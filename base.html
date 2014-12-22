@@ -1,0 +1,167 @@
+<html>
+<head>
+<title></title>
+<!--[if lt IE 9]>
+    <script src="excanvas.js"></script>
+<![endif]-->
+<script src="jquery.min.js"></script>
+</head>
+<body>
+<div style="position: relative;">
+	<canvas id="simpleBases" width="800" height="400" style="position: absolute; left: 0; top: 0; z-index: 1;"></canvas>
+	<canvas id="simpleDraw" width="800" height="400" style="position: absolute; left: 0; top: 0; z-index: 0;"></canvas>
+</div>
+<script>
+
+// DEFS
+var sin60 = 0.866025403784439;
+function Point(){
+	var x;
+	var y;
+}
+
+
+var baseCanvas = document.getElementById("simpleBases");
+var baseContext = baseCanvas.getContext("2d");
+var canvas = document.getElementById("simpleDraw");
+var context = canvas.getContext("2d");
+
+var mouse = new Point();
+
+// triangle points:
+// p1 origin
+// p2 arm edge
+// p3 top (hexagon side mid-point)
+var p1 = new Point();
+var p2 = new Point();
+var p3 = new Point();
+var radius = 400;
+
+p1.x = 100;
+p1.y = 300;
+p2.x = p1.x+radius
+p2.y = p1.y;
+p3.x = p1.x+radius*.75;
+p3.y = p1.y-radius*.5*sin60;
+
+// triangle sides:
+// b bottom (large radius)
+// s outside side
+// t top, (small radius)
+var dB = new Point();  // begin from origin
+var dS = new Point();  // begin from large radius
+var dT = new Point();  // begin from origin
+
+var bLength = Math.sqrt( (p2.x-p1.x)*(p2.x-p1.x) + (p2.y-p1.y)*(p2.y-p1.y) );
+var sLength = Math.sqrt( (p2.x-p3.x)*(p2.x-p3.x) + (p2.y-p3.y)*(p2.y-p3.y) );
+var tLength = Math.sqrt( (p3.x-p1.x)*(p3.x-p1.x) + (p3.y-p1.y)*(p3.y-p1.y) );
+dB.x = (p2.x - p1.x) / bLength;
+dB.y = (p2.y - p1.y) / bLength;
+dS.x = (p3.x - p2.x) / sLength;
+dS.y = (p3.y - p2.y) / sLength;
+dT.x = (p3.x - p1.x) / tLength;
+dT.y = (p3.y - p1.y) / tLength;
+
+// RAYS from the mouse
+var d1 = new Point();
+var d2 = new Point();
+d1.x = 1;
+d1.y = 0;
+d2.x = -.5;
+d2.y = -sin60;
+
+// 1/12 TRIANGLE SEGMENT
+baseContext.lineWidth = 4;
+baseContext.lineCap = "round";
+baseContext.beginPath();
+baseContext.moveTo(p1.x, p1.y);
+baseContext.lineTo(p2.x, p2.y);
+baseContext.lineTo(p3.x, p3.y);
+baseContext.lineTo(p1.x, p1.y);
+baseContext.stroke();
+
+$(document).mousemove(function(event){
+	mouse.x = event.pageX;
+	mouse.y = event.pageY;
+  // $("span").text(event.pageX + ", " + event.pageY);
+  	canvas.width = canvas.width;
+	context.lineWidth = 4;
+	context.lineCap = "round";
+	context.fillStyle = "#C0C0C0";
+
+	// POINT inside TRIANGLE test
+	// http://stackoverflow.com/questions/13300904/determine-whether-point-lies-inside-triangle
+	var alpha = ((p2.y - p3.y)*(mouse.x - p3.x) + (p3.x - p2.x)*(mouse.y - p3.y)) / ((p2.y - p3.y)*(p1.x - p3.x) + (p3.x - p2.x)*(p1.y - p3.y));
+	var beta = ((p3.y - p1.y)*(mouse.x - p3.x) + (p1.x - p3.x)*(mouse.y - p3.y)) / ((p2.y - p3.y)*(p1.x - p3.x) + (p3.x - p2.x)*(p1.y - p3.y));
+	var gamma = 1.0 - alpha - beta;
+	if(alpha > 0.0 && beta > 0.0 && gamma > 0.0){
+		context.beginPath();
+		context.moveTo(p1.x, p1.y);
+		context.lineTo(p2.x, p2.y);
+		context.lineTo(p3.x, p3.y);
+		context.lineTo(p1.x, p1.y);
+		context.fill();
+	}
+
+	// RAY and LINE intersection test
+	// http://rootllama.wordpress.com/2014/06/20/ray-line-segment-intersection-test-in-2d/
+	var p = new Point();
+	p = RayLineIntersectQuick(mouse, d1, p3, p2);
+	context.beginPath();
+	context.moveTo(mouse.x, mouse.y);
+	context.lineTo(mouse.x+radius*2*d1.x, mouse.y+radius*2*d1.y);
+	context.moveTo(mouse.x, mouse.y);
+	context.lineTo(mouse.x+radius*2*d2.x, mouse.y+radius*2*d2.y);
+	context.stroke();
+});
+
+// origin and dX,dY of RAY -- pointA pointB of line
+// pre-calculated length of AB, and dX dY of A->B
+function RayLineIntersectQuick(origin, dV, pA, pB, lengthAB, dAB){
+	var v1 = new Point();
+	var v2 = new Point();
+	var v3 = new Point();
+	v1.x = origin.x - pA.x;
+	v1.y = origin.y - pA.y;
+	v2.x = pB.x - pA.x;
+	v2.y = pB.y - pA.y;
+	v3.x = -dV.y;
+	v3.y = dV.x;
+	var t1 = (v2.x*v1.y - v2.y*v1.x) / (v2.x*v3.x + v2.y*v3.y);
+	var t2 = (v1.x*v3.x + v1.y*v3.y) / (v2.x*v3.x + v2.y*v3.y);
+	var p = new Point();
+	p.x = p3.x + .5*radius*.5 * t2;
+	p.y = p3.y + sin60*radius*.5 * t2;
+	if(t2 > 0.0 && t2 < 1.0 && t1 > 0.0){
+		context.fillStyle = "#22AA22";
+		context.fillRect(p.x-10, p.y-10, 20, 20);
+	}
+	return p;
+}
+
+// function RayLineIntersect(origin, dV, pA, pB){
+// 	var v1 = new Point();
+// 	var v2 = new Point();
+// 	var v3 = new Point();
+// 	v1.x = origin.x - pA.x;
+// 	v1.y = origin.y - pA.y;
+// 	v2.x = pB.x - pA.x;
+// 	v2.y = pB.y - pA.y;
+// 	v3.x = -dV.y;
+// 	v3.y = dV.x;
+// 	var t1 = (v2.x*v1.y - v2.y*v1.x) / (v2.x*v3.x + v2.y*v3.y);
+// 	var t2 = (v1.x*v3.x + v1.y*v3.y) / (v2.x*v3.x + v2.y*v3.y);
+// 	var p = new Point();
+// 	p.x = p3.x + .5*radius*.5 * t2;
+// 	p.y = p3.y + .866*radius*.5 * t2;
+// 	if(t2 > 0.0 && t2 < 1.0 && t1 > 0.0){
+// 		context.fillStyle = "#22AA22";
+// 		context.fillRect(p.x-10, p.y-10, 20, 20);
+// 	}
+// 	return p;
+// }
+// canvas.onmousemove = mousePos;
+
+// context.fillRect(10,10,100,100);
+</script>
+</html>
