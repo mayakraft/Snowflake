@@ -20,7 +20,6 @@ function Point(){
 	var y;
 }
 
-
 var baseCanvas = document.getElementById("simpleBases");
 var baseContext = baseCanvas.getContext("2d");
 var canvas = document.getElementById("simpleDraw");
@@ -49,7 +48,7 @@ p3.y = p1.y-radius*.5*sin60;
 // s outside side
 // t top, (small radius)
 var dB = new Point();  // begin from origin
-var dS = new Point();  // begin from large radius
+var dS = new Point();  // from small radius to large
 var dT = new Point();  // begin from origin
 
 var bLength = Math.sqrt( (p2.x-p1.x)*(p2.x-p1.x) + (p2.y-p1.y)*(p2.y-p1.y) );
@@ -87,26 +86,60 @@ $(document).mousemove(function(event){
   	canvas.width = canvas.width;
 	context.lineWidth = 4;
 	context.lineCap = "round";
-	context.fillStyle = "#C0C0C0";
 
 	// POINT inside TRIANGLE test
 	// http://stackoverflow.com/questions/13300904/determine-whether-point-lies-inside-triangle
 	var alpha = ((p2.y - p3.y)*(mouse.x - p3.x) + (p3.x - p2.x)*(mouse.y - p3.y)) / ((p2.y - p3.y)*(p1.x - p3.x) + (p3.x - p2.x)*(p1.y - p3.y));
 	var beta = ((p3.y - p1.y)*(mouse.x - p3.x) + (p1.x - p3.x)*(mouse.y - p3.y)) / ((p2.y - p3.y)*(p1.x - p3.x) + (p3.x - p2.x)*(p1.y - p3.y));
 	var gamma = 1.0 - alpha - beta;
+	var inside = false;
 	if(alpha > 0.0 && beta > 0.0 && gamma > 0.0){
-		context.beginPath();
-		context.moveTo(p1.x, p1.y);
-		context.lineTo(p2.x, p2.y);
-		context.lineTo(p3.x, p3.y);
-		context.lineTo(p1.x, p1.y);
-		context.fill();
+		inside = true;
 	}
+
 
 	// RAY and LINE intersection test
 	// http://rootllama.wordpress.com/2014/06/20/ray-line-segment-intersection-test-in-2d/
-	var p = new Point();
-	p = RayLineIntersectQuick(mouse, d1, p3, p2);
+	var i1 = RayLineIntersectQuick(mouse, d1, p2, p3, sLength, dS);
+	var i2 = RayLineIntersectQuick(mouse, d1, p1, p3, tLength, dT);
+	var i3 = RayLineIntersectQuick(mouse, d2, p1, p3, tLength, dT);
+	var i4 = RayLineIntersectQuick(mouse, d2, p1, p2, bLength, dB);
+
+	// if(inside){
+	context.fillStyle = "#E0E0E0";
+	context.beginPath();
+	context.moveTo(p1.x, p1.y);
+	if(i4.x != undefined){
+		context.lineTo(i3.x, i3.y);
+		context.lineTo(i4.x, i4.y);
+	}
+	else if(i3.x != undefined){
+		context.lineTo(i3.x, i3.y);
+		context.lineTo(mouse.x, mouse.y);
+		context.lineTo(i1.x, i1.y);
+		context.lineTo(p2.x, p2.y);
+	}
+	else if(i2.x != undefined){
+		context.lineTo(i2.x, i2.y);
+		context.lineTo(i1.x, i1.y);
+		context.lineTo(p2.x, p2.y);
+	}
+	else{
+		context.lineTo(p2.x, p2.y);
+		context.lineTo(p3.x, p3.y);
+		context.lineTo(p1.x, p1.y);
+	}
+	context.lineTo(p1.x, p1.y);
+	context.fill();
+
+	context.fillStyle = "#22AA22";
+
+	if(inside) context.fillRect(mouse.x-10, mouse.y-10, 20, 20);
+	if(i1.x != undefined) context.fillRect(i1.x-10, i1.y-10, 20, 20);
+	if(i2.x != undefined) context.fillRect(i2.x-10, i2.y-10, 20, 20);	
+	if(i3.x != undefined) context.fillRect(i3.x-10, i3.y-10, 20, 20);
+	if(i4.x != undefined) context.fillRect(i4.x-10, i4.y-10, 20, 20);
+
 	context.beginPath();
 	context.moveTo(mouse.x, mouse.y);
 	context.lineTo(mouse.x+radius*2*d1.x, mouse.y+radius*2*d1.y);
@@ -130,15 +163,14 @@ function RayLineIntersectQuick(origin, dV, pA, pB, lengthAB, dAB){
 	var t1 = (v2.x*v1.y - v2.y*v1.x) / (v2.x*v3.x + v2.y*v3.y);
 	var t2 = (v1.x*v3.x + v1.y*v3.y) / (v2.x*v3.x + v2.y*v3.y);
 	var p = new Point();
-	p.x = p3.x + .5*radius*.5 * t2;
-	p.y = p3.y + sin60*radius*.5 * t2;
 	if(t2 > 0.0 && t2 < 1.0 && t1 > 0.0){
-		context.fillStyle = "#22AA22";
-		context.fillRect(p.x-10, p.y-10, 20, 20);
+		p.x = pA.x + lengthAB * t2 * dAB.x;
+		p.y = pA.y + lengthAB * t2 * dAB.y;
 	}
 	return p;
 }
 
+// full robust like gma's homemade chicken
 // function RayLineIntersect(origin, dV, pA, pB){
 // 	var v1 = new Point();
 // 	var v2 = new Point();
@@ -152,11 +184,13 @@ function RayLineIntersectQuick(origin, dV, pA, pB, lengthAB, dAB){
 // 	var t1 = (v2.x*v1.y - v2.y*v1.x) / (v2.x*v3.x + v2.y*v3.y);
 // 	var t2 = (v1.x*v3.x + v1.y*v3.y) / (v2.x*v3.x + v2.y*v3.y);
 // 	var p = new Point();
-// 	p.x = p3.x + .5*radius*.5 * t2;
-// 	p.y = p3.y + .866*radius*.5 * t2;
 // 	if(t2 > 0.0 && t2 < 1.0 && t1 > 0.0){
-// 		context.fillStyle = "#22AA22";
-// 		context.fillRect(p.x-10, p.y-10, 20, 20);
+// 		var dAB = new Point();
+// 		var lengthAB = Math.sqrt( (pB.x-pA.x)*(pB.x-pA.x) + (pB.y-pA.y)*(pB.y-pA.y) );
+// 		dAB.x = (pB.x - pA.x) / lengthAB;
+// 		dAB.y = (pB.y - pA.y) / lengthAB;
+// 		p.x = pA.x + lengthAB * t2 * dAB.x;
+// 		p.y = pA.y + lengthAB * t2 * dAB.y;
 // 	}
 // 	return p;
 // }
