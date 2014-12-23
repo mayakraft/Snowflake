@@ -1,21 +1,3 @@
-<html>
-<head>
-<title></title>
-<!--[if lt IE 9]>
-    <script src="excanvas.js"></script>
-<![endif]-->
-<script src="jquery.min.js"></script>
-</head>
-<body>
-<div style="position: relative;">
-	<canvas id="simpleBases" width="600" height="400" style="position: absolute; left: 0; top: 0; z-index: 1;"></canvas>
-	<canvas id="simpleDraw" width="600" height="400" style="position: absolute; left: 0; top: 0; z-index: 0;"></canvas>
-</div>
-<div style="position: relative;">
-	<canvas id="hexagonResult" width="400" height="400" style="position: absolute; left: 600; top: 0; z-index: 0;"></canvas>
-</div>
-<script>
-
 // DEFS
 var sin60 = 0.866025403784439;
 var twoPi = 6.28318530717959;
@@ -89,9 +71,28 @@ baseContext.lineTo(o.x + p3.x, o.y + p3.y);
 baseContext.lineTo(o.x + p1.x, o.y + p1.y);
 baseContext.stroke();
 
-$(document).mousemove(function(event){
-	mouse.x = event.pageX - o.x;
-	mouse.y = event.pageY - o.y;
+$("#simpleBases").mousemove(function(event){
+// $(document).mousemove(function(event){
+	// mouse.x = event.clientX - o.x;
+	// mouse.y = event.clientY - o.y;
+	// if(event.offsetX){//} && $(event.target).attr('id') != "hexagonResult") {
+
+    // get the scale based on actual width;
+	var sx = canvas.width / canvas.offsetWidth;
+    var sy = canvas.height / canvas.offsetHeight;
+
+	mouse.x = event.offsetX * sx;
+	mouse.y = event.offsetY * sy;
+    // }
+    // else if(event.layerX) {
+    //     mouse.x = event.layerX;
+    //     mouse.y = event.layerY;
+    // }
+   	mouse.x -= o.x ;
+	mouse.y -= o.y ;
+
+	// mouse.x = event.pageX - o.x ;
+	// mouse.y = event.pageY - o.y ;
   // $("span").text(event.pageX + ", " + event.pageY);
   	canvas.width = canvas.width;
 	context.lineWidth = 4;
@@ -106,7 +107,6 @@ $(document).mousemove(function(event){
 	if(alpha > 0.0 && beta > 0.0 && gamma > 0.0){
 		inside = true;
 	}
-
 
 	// RAY and LINE intersection test
 	// http://rootllama.wordpress.com/2014/06/20/ray-line-segment-intersection-test-in-2d/
@@ -135,6 +135,30 @@ $(document).mousemove(function(event){
 		points.push(p2);
 		points.push(p3);
 	}
+
+	if(points.length > 0){
+		baseCanvas.width = baseCanvas.width;
+
+		baseContext.strokeStyle = "#E0E0E0";
+		baseContext.lineWidth = 4;
+		baseContext.lineCap = "round";
+		baseContext.beginPath();
+		baseContext.moveTo(o.x + p1.x, o.y + p1.y);
+		baseContext.lineTo(o.x + p2.x, o.y + p2.y);
+		baseContext.lineTo(o.x + p3.x, o.y + p3.y);
+		baseContext.lineTo(o.x + p1.x, o.y + p1.y);
+		baseContext.stroke();
+		baseContext.strokeStyle = "#000000";
+		baseContext.beginPath();
+		baseContext.moveTo(o.x + p1.x, o.y + p1.y);
+		for(var i = 0; i < points.length; i++){
+			baseContext.lineTo(o.x + points[i].x, o.y + points[i].y);
+		}
+		baseContext.lineTo(o.x + p1.x, o.y + p1.y);
+		baseContext.stroke();
+	}
+
+
 	context.fillStyle = "#E0E0E0";
 	context.beginPath();
 	context.moveTo(o.x + p1.x, o.y + p1.y);
@@ -152,6 +176,7 @@ $(document).mousemove(function(event){
 	// if(i3.x != undefined) context.fillRect(i3.x-10, i3.y-10, 20, 20);
 	// if(i4.x != undefined) context.fillRect(i4.x-10, i4.y-10, 20, 20);
 
+	context.strokeStyle = "#E0E0E0";
 	context.beginPath();
 	context.moveTo(o.x + mouse.x, o.y + mouse.y);
 	context.lineTo(o.x + mouse.x+radius*2*d1.x, o.y + mouse.y+radius*2*d1.y);
@@ -159,51 +184,37 @@ $(document).mousemove(function(event){
 	context.lineTo(o.x + mouse.x+radius*2*d2.x, o.y + mouse.y+radius*2*d2.y);
 	context.stroke();
 
+
+	// HEXAGON SNOWFLAKE RESULT
 	var hex = new Point();
-	hex.x = 200;
-	hex.y = 200;
-
+	hex.x = hexCanvas.width * .5;
+	hex.y = hexCanvas.width * .5;
 	var scale = .5;
-
   	hexCanvas.width = hexCanvas.width;
 	hexContext.lineWidth = 4;
 	hexContext.lineCap = "round";
-
+	// one rotation, 6 parts
 	for(var a = 0; a < 6; a++){
-		var angle = Math.atan2(points[0].y, points[0].x);// * 360 / 3.141592;
+		var angle = Math.atan2(points[0].y, points[0].x);
 		var distance = Math.sqrt(points[0].y*points[0].y + points[0].x*points[0].x);
 		hexContext.moveTo(hex.x + distance*Math.cos(angle+a*twoPi/6) * scale, hex.y + distance*Math.sin(angle+a*twoPi/6) * scale);
 		for(var i = 1; i < points.length; i++){
-			var angle = Math.atan2(points[i].y, points[i].x);// * 360 / 3.141592;
+			var angle = Math.atan2(points[i].y, points[i].x);
 			var distance = Math.sqrt(points[i].y*points[i].y + points[i].x*points[i].x);
 			hexContext.lineTo(hex.x + distance*Math.cos(angle+a*twoPi/6) * scale, hex.y + distance*Math.sin(angle+a*twoPi/6) * scale);
 		}
 	}
 	// reflection
 	for(var a = 0; a < 6; a++){
-		var angle = Math.atan2(points[0].y, points[0].x);// * 360 / 3.141592;
+		var angle = Math.atan2(points[0].y, points[0].x);
 		var distance = Math.sqrt(points[0].y*points[0].y + points[0].x*points[0].x);
 		hexContext.moveTo(hex.x + distance*Math.cos(angle+a*twoPi/6) * scale, hex.y - distance*Math.sin(angle+a*twoPi/6) * scale);
 		for(var i = 1; i < points.length; i++){
-			var angle = Math.atan2(points[i].y, points[i].x);// * 360 / 3.141592;
+			var angle = Math.atan2(points[i].y, points[i].x);
 			var distance = Math.sqrt(points[i].y*points[i].y + points[i].x*points[i].x);
 			hexContext.lineTo(hex.x + distance*Math.cos(angle+a*twoPi/6) * scale, hex.y - distance*Math.sin(angle+a*twoPi/6) * scale);
 		}
 	}
-
-	// hexContext.moveTo(hex.x+points[0].x*-scale, hex.y+points[0].y*-scale);
-	// for(var i = 1; i < points.length; i++){
-	// 	hexContext.lineTo(hex.x + points[i].x*-scale, hex.y + points[i].y*-scale);
-	// }
-	// hexContext.moveTo(hex.x+points[0].x*scale, hex.y+points[0].y*-scale);
-	// for(var i = 1; i < points.length; i++){
-	// 	hexContext.lineTo(hex.x + points[i].x*scale, hex.y + points[i].y*-scale);
-	// }
-	// hexContext.moveTo(hex.x+points[0].x*-scale, hex.y+points[0].y*scale);
-	// for(var i = 1; i < points.length; i++){
-	// 	hexContext.lineTo(hex.x + points[i].x*-scale, hex.y + points[i].y*scale);
-	// }
-
 	hexContext.stroke();
 });
 
@@ -256,5 +267,3 @@ function RayLineIntersectQuick(origin, dV, pA, pB, lengthAB, dAB){
 // canvas.onmousemove = mousePos;
 
 // context.fillRect(10,10,100,100);
-</script>
-</html>
