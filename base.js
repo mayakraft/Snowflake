@@ -75,38 +75,34 @@ $("#simpleBases").mousemove(function(event){
 // $(document).mousemove(function(event){
 	// mouse.x = event.clientX - o.x;
 	// mouse.y = event.clientY - o.y;
-	// if(event.offsetX){//} && $(event.target).attr('id') != "hexagonResult") {
+	// mouse.x = event.layerX;
+	// mouse.y = event.layerY;
+	// mouse.x = event.pageX - o.x ;
+	// mouse.y = event.pageY - o.y ;
+   	// if(event.offsetX){//} && $(event.target).attr('id') != "hexagonResult") {
 
     // get the scale based on actual width;
 	var sx = canvas.width / canvas.offsetWidth;
     var sy = canvas.height / canvas.offsetHeight;
-
 	mouse.x = event.offsetX * sx;
 	mouse.y = event.offsetY * sy;
-    // }
-    // else if(event.layerX) {
-    //     mouse.x = event.layerX;
-    //     mouse.y = event.layerY;
-    // }
-   	mouse.x -= o.x ;
+	mouse.x -= o.x ;
 	mouse.y -= o.y ;
 
-	// mouse.x = event.pageX - o.x ;
-	// mouse.y = event.pageY - o.y ;
-  // $("span").text(event.pageX + ", " + event.pageY);
+
   	canvas.width = canvas.width;
 	context.lineWidth = 4;
 	context.lineCap = "round";
 
 	// POINT inside TRIANGLE test
 	// http://stackoverflow.com/questions/13300904/determine-whether-point-lies-inside-triangle
-	var alpha = ((p2.y - p3.y)*(mouse.x - p3.x) + (p3.x - p2.x)*(mouse.y - p3.y)) / ((p2.y - p3.y)*(p1.x - p3.x) + (p3.x - p2.x)*(p1.y - p3.y));
-	var beta = ((p3.y - p1.y)*(mouse.x - p3.x) + (p1.x - p3.x)*(mouse.y - p3.y)) / ((p2.y - p3.y)*(p1.x - p3.x) + (p3.x - p2.x)*(p1.y - p3.y));
-	var gamma = 1.0 - alpha - beta;
-	var inside = false;
-	if(alpha > 0.0 && beta > 0.0 && gamma > 0.0){
-		inside = true;
-	}
+	// var alpha = ((p2.y - p3.y)*(mouse.x - p3.x) + (p3.x - p2.x)*(mouse.y - p3.y)) / ((p2.y - p3.y)*(p1.x - p3.x) + (p3.x - p2.x)*(p1.y - p3.y));
+	// var beta = ((p3.y - p1.y)*(mouse.x - p3.x) + (p1.x - p3.x)*(mouse.y - p3.y)) / ((p2.y - p3.y)*(p1.x - p3.x) + (p3.x - p2.x)*(p1.y - p3.y));
+	// var gamma = 1.0 - alpha - beta;
+	// var inside = false;
+	// if(alpha > 0.0 && beta > 0.0 && gamma > 0.0){
+	// 	inside = true;
+	// }
 
 	// RAY and LINE intersection test
 	// http://rootllama.wordpress.com/2014/06/20/ray-line-segment-intersection-test-in-2d/
@@ -116,24 +112,24 @@ $("#simpleBases").mousemove(function(event){
 	var i4 = RayLineIntersectQuick(mouse, d2, p1, p2, bLength, dB);
 
 	var points = [];
-	if(i4.x != undefined){
+	if(i4.x != undefined){ // cuts through the bottom: small hexagon
 		points.push(i3);
 		points.push(i4);
 	}
-	else if(i3.x != undefined){
+	else if(i3.x != undefined){ // 60deg cut into top, there are 2 cuts
 		points.push(i3);
 		points.push(mouse);
 		points.push(i1);
 		points.push(p2);
 	}
-	else if(i2.x != undefined){
+	else if(i2.x != undefined){ // horizontal cut across top
 		points.push(i2);
 		points.push(i1);
 		points.push(p2);
 	}
-	else{
-		points.push(p2);
+	else{ 						// no cuts
 		points.push(p3);
+		points.push(p2);
 	}
 
 	if(points.length > 0){
@@ -168,14 +164,6 @@ $("#simpleBases").mousemove(function(event){
 	context.lineTo(o.x + p1.x, o.y + p1.y);
 	context.fill();
 
-	context.fillStyle = "#22AA22";
-
-	// if(inside) context.fillRect(mouse.x-10, mouse.y-10, 20, 20);
-	// if(i1.x != undefined) context.fillRect(i1.x-10, i1.y-10, 20, 20);
-	// if(i2.x != undefined) context.fillRect(i2.x-10, i2.y-10, 20, 20);	
-	// if(i3.x != undefined) context.fillRect(i3.x-10, i3.y-10, 20, 20);
-	// if(i4.x != undefined) context.fillRect(i4.x-10, i4.y-10, 20, 20);
-
 	context.strokeStyle = "#E0E0E0";
 	context.beginPath();
 	context.moveTo(o.x + mouse.x, o.y + mouse.y);
@@ -186,37 +174,67 @@ $("#simpleBases").mousemove(function(event){
 
 
 	// HEXAGON SNOWFLAKE RESULT
-	var hex = new Point();
-	hex.x = hexCanvas.width * .5;
-	hex.y = hexCanvas.width * .5;
-	var scale = .5;
   	hexCanvas.width = hexCanvas.width;
 	hexContext.lineWidth = 4;
 	hexContext.lineCap = "round";
-	// one rotation, 6 parts
-	for(var a = 0; a < 6; a++){
-		var angle = Math.atan2(points[0].y, points[0].x);
-		var distance = Math.sqrt(points[0].y*points[0].y + points[0].x*points[0].x);
-		hexContext.moveTo(hex.x + distance*Math.cos(angle+a*twoPi/6) * scale, hex.y + distance*Math.sin(angle+a*twoPi/6) * scale);
-		for(var i = 1; i < points.length; i++){
-			var angle = Math.atan2(points[i].y, points[i].x);
-			var distance = Math.sqrt(points[i].y*points[i].y + points[i].x*points[i].x);
-			hexContext.lineTo(hex.x + distance*Math.cos(angle+a*twoPi/6) * scale, hex.y + distance*Math.sin(angle+a*twoPi/6) * scale);
-		}
-	}
-	// reflection
-	for(var a = 0; a < 6; a++){
-		var angle = Math.atan2(points[0].y, points[0].x);
-		var distance = Math.sqrt(points[0].y*points[0].y + points[0].x*points[0].x);
-		hexContext.moveTo(hex.x + distance*Math.cos(angle+a*twoPi/6) * scale, hex.y - distance*Math.sin(angle+a*twoPi/6) * scale);
-		for(var i = 1; i < points.length; i++){
-			var angle = Math.atan2(points[i].y, points[i].x);
-			var distance = Math.sqrt(points[i].y*points[i].y + points[i].x*points[i].x);
-			hexContext.lineTo(hex.x + distance*Math.cos(angle+a*twoPi/6) * scale, hex.y - distance*Math.sin(angle+a*twoPi/6) * scale);
-		}
+
+	var hexCenter = new Point();
+	hexCenter.x = hexCanvas.width * .5;
+	hexCenter.y = hexCanvas.width * .5;
+	var hexPoints = hexagonFromTwelfthHexagon(points);
+	hexContext.moveTo(hexCenter.x + hexPoints[0].x, hexCenter.y + hexPoints[0].y);
+	for(var i = 1; i < hexPoints.length; i++){
+		hexContext.lineTo(hexCenter.x + hexPoints[i].x, hexCenter.y + hexPoints[i].y);
 	}
 	hexContext.stroke();
 });
+
+
+// function edgePointsForSimpleSnowflakeSlice(){
+
+// }
+
+function hexagonFromTwelfthHexagon(points){
+	var revolutions = 6;
+	var hexPoints = [];
+	if(points.length <= 0) return hexPoints;
+
+	var scale = .5;
+	// build SIXTH segment from TWELFTH segment by reflecting Y values across X axis
+	var sixth = [];
+	for(var i = 0; i < points.length; i++) sixth.push(points[i]);
+	for(var i = points.length-1; i >= 0; i--){
+		var point = new Point();
+		point.x = points[i].x;
+		point.y = -points[i].y; // reflection across y axis is most accessible given current orientation
+		sixth.push(point);
+	}
+	for(var a = 0; a < revolutions; a++){
+		var angle = Math.atan2(sixth[0].y, sixth[0].x);
+		var distance = Math.sqrt(sixth[0].y*sixth[0].y + sixth[0].x*sixth[0].x);
+		var first = new Point();
+		first.x = distance*Math.cos(angle+a*twoPi/6) * scale;
+		first.y = distance*Math.sin(angle+a*twoPi/6) * scale;
+		hexPoints.push(first);
+		for(var i = 1; i < sixth.length-1; i++){
+			var angle = Math.atan2(sixth[i].y, sixth[i].x);
+			var distance = Math.sqrt(sixth[i].y*sixth[i].y + sixth[i].x*sixth[i].x);
+			var point = new Point();
+			point.x = distance*Math.cos(angle+a*twoPi/6) * scale;
+			point.y = distance*Math.sin(angle+a*twoPi/6) * scale;
+			hexPoints.push(point);
+		}
+	}
+	var i = sixth.length-1;
+	var angle = Math.atan2(sixth[i].y, sixth[i].x);
+	var distance = Math.sqrt(sixth[i].y*sixth[i].y + sixth[i].x*sixth[i].x);
+	var point = new Point();
+	point.x = distance*Math.cos(angle+(revolutions-1)*twoPi/6) * scale;
+	point.y = distance*Math.sin(angle+(revolutions-1)*twoPi/6) * scale;
+	hexPoints.push(point);
+
+	return hexPoints;
+}
 
 // origin and dX,dY of RAY -- pointA pointB of line
 // pre-calculated length of AB, and dX dY of A->B
