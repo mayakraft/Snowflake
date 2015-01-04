@@ -6,7 +6,7 @@ var hexCanvas2 = document.getElementById("secondaryHexagonResult");
 var hexContext2 = hexCanvas2.getContext("2d");
 
 var scale2 = 300; // radius of segment's long side
-var hexScale2 = scale * .5;
+var hexScale2 = scale2 * .5;
 
 // ORIGIN in real pixel space
 var o = new Point();
@@ -30,10 +30,14 @@ s1.x = 0;
 s1.y = 0;
 s2.x = s1.x+1
 s2.y = s1.y;
-s3.x = 0.8726089487010745
-s3.y = -0.22064777327935228
-s4.x = 0.3821731538967765
-s4.y = -0.22064777327935228
+// s3.x = 0.8726089487010745
+// s3.y = -0.22064777327935228
+// s4.x = 0.3821731538967765
+// s4.y = -0.22064777327935228
+s3.x = 0.8336514406585896
+s3.y = -0.2881241565452092
+s4.x = 0.499045678024231
+s4.y = -0.2881241565452092
 
 // triangle sides:
 // b bottom (large radius)
@@ -46,14 +50,14 @@ var dT2 = new Point();  // begin from origin
 var dI2 = new Point();  // begin from origin
 var bLength2 = Math.sqrt( (s2.x-s1.x)*(s2.x-s1.x) + (s2.y-s1.y)*(s2.y-s1.y) );
 var sLength2 = Math.sqrt( (s2.x-s3.x)*(s2.x-s3.x) + (s2.y-s3.y)*(s2.y-s3.y) );
-var tLength2 = Math.sqrt( (s3.x-s1.x)*(s3.x-s1.x) + (s3.y-s1.y)*(s3.y-s1.y) );
-var iLength2 = Math.sqrt( (s3.x-s1.x)*(s3.x-s1.x) + (s3.y-s1.y)*(s3.y-s1.y) );
+var tLength2 = Math.sqrt( (s4.x-s3.x)*(s4.x-s3.x) + (s4.y-s3.y)*(s4.y-s3.y) );
+var iLength2 = Math.sqrt( (s4.x-s1.x)*(s4.x-s1.x) + (s4.y-s1.y)*(s4.y-s1.y) );
 dB2.x = (s2.x - s1.x) / bLength2;
 dB2.y = (s2.y - s1.y) / bLength2;
 dS2.x = (s3.x - s2.x) / sLength2;
 dS2.y = (s3.y - s2.y) / sLength2;
-dT2.x = (s3.x - s1.x) / tLength2;
-dT2.y = (s3.y - s1.y) / tLength2;
+dT2.x = (s3.x - s4.x) / tLength2;
+dT2.y = (s3.y - s4.y) / tLength2;
 dI2.x = (s4.x - s1.x) / iLength2;
 dI2.y = (s4.y - s1.y) / iLength2;
 
@@ -71,23 +75,26 @@ function drawSegmentAndHexagon2(mouse){
 	var inside2 = pointInTriangle({x:(mouse.x/scale2), y:(mouse.y/scale2)}, s1, s3, s4);
 
 	// build slice from mouse input
-	// var points = secondaryBaseCut({x:(mouse.x/scale2), y:(mouse.y/scale2)});
-	var points = [s1, s2, s3, s4];
+	var points;
+	if(inside1 || inside2)
+		points = secondaryBaseCut({x:(mouse.x/scale2), y:(mouse.y/scale2)});
+	else
+		points = [s4, s3, s2];
 
 	// light gray fill, visible segment piece
-	context2.fillStyle = "#E0E0E0";
-	context2.beginPath();
-	context2.moveTo(o.x + s1.x*scale, o.y + s1.y*scale);
-	for(var i = 0; i < points.length; i++) context.lineTo(o.x + points[i].x*scale, o.y + points[i].y*scale);
-	context2.lineTo(o.x + s1.x*scale, o.y + s1.y*scale);
-	context2.fill();
+	// context2.fillStyle = "#E0E0E0";
+	// context2.beginPath();
+	// context2.moveTo(o.x + s1.x*scale2, o.y + s1.y*scale2);
+	// for(var i = 0; i < points.length; i++) context2.lineTo(o.x + points[i].x*scale2, o.y + points[i].y*scale2);
+	// context2.lineTo(o.x + s1.x*scale2, o.y + s1.y*scale2);
+	// context2.fill();
 
 	// 2 mouse ray lines
-	if(inside1)
-		context2.strokeStyle = "#FF0000";
-	else if(inside2)
-		context2.strokeStyle = "#0000FF";
-	else
+	// if(inside1)
+	// 	context2.strokeStyle = "#FF0000";
+	// else if(inside2)
+	// 	context2.strokeStyle = "#0000FF";
+	// else
 		context2.strokeStyle = "#E0E0E0";
 	context2.beginPath();
 	context2.moveTo(o.x + mouse.x, o.y + mouse.y);
@@ -110,60 +117,112 @@ function drawSegmentAndHexagon2(mouse){
 	context2.beginPath();
 	context2.moveTo(o.x + s1.x*scale2, o.y + s1.y*scale2);
 	for(var i = 0; i < points.length; i++){
-		context2.lineTo(o.x + points[i].x*scale2, o.y + points[i].y*scale2);
+		if(!penUp(points[i]))
+			context2.lineTo(o.x + points[i].x*scale2, o.y + points[i].y*scale2);
 	}
 	context2.lineTo(o.x + s1.x*scale2, o.y + s1.y*scale2);
 	context2.stroke();
-
 
 	// HEXAGON SNOWFLAKE RESULT
   	hexCanvas2.width = hexCanvas2.width;
 	hexContext2.lineWidth = 4;
 	hexContext2.lineCap = "round";
 
-	var hexPoints = hexagonFromTwelfthHexagon(points);
-	hexContext2.moveTo(hexCenter2.x + hexPoints[0].x*hexScale2, hexCenter2.y + hexPoints[0].y*hexScale2);
-	for(var i = 1; i < hexPoints.length; i++){
-		hexContext2.lineTo(hexCenter2.x + hexPoints[i].x*hexScale2, hexCenter2.y + hexPoints[i].y*hexScale2);
+	var hexPoints2 = hexagonFromTwelfthHexagon(points);
+
+	var pickUpPen = false;
+	if(penUp(hexPoints2[0])){
+		pickUpPen = true;
+	}
+	else{
+		hexContext2.moveTo(hexCenter2.x + hexPoints2[0].x*hexScale2, hexCenter2.y + hexPoints2[0].y*hexScale2);
+	}
+	for(var i = 1; i < hexPoints2.length; i++){
+		// secret language for picking up the pen
+		if(penUp(hexPoints2[i])){
+			pickUpPen = true;
+		}
+		else{
+			if(pickUpPen){
+				hexContext2.moveTo(hexCenter2.x + hexPoints2[i].x*hexScale2, hexCenter2.y + hexPoints2[i].y*hexScale2);
+				pickUpPen = false;
+			}
+			else{
+				hexContext2.lineTo(hexCenter2.x + hexPoints2[i].x*hexScale2, hexCenter2.y + hexPoints2[i].y*hexScale2);
+			}
+		}
 	}
 	hexContext2.stroke();
 }
 
 // makes a snowflake pattern by two or one cuts, based on position of one point
 function secondaryBaseCut(point){
-	var i1 = RayLineIntersectQuick(point, d1, s4, s1, sLength2, dS2); // check intersect with outside
-	var i2 = RayLineIntersectQuick(point, d1, s1, s3, tLength2, dT2); // check horizontal intersect with top
-	var i3 = RayLineIntersectQuick(point, d2, s1, s3, tLength2, dT2); // check 60 deg intersect with top
-	var i4 = RayLineIntersectQuick(point, d2, s1, s2, bLength2, dB2); // check 60 deg intersect with bottom
+	var i1 = RayLineIntersectQuick(point, dRayR2, s1, s4, iLength2, dI2); // check intersect with outside
+	var i2 = RayLineIntersectQuick(point, dRayL2, s1, s4, iLength2, dI2); // check horizontal intersect with top
+	var i3 = RayLineIntersectQuick(point, dRayR2, s4, s3, tLength2, dT2); // check 60 deg intersect with top
+	var i4 = RayLineIntersectQuick(point, dRayL2, s4, s3, tLength2, dT2); // check 60 deg intersect with bottom
+	var i5 = RayLineIntersectQuick(point, dRayR2, s2, s3, sLength2, dS2); // check 60 deg intersect with bottom
 
 	var points = [];
-	if(i4.x != undefined){ // cuts through the bottom: small hexagon
-		points.push(i3);
-		points.push(i4);
-	}
-	else if(i3.x != undefined){ // 60deg cut into top, there are 2 cuts
-		points.push(i3);
+	if(i1.x != undefined){  // both cuts through the inside
+		points.push(i2);
 		points.push(point);
 		points.push(i1);
-		points.push(s2);
-	}
-	else if(i2.x != undefined){ // horizontal cut across top
-		points.push(i2);
-		points.push(i1);
-		points.push(s2);
-	}
-	else{ 						// no cuts
+		points.push({x:-1,y:-1});
+		points.push(s4);
 		points.push(s3);
 		points.push(s2);
 	}
+	else if(i2.x != undefined){
+		points.push(i2);
+		points.push(point);
+		points.push(i3);
+		points.push(s3);
+		points.push(s2);
+	}
+	else if(i3.x != undefined){
+		points.push(s4);
+		points.push(i4);
+		points.push(point);
+		points.push(i3);
+		points.push(s3);
+		points.push(s2);
+	}
+	else if(i5.x != undefined){
+		points.push(s4);
+		points.push(i4);
+		points.push(point);
+		points.push(i3);
+		points.push(i5);
+		points.push(s2);
+	}
+	// if(i4.x != undefined){ // cuts through the bottom: small hexagon
+	// 	points.push(i3);
+	// 	points.push(i4);
+	// }
+	// else if(i3.x != undefined){ // 60deg cut into top, there are 2 cuts
+	// 	points.push(i3);
+	// 	points.push(point);
+	// 	points.push(i1);
+	// 	points.push(s2);
+	// }
+	// else if(i2.x != undefined){ // horizontal cut across top
+	// 	points.push(i2);
+	// 	points.push(i1);
+	// 	points.push(s2);
+	// }
+	// else{ 						// no cuts
+	// 	points.push(s3);
+	// 	points.push(s2);
+	// }
 	return points;
 }
 
 $("#secondaryBases").mousemove(function(event){
 	var mouse = new Point();  // in the computational space.  origin is the origin of the triangle
     // get the scale based on actual width;
-	var sx = canvas.width / canvas2.offsetWidth;
-    var sy = canvas.height / canvas2.offsetHeight;
+	var sx = canvas2.width / canvas2.offsetWidth;
+    var sy = canvas2.height / canvas2.offsetHeight;
 	mouse.x = event.offsetX * sx - o.x;
 	mouse.y = event.offsetY * sy - o.y;
 	drawSegmentAndHexagon2(mouse);
