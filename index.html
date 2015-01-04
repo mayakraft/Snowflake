@@ -1,5 +1,21 @@
 <html>
 <head>
+	<link rel="apple-touch-icon" sizes="57x57" href="/icon/apple-touch-icon-57x57.png">
+	<link rel="apple-touch-icon" sizes="114x114" href="/icon/apple-touch-icon-114x114.png">
+	<link rel="apple-touch-icon" sizes="72x72" href="/icon/apple-touch-icon-72x72.png">
+	<link rel="apple-touch-icon" sizes="144x144" href="/icon/apple-touch-icon-144x144.png">
+	<link rel="apple-touch-icon" sizes="60x60" href="/icon/apple-touch-icon-60x60.png">
+	<link rel="apple-touch-icon" sizes="120x120" href="/icon/apple-touch-icon-120x120.png">
+	<link rel="apple-touch-icon" sizes="76x76" href="/icon/apple-touch-icon-76x76.png">
+	<link rel="apple-touch-icon" sizes="152x152" href="/icon/apple-touch-icon-152x152.png">
+	<link rel="apple-touch-icon" sizes="180x180" href="/icon/apple-touch-icon-180x180.png">
+	<link rel="icon" type="image/png" href="/icon/favicon-192x192.png" sizes="192x192">
+	<link rel="icon" type="image/png" href="/icon/favicon-160x160.png" sizes="160x160">
+	<link rel="icon" type="image/png" href="/icon/favicon-96x96.png" sizes="96x96">
+	<link rel="icon" type="image/png" href="/icon/favicon-16x16.png" sizes="16x16">
+	<link rel="icon" type="image/png" href="/icon/favicon-32x32.png" sizes="32x32">
+	<meta name="msapplication-TileColor" content="#da532c">
+	<meta name="msapplication-TileImage" content="/icon/mstile-144x144.png">
 	<!--[if lt IE 9]>
     <script src="excanvas.js"></script>
 	<![endif]-->
@@ -78,13 +94,13 @@
 			margin: auto;
 			padding: 10px;
 		}
-		#left{
+		.left{
 			float:left;
 			width:60%;
 			height:400px;
 			overflow:hidden;
 		}
-		#right{
+		.right{
 			float:left;
 			width:40%;
 			height:400px;
@@ -114,14 +130,29 @@
 	<div class="separator"></div>
 	<div>
 		<div style="width:75%;">
-			<h2>Simple Bases</h2>
+			<h2>Primary Bases</h2>
 		</div>
 		<div id="section" style="display:inline-block;">
-			<div id="left">
+			<div class="left">
 				<canvas id="simpleBases" width="600" height="400"></canvas>
 			</div>
-			<div id="right">
+			<div class="right">
 				<canvas id="hexagonResult" width="400" height="400"></canvas>
+			</div>
+		</div>
+	</div>
+	<div class="separator"></div>
+	<div>
+		<div style="width:75%;">
+			<h2>Secondary Bases</h2>
+			<p style="padding-top:1em;">After a primary cut, for instance a horizontal line across, cut hexagons or triangles.</p>
+		</div>
+		<div id="section" style="display:inline-block;">
+			<div class="left">
+				<canvas id="secondaryBases" width="600" height="400"></canvas>
+			</div>
+			<div class="right">
+				<canvas id="secondaryHexagonResult" width="400" height="400"></canvas>
 			</div>
 		</div>
 	</div>
@@ -133,14 +164,24 @@
 	</div>
 	<div class="separator"></div>
 	<div>
-		<iframe frameborder="0" height="420" width="260" scrolling="no" src="https://www.kickstarter.com/projects/800815304/scientifically-accurate-snowflakes/widget/card.html"></iframe>
+		<p>watch the kickstarter video</p>
+		<p>&nbsp;</p>
+	</div>
+	<div>
+		<iframe frameborder="0" id="kickstarterVideo" style="width:640px; height:480px;" scrolling="no" src="https://www.kickstarter.com/projects/800815304/scientifically-accurate-snowflakes/widget/video.html"></iframe>
 	</div>
 	<div class="separator"></div>
 	<div>
 		<img src="snowflake2.png" style="width:20%;">
 	</div>
+	<div>
+		<p>&nbsp;</p>
+		<p>made by <a href="http://robbykraft.com">Robby</a></p>
+	</div>
 </body>
+<script src="snowflakeMath.js"></script>
 <script src="simpleBases.js"></script>
+<script src="secondaryBases.js"></script>
 <script>
 // When document has finished loading
 $(document).ready(function() {
@@ -151,9 +192,14 @@ $(document).ready(function() {
 		$("p").css("font-size", $(window).width() * .02 + 'px');
 		$(".separator").css("height", $(window).width() * .1 + 'px');
 		$("#simpleBases").width($(window).width() * .6);
-		$("#left").height($(window).width() * .4);
-		$("#right").height($(window).width() * .4);
 		$("#hexagonResult").width($(window).width() * .4);
+		$("#secondaryBases").width($(window).width() * .6);
+		$("#secondaryHexagonResult").width($(window).width() * .4);
+		$(".left").height($(window).width() * .4);
+		$(".right").height($(window).width() * .4);
+		var iframe = document.getElementById('kickstarterVideo');
+		iframe.style.width = $(window).width() * .66 + "px";  
+		iframe.style.height = $(window).width() * .66*3/4 + "px";  
     };
     $(window).bind('resize', function() {
         resizeText();
