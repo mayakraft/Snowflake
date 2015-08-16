@@ -12,22 +12,143 @@ var DIRECTION = [
 	{x:.5,y:0.86602540378444}
 ];
 
+var tree;
 
+var RIGHT = 1;
+var LEFT = 0;
+
+function makeValue(){
+	return int(random(115))+5;
+}
 
 function setup() {
 	createCanvas(windowWidth, windowHeight);
 	// snowflake = buildPointArrays();
 	snowflake = buildLineArrays();
+	tree = new btree();
+	// tree.addRight();
+	// tree.addLeft();
+	// tree.left.addRight();
+	// tree.left.right.addLeft();
+	// tree.right = new btree(tree);
+	// tree.left = new btree(tree);
+
+
+	// var node = tree;
+	// for(var i = 0; i < 10; i++){
+	// 	node.value = random(40) + 10;
+	// 	node.addChildren();
+	// 	node = node.left;
+	// }
+	buildSnowflake(tree);
+	logTree(tree);
 }
 
 function draw() {
 	// drawSnowflake({x:(width/10), y:(height/10*9)}, snowflake);
-	drawSnowflakeLines({x:(width/10), y:(height*.5)}, snowflake);
-	for(var i = 0; i < snowflake.length; i++){
-		snowflake[i].grow();
-		if(int(random(500)) == 0){
-			sprout(snowflake, i);
+
+	// strokeWeight(5);
+	drawTree(tree, {x:width*.1, y:height*.5}, 0, 0);
+
+	// drawSnowflakeLines({x:(width/10), y:(height*.5)}, snowflake);
+	// for(var i = 0; i < snowflake.length; i++){
+	// 	snowflake[i].grow();
+	// 	if(int(random(500)) == 0){
+	// 		sprout(snowflake, i);
+	// 	}
+	// }
+}
+
+function buildSnowflake(node){
+	if(node != undefined){
+		if(int(random(8)) && node.level < 2){
+			// we are not a leaf
+			node.addChildren();
+			buildSnowflake(node.left);
+			buildSnowflake(node.right);
 		}
+		else{
+			// we are a leaf
+			node.numChildren = 0;
+		}
+
+		node.value = makeValue();
+		node.sumValue = node.value;
+		node.numChildren = 0;
+
+		if(node.left != undefined){
+			node.numChildren += 1 + node.left.numChildren;
+			node.sumValue += 1 + node.left.sumValue;
+		}
+		if(node.right != undefined){
+			node.numChildren += 1 + node.right.numChildren;
+			node.sumValue += 1 + node.right.sumValue;
+		}
+	}
+}
+
+function drawTree(tree, start, left, right){
+	if(tree != undefined){
+		if(tree.left != undefined)
+			drawTree(tree.left, {x:start.x + tree.value * DIRECTION[left].x, y:start.y + tree.value * DIRECTION[left].y}, left+1, right);
+		if(tree.right != undefined)
+			drawTree(tree.right, {x:start.x + tree.value * DIRECTION[right].x, y:start.y + tree.value * DIRECTION[right].y}, left, right+1);
+
+		stroke(0 + 40*tree.level);
+		line(start.x, start.y, start.x + tree.value * DIRECTION[right].x, start.y + tree.value * DIRECTION[right].y);
+	}
+}
+
+function btree(parent){
+	// store fun stuff here
+	this.value = undefined;
+	this.sumValue = undefined;
+	this.numChildren = undefined;
+	this.childType = undefined;
+
+	// data structure parts
+	this.parent = parent;
+	if(parent)
+		this.level = parent.level+1;
+	else
+		this.level = 0;
+	this.right = undefined;
+	this.left = undefined;
+
+	this.addChildren = function(){
+		this.left = new btree(this);
+		this.right = new btree(this);
+		this.right.parent = this;
+		this.left.parent = this;
+		this.right.childType = RIGHT;
+		this.left.childType = LEFT;
+	}
+	// this.addLeft = function(child){
+	// 	if(child == undefined)
+	// 		child = new btree(this);
+	// 	else
+	// 		child.parent = this;
+	// 	this.left = child;
+	// }
+	// this.addRight = function(child){
+	// 	if(child == undefined)
+	// 		child = new btree(this);
+	// 	else
+	// 		child.parent = this;
+	// 	this.right = child;
+	// }
+}
+
+function drawBFlake(root){
+	var node = root;
+
+}
+
+function logTree(node){
+	if(node != undefined){
+		console.log("Node ("+node.level+"): " + node.value + "(" + node.sumValue + ")  CH:(" + node.left + " " + node.right + ")  NumChildren:" + node.numChildren);
+		logTree(node.left);
+		logTree(node.right);
 	}
 }
 
