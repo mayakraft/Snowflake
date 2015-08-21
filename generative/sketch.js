@@ -1,4 +1,3 @@
-var snowflake;
 
 var STICKY = .8;  // 0 means change every time, 1 means stay on course
 
@@ -18,50 +17,31 @@ var RIGHT = 1;
 var LEFT = 0;
 
 function makeValue(){
-	return int(random(115))+5;
+	return int(random(65))+5;
 }
 
 function setup() {
 	createCanvas(windowWidth, windowHeight);
-	// snowflake = buildPointArrays();
-	snowflake = buildLineArrays();
+
 	tree = new btree();
-	// tree.addRight();
-	// tree.addLeft();
-	// tree.left.addRight();
-	// tree.left.right.addLeft();
-	// tree.right = new btree(tree);
-	// tree.left = new btree(tree);
-
-
-	// var node = tree;
-	// for(var i = 0; i < 10; i++){
-	// 	node.value = random(40) + 10;
-	// 	node.addChildren();
-	// 	node = node.left;
-	// }
 	buildSnowflake(tree);
 	logTree(tree);
 }
 
 function draw() {
-	// drawSnowflake({x:(width/10), y:(height/10*9)}, snowflake);
+	background(255);
+	drawSnowflake(tree, {x:width*.5, y:height*.5});
+}
 
-	// strokeWeight(5);
-	drawTree(tree, {x:width*.1, y:height*.5}, 0, 0);
-
-	// drawSnowflakeLines({x:(width/10), y:(height*.5)}, snowflake);
-	// for(var i = 0; i < snowflake.length; i++){
-	// 	snowflake[i].grow();
-	// 	if(int(random(500)) == 0){
-	// 		sprout(snowflake, i);
-	// 	}
-	// }
+function mousePressed() {
+	tree = new btree();
+	buildSnowflake(tree);
+	background(255);
 }
 
 function buildSnowflake(node){
 	if(node != undefined){
-		if(int(random(8)) && node.level < 2){
+		if(int(random(9)) && node.level < 4){
 			// we are not a leaf
 			node.addChildren();
 			buildSnowflake(node.left);
@@ -87,15 +67,45 @@ function buildSnowflake(node){
 	}
 }
 
-function drawTree(tree, start, left, right){
+function drawSnowflake(tree, start){
+	for(var i = 0; i < 6; i++)
+		drawTreeWithReflections(tree, start, i);
+}
+
+function drawTree(tree, start, angleDepth){
 	if(tree != undefined){
 		if(tree.left != undefined)
-			drawTree(tree.left, {x:start.x + tree.value * DIRECTION[left].x, y:start.y + tree.value * DIRECTION[left].y}, left+1, right);
+			drawTree(tree.left, {x:start.x + tree.value * DIRECTION[angleDepth].x, y:start.y + tree.value * DIRECTION[angleDepth].y}, angleDepth);
 		if(tree.right != undefined)
-			drawTree(tree.right, {x:start.x + tree.value * DIRECTION[right].x, y:start.y + tree.value * DIRECTION[right].y}, left, right+1);
+			drawTree(tree.right, {x:start.x + tree.value * DIRECTION[angleDepth].x, y:start.y + tree.value * DIRECTION[angleDepth].y}, angleDepth+1);
+
+		stroke(200);
+		line(start.x, start.y, start.x + tree.value * DIRECTION[angleDepth].x, start.y + tree.value * DIRECTION[angleDepth].y);
+		ellipse(start.x, start.y, 5, 5);
+	}
+}
+
+function fixMod6(input){
+	var i = input;
+	while (i < 0) i += 6;
+	return i % 6;
+}
+
+function drawTreeWithReflections(tree, start, angle){
+	if(tree != undefined){
+
+		var endPoint = new Vec2(start.x + tree.value * DIRECTION[angle].x, start.y + tree.value * DIRECTION[angle].y);
 
 		stroke(0 + 40*tree.level);
-		line(start.x, start.y, start.x + tree.value * DIRECTION[right].x, start.y + tree.value * DIRECTION[right].y);
+		line(start.x, start.y, endPoint.x, endPoint.y);
+		ellipse(start.x, start.y, 5, 5);
+
+		if(tree.left != undefined)
+			drawTreeWithReflections(tree.left, endPoint, angle);
+		if(tree.right != undefined){
+			drawTreeWithReflections(tree.right, endPoint, fixMod6(angle+1) );
+			drawTreeWithReflections(tree.right, endPoint, fixMod6(angle-1) );
+		}
 	}
 }
 
@@ -139,22 +149,12 @@ function btree(parent){
 	// }
 }
 
-function drawBFlake(root){
-	var node = root;
-
-}
-
 function logTree(node){
 	if(node != undefined){
 		console.log("Node ("+node.level+"): " + node.value + "(" + node.sumValue + ")  CH:(" + node.left + " " + node.right + ")  NumChildren:" + node.numChildren);
 		logTree(node.left);
 		logTree(node.right);
 	}
-}
-
-function mousePressed() {
-	var index = int(random(0,snowflake.length));
-	sprout(snowflake, index);
 }
 
 function Vec2(newX, newY){
@@ -198,34 +198,34 @@ function sprout(flake, index){
 	snowflake.push(sprout2);
 }
 
-function drawSnowflake(origin, sf){
-	var SCALE = 2.0;
-	for(var i = 0; i < sf.length; i++){
-		ellipse(origin.x + sf[i].origin.x * SCALE, origin.y + sf[i].origin.y * SCALE, SCALE, SCALE);
-		// line(origin.x + sf[i].x, origin.y + sf[i].y);
-	}
-}
+// function drawSnowflake(origin, sf){
+// 	var SCALE = 2.0;
+// 	for(var i = 0; i < sf.length; i++){
+// 		ellipse(origin.x + sf[i].origin.x * SCALE, origin.y + sf[i].origin.y * SCALE, SCALE, SCALE);
+// 		// line(origin.x + sf[i].x, origin.y + sf[i].y);
+// 	}
+// }
 
-function drawSnowflakeLines(origin, flake){
-	var SCALE = 2.0;
-	for(var i = 0; i < flake.length; i++){
-		var x1 = origin.x + flake[i].origin.x;
-		var y1 = origin.y + flake[i].origin.y;
-		var x2 = origin.x + flake[i].origin.x + (DIRECTION[flake[i].direction]).x * flake[i].size;
-		var y2 = origin.y + flake[i].origin.y + (DIRECTION[flake[i].direction]).y * flake[i].size;
-		line(x1, y1, x2, y2);
-	}
-}
+// function drawSnowflakeLines(origin, flake){
+// 	var SCALE = 2.0;
+// 	for(var i = 0; i < flake.length; i++){
+// 		var x1 = origin.x + flake[i].origin.x;
+// 		var y1 = origin.y + flake[i].origin.y;
+// 		var x2 = origin.x + flake[i].origin.x + (DIRECTION[flake[i].direction]).x * flake[i].size;
+// 		var y2 = origin.y + flake[i].origin.y + (DIRECTION[flake[i].direction]).y * flake[i].size;
+// 		line(x1, y1, x2, y2);
+// 	}
+// }
 
-function buildLineArrays(){
-	var s = new Array();
-	var start = new lineUnit({x:(0),y:(0)}, 0, 1);
-	s.push(start);
-	// for(var i = 1; i < 650; i++){
-	// 	var rand = random(0,1);
-	// }
-	return s;
-}
+// function buildLineArrays(){
+// 	var s = new Array();
+// 	var start = new lineUnit({x:(0),y:(0)}, 0, 1);
+// 	s.push(start);
+// 	// for(var i = 1; i < 650; i++){
+// 	// 	var rand = random(0,1);
+// 	// }
+// 	return s;
+// }
 
 // function buildPointArrays(){
 // 	var s = new Array();
