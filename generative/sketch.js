@@ -20,11 +20,22 @@ var originSnowflake;
 var originTree;
 // P5.JS
 
+function findOrigins(){
+	if(windowWidth > windowHeight){
+		originSnowflake = {x:windowWidth*.60, y:windowHeight*.5};
+		originTree = {x:windowWidth*.1, y:windowHeight*.66};
+	}
+	else{
+		originSnowflake = {x:windowWidth*.5, y:windowHeight*.4};
+		originTree = {x:windowWidth*.3, y:windowHeight*.933};
+	}
+}
+
 function setup() {
 	createCanvas(windowWidth, windowHeight);
-	originSnowflake = {x:windowWidth*.60, y:windowHeight*.5};
-	originTree = {x:windowWidth*.1, y:windowHeight*.66};
 	noLoop();
+
+	findOrigins();
 
 	tree = new btree();
 	buildSnowflake(tree);
@@ -34,6 +45,10 @@ function setup() {
 	logTree(tree);
 }
 
+function windowResized() {
+	resizeCanvas(windowWidth, windowHeight);
+	findOrigins();
+}
 
 function cropValues(node){
 	if(node != undefined){
