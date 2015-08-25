@@ -20,7 +20,7 @@ var originSnowflake;
 var originTree;
 // P5.JS
 
-function findOrigins(){
+function resizeOrigins(){
 	if(windowWidth > windowHeight){
 		originSnowflake = {x:windowWidth*.60, y:windowHeight*.5};
 		originTree = {x:windowWidth*.1, y:windowHeight*.66};
@@ -35,7 +35,7 @@ function setup() {
 	createCanvas(windowWidth, windowHeight);
 	noLoop();
 
-	findOrigins();
+	resizeOrigins();
 
 	tree = new btree();
 	buildSnowflake(tree);
@@ -47,7 +47,7 @@ function setup() {
 
 function windowResized() {
 	resizeCanvas(windowWidth, windowHeight);
-	findOrigins();
+	resizeOrigins();
 }
 
 function cropValues(node){
@@ -92,10 +92,17 @@ function makeValue2(start){
 	// return value;
 	var value = int(random(65))+5;
 
-	if(abs(start.location.y)/abs(start.location.x) > 0.57735026918962){
-		console.log("RESET");
+	var pEnd = {x:(start.location.x + value * DIRECTION[start.direction].x), y:(start.location.y + value * DIRECTION[start.direction].y)};
+	var result;
+	result = RayLineIntersect({x:0,y:0}, {x:(cos(30/180*Math.PI)), y:(sin(30/180*Math.PI))}, {x:start.location.x, y:abs(start.location.y)}, {x:pEnd.x,y:abs(pEnd.y)});
+	// console.log("RAY LINE INTERSECT: " + result.x + ", " + result.y  + "       " + pEnd.x + ", " + pEnd.y);
+
+	if(result != undefined){
 		// console.log("RESET: " + start.location.y + " " + start.location.x + "  (" (start.location.y/start.location.x) + ")");
-		return 1;
+		var distance = Math.sqrt( (result.x-start.location.x)*(result.x-start.location.x) + (result.y-abs(start.location.y))*(result.y-abs(start.location.y)) );
+		start.dead = true;
+		console.log("INTERSECTION, TRIED: " + value + "    FIX: " + distance);
+		return distance;
 	}
 	return value;
 }
@@ -146,25 +153,19 @@ function distributeMaxDepth(node, max){
 // GEOMETRY
 
 function RayLineIntersect(origin, dV, pA, pB){
-	var v1 = new Vec2();
-	var v2 = new Vec2();
-	var v3 = new Vec2();
-	v1.x = origin.x - pA.x;
-	v1.y = origin.y - pA.y;
-	v2.x = pB.x - pA.x;
-	v2.y = pB.y - pA.y;
-	v3.x = -dV.y;
-	v3.y = dV.x;
+	var v1 = { x:(origin.x - pA.x), y:(origin.y - pA.y) };
+	var v2 = { x:(pB.x - pA.x), y:(pB.y - pA.y) };
+	var v3 = { x:(-dV.y), y:(dV.x) };
 	var t1 = (v2.x*v1.y - v2.y*v1.x) / (v2.x*v3.x + v2.y*v3.y);
 	var t2 = (v1.x*v3.x + v1.y*v3.y) / (v2.x*v3.x + v2.y*v3.y);
-	var p = new Vec2();
+	// console.log("0 < " + t2 + " < 1       0 < " + t1);
+	var p = undefined;
 	if(t2 > 0.0 && t2 < 1.0 && t1 > 0.0){
 		var dAB = new Vec2();
 		var lengthAB = Math.sqrt( (pB.x-pA.x)*(pB.x-pA.x) + (pB.y-pA.y)*(pB.y-pA.y) );
 		dAB.x = (pB.x - pA.x) / lengthAB;
 		dAB.y = (pB.y - pA.y) / lengthAB;
-		p.x = pA.x + lengthAB * t2 * dAB.x;
-		p.y = pA.y + lengthAB * t2 * dAB.y;
+		p = {x:(pA.x + lengthAB * t2 * dAB.x), y:(pA.y + lengthAB * t2 * dAB.y)};
 	}
 	return p;
 }
@@ -178,7 +179,8 @@ function btree(parent, value){
 	this.numChildren = 0;
 	this.maxDepth = 0;
 	this.childType;
-	this.location = {x:0,y:0};
+	this.location;
+	this.dead; // set to true if there is no room for this node to grow
 
 	// manage properties related to the data structure
 	this.parent = parent;
@@ -254,7 +256,7 @@ function btree(parent, value){
 
 function buildSnowflake(node){
 	if(node != undefined){
-		if(int(random(9)) && node.depth < 5){
+		if(int(random(9)) && node.depth < 5 && node.dead != true){
 			// we are not a leaf
 			// var l = -1;
 			// var r = 0;
@@ -264,6 +266,7 @@ function buildSnowflake(node){
 			// }
 			// node.addChildren(l, r);
 			node.addChildren();
+
 			buildSnowflake(node.left);
 			buildSnowflake(node.right);
 		}
