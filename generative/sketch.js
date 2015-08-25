@@ -52,7 +52,9 @@ function windowResized() {
 
 function draw() {
 	background(255);
-	drawSnowflake(tree, originSnowflake);
+	// drawFilledSnowflake(tree, originSnowflake, 0);
+	drawOutlineSnowflake(tree, originSnowflake);
+	// drawArtifacts(originSnowflake, originTree);
 	stroke(0);
 	drawTree(tree, originTree, 0);
 }
@@ -272,6 +274,18 @@ function drawSnowflake(tree, start){
 		drawTreeWithReflections(tree, start, i);
 }
 
+function drawOutlineSnowflake(tree, start){
+	for(var i = 0; i < 6; i++)
+		drawHexagonTreeWithReflections(tree, start, i);
+}
+
+function drawFilledSnowflake(tree, start){
+	// noStroke();
+	// colorMode(HSB, 255);
+	for(var i = 0; i < 6; i++)
+		drawFilledHexagonTreeWithReflections(tree, start, i);
+}
+
 function drawTree(tree, start, angleDepth){
 	if(tree != undefined){
 		if(tree.left != undefined)
@@ -300,6 +314,137 @@ function drawTreeWithReflections(tree, start, angle){
 			drawTreeWithReflections(tree.right, endVec2, fixMod6(angle-1) );
 		}
 	}
+}
+
+
+function drawHexagonTreeWithReflections(tree, start, angle){
+	var VOLUME = 10;
+	if(tree != undefined){
+
+		var endVec2 = new Vec2(start.x + tree.value * DIRECTION[angle].x, start.y + tree.value * DIRECTION[angle].y);
+
+		stroke(0);
+		// stroke(0 + (200/DEPTH)*tree.depth);
+		VOLUME = 50 - 50 * (tree.depth / tree.maxDepth) + 1 + random(2);
+		var point1a, point1b, point2a, point2b;
+		// var distance = sqrt(Math.pow(endVec2.x - start.x,2) + Math.pow(endVec2.y - start.y,2) );
+		if(VOLUME > tree.value ){ 
+			point1a = new Vec2( (start.x + tree.value * DIRECTION[fixMod6(angle-1)].x), (start.y + tree.value * DIRECTION[fixMod6(angle-1)].y) );
+			point1b = new Vec2( (start.x + tree.value * DIRECTION[fixMod6(angle+1)].x), (start.y + tree.value * DIRECTION[fixMod6(angle+1)].y) );
+			point2a = new Vec2( (endVec2.x - tree.value * DIRECTION[fixMod6(angle+1)].x), (endVec2.y - tree.value * DIRECTION[fixMod6(angle+1)].y) );
+			point2b = new Vec2( (endVec2.x - tree.value * DIRECTION[fixMod6(angle-1)].x), (endVec2.y - tree.value * DIRECTION[fixMod6(angle-1)].y) );
+		}
+		else{
+			point1a = new Vec2( (start.x + VOLUME * DIRECTION[fixMod6(angle-1)].x), (start.y + VOLUME * DIRECTION[fixMod6(angle-1)].y) );
+			point1b = new Vec2( (start.x + VOLUME * DIRECTION[fixMod6(angle+1)].x), (start.y + VOLUME * DIRECTION[fixMod6(angle+1)].y) );
+			point2a = new Vec2( (endVec2.x - VOLUME * DIRECTION[fixMod6(angle+1)].x), (endVec2.y - VOLUME * DIRECTION[fixMod6(angle+1)].y) );
+			point2b = new Vec2( (endVec2.x - VOLUME * DIRECTION[fixMod6(angle-1)].x), (endVec2.y - VOLUME * DIRECTION[fixMod6(angle-1)].y) );
+		}
+
+		// line(start.x, start.y, endVec2.x, endVec2.y);       // the major artery
+		line(start.x, start.y, point1a.x, point1a.y);
+		line(start.x, start.y, point1b.x, point1b.y);
+
+		line(point1a.x, point1a.y, point2a.x, point2a.y);
+		line(point1b.x, point1b.y, point2b.x, point2b.y);
+
+		line(point2a.x, point2a.y, endVec2.x, endVec2.y);
+		line(point2b.x, point2b.y, endVec2.x, endVec2.y);
+
+// ellipse? do we want the ellipse?
+		ellipse(start.x, start.y, 5, 5);
+
+		if(tree.left != undefined)
+			drawHexagonTreeWithReflections(tree.left, endVec2, angle);
+		if(tree.right != undefined){
+			drawHexagonTreeWithReflections(tree.right, endVec2, fixMod6(angle+1) );
+			drawHexagonTreeWithReflections(tree.right, endVec2, fixMod6(angle-1) );
+		}
+	}
+}
+
+
+
+function drawFilledHexagonTreeWithReflections(tree, start, angle){
+	var VOLUME = 10;
+	if(tree != undefined){
+
+		var endVec2 = new Vec2(start.x + tree.value * DIRECTION[angle].x, start.y + tree.value * DIRECTION[angle].y);
+
+		
+		// stroke(0 + (200/DEPTH)*tree.depth);
+		VOLUME = 50 - 50 * (tree.depth / tree.maxDepth) + 1 + random(2);
+		var point1a, point1b, point2a, point2b;
+		// var distance = sqrt(Math.pow(endVec2.x - start.x,2) + Math.pow(endVec2.y - start.y,2) );
+		if(VOLUME > tree.value ){ 
+			point1a = new Vec2( (start.x + tree.value * DIRECTION[fixMod6(angle-1)].x), (start.y + tree.value * DIRECTION[fixMod6(angle-1)].y) );
+			point1b = new Vec2( (start.x + tree.value * DIRECTION[fixMod6(angle+1)].x), (start.y + tree.value * DIRECTION[fixMod6(angle+1)].y) );
+			point2a = new Vec2( (endVec2.x - tree.value * DIRECTION[fixMod6(angle+1)].x), (endVec2.y - tree.value * DIRECTION[fixMod6(angle+1)].y) );
+			point2b = new Vec2( (endVec2.x - tree.value * DIRECTION[fixMod6(angle-1)].x), (endVec2.y - tree.value * DIRECTION[fixMod6(angle-1)].y) );
+		}
+		else{
+			point1a = new Vec2( (start.x + VOLUME * DIRECTION[fixMod6(angle-1)].x), (start.y + VOLUME * DIRECTION[fixMod6(angle-1)].y) );
+			point1b = new Vec2( (start.x + VOLUME * DIRECTION[fixMod6(angle+1)].x), (start.y + VOLUME * DIRECTION[fixMod6(angle+1)].y) );
+			point2a = new Vec2( (endVec2.x - VOLUME * DIRECTION[fixMod6(angle+1)].x), (endVec2.y - VOLUME * DIRECTION[fixMod6(angle+1)].y) );
+			point2b = new Vec2( (endVec2.x - VOLUME * DIRECTION[fixMod6(angle-1)].x), (endVec2.y - VOLUME * DIRECTION[fixMod6(angle-1)].y) );
+		}
+
+		// var from = color(230, 230, 255, 100);
+		// var to = color(0, 0, 255, 100);
+		// var interp = lerpColor(from, to, tree.depth/tree.maxDepth);
+		// fill(interp);
+
+		// fill(color(255 * tree.depth/tree.maxDepth, 127, 255));
+		noStroke();
+		fill(255*tree.depth/tree.maxDepth,100);
+
+		beginShape(TRIANGLE_STRIP);
+		vertex(start.x, start.y);
+		vertex(point1a.x, point1a.y);
+		vertex(point1b.x, point1b.y);
+		vertex(point2a.x, point2a.y);
+		vertex(point2b.x, point2b.y);
+		vertex(endVec2.x, endVec2.y);
+		endShape();
+
+		stroke(1);
+
+		line(start.x, start.y, point1a.x, point1a.y);
+		line(start.x, start.y, point1b.x, point1b.y);
+
+		line(point1a.x, point1a.y, point2a.x, point2a.y);
+		line(point1b.x, point1b.y, point2b.x, point2b.y);
+
+		line(point2a.x, point2a.y, endVec2.x, endVec2.y);
+		line(point2b.x, point2b.y, endVec2.x, endVec2.y);
+
+
+		if(tree.left != undefined)
+			drawFilledHexagonTreeWithReflections(tree.left, endVec2, angle);
+		if(tree.right != undefined){
+			drawFilledHexagonTreeWithReflections(tree.right, endVec2, fixMod6(angle+1) );
+			drawFilledHexagonTreeWithReflections(tree.right, endVec2, fixMod6(angle-1) );
+		}
+	}
+}
+
+
+function drawArtifacts(snowflakeCenter, treeCenter){
+	stroke(240);
+	var LENGTH = 250;
+	strokeWeight(8);
+	strokeCap(ROUND);
+	line(treeCenter.x, treeCenter.y, treeCenter.x + LENGTH*cos(30/180*Math.PI), treeCenter.y - LENGTH*sin(30/180*Math.PI));
+	line(treeCenter.x, treeCenter.y, treeCenter.x + LENGTH*cos(0/180*Math.PI), treeCenter.y + LENGTH*sin(0/180*Math.PI));
+	// for(var i = 0; i < 20; i++){
+	// 	var x = lerp(treeCenter.x - XOFFSET, treeCenter.x - XOFFSET + LENGTH*cos(30/180*Math.PI), i/20);
+	// 	var y = lerp(treeCenter.y, treeCenter.y - LENGTH*sin(30/180*Math.PI), i/20);
+	// 	console.log(x + " " + y);
+	// 	ellipse(x,y,3,3);
+	// }
+	// line(treeCenter.x - 30, treeCenter.y, treeCenter.x - 30 + 50*cos(30/180*Math.PI), treeCenter.y + 50*sin(30/180*Math.PI));
+	strokeCap(SQUARE);
+	strokeWeight(1);
 }
 
 function logTree(node){
