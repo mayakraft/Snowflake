@@ -18,6 +18,8 @@ var tree;  // the snowflake
 var age;  // global to tree, 
 var originSnowflake;
 var originTree;
+
+var DEPTH = 7;
 // P5.JS
 
 function resizeOrigins(){
@@ -40,24 +42,12 @@ function setup() {
 	tree = new btree();
 	buildSnowflake(tree);
 
-	cropValues(tree);
-
-	logTree(tree);
+	// logTree(tree);
 }
 
 function windowResized() {
 	resizeCanvas(windowWidth, windowHeight);
 	resizeOrigins();
-}
-
-function cropValues(node){
-	if(node != undefined){
-		console.log(node.location.x + ", " + node.location.y + "  ");
-		if(node.left != undefined)
-			cropValues(node.left);
-		if(node.right != undefined)
-			cropValues(node.right);
-	}
 }
 
 function draw() {
@@ -70,27 +60,17 @@ function draw() {
 function mousePressed() {
 	tree = new btree();//undefined, makeValue());
 	buildSnowflake(tree);
-	cropValues(tree);
 	background(255);
 	draw();
 }
 
 function makeValue(){
-	return int(random(65))+5;
+	if( int( random(8)) )
+		return int( (random(32)) )+3;
+	return int( (random(32)) )+60;
 }
 function makeValue2(start){
-	// if(start.y/start.x > 0.57735026918962)  // 30deg rise over run
-	// 	return 0;
-	// var value = int(random(65))+5;
-	// var check;
-	// do{
-	// 	check = new Vec2(start.x + DIRECTION[direction]*value, start.y + DIRECTION[direction]*value);
-	// while(check.y / check.x < 0.57735026918962);
-
-	// if(check.y / check.x > 0.57735026918962)
-	// 	return 0;
-	// return value;
-	var value = int(random(65))+5;
+	var value = makeValue();
 
 	var pEnd = {x:(start.location.x + value * DIRECTION[start.direction].x), y:(start.location.y + value * DIRECTION[start.direction].y)};
 	var result;
@@ -101,7 +81,6 @@ function makeValue2(start){
 		// console.log("RESET: " + start.location.y + " " + start.location.x + "  (" (start.location.y/start.location.x) + ")");
 		var distance = Math.sqrt( (result.x-start.location.x)*(result.x-start.location.x) + (result.y-abs(start.location.y))*(result.y-abs(start.location.y)) );
 		start.dead = true;
-		console.log("INTERSECTION, TRIED: " + value + "    FIX: " + distance);
 		return distance;
 	}
 	return value;
@@ -123,7 +102,6 @@ function calculateNumChildren(node, num){
 	}
 }
 
-
 function distributeMaxDepth(node, max){
 	if(node){	
 		if(node.maxDepth < max)
@@ -134,31 +112,16 @@ function distributeMaxDepth(node, max){
 	}
 }
 
-// function fillXYLocations(node){
-// 	if(node){
-// 		if(node.parent == undefined){
-// 			node.location = new Vec2(0, 0);
-// 		}
-// 		else{
-// 			node.location = new Vec2(node.parent.location.x + DIRECTION[node.direction].x * node.value, 
-// 									 node.parent.location.y + DIRECTION[node.direction].y * node.value);
-// 		}
-// 		if(node.left)
-// 			fillXYLocations(node.left);
-// 		if(node.right)
-// 			fillXYLocations(node.right);
-// 	}
-// }
-
 // GEOMETRY
 
 function RayLineIntersect(origin, dV, pA, pB){
+	// if intersection, returns point of intersection
+	// if no intersection, returns undefined
 	var v1 = { x:(origin.x - pA.x), y:(origin.y - pA.y) };
 	var v2 = { x:(pB.x - pA.x), y:(pB.y - pA.y) };
 	var v3 = { x:(-dV.y), y:(dV.x) };
 	var t1 = (v2.x*v1.y - v2.y*v1.x) / (v2.x*v3.x + v2.y*v3.y);
 	var t2 = (v1.x*v3.x + v1.y*v3.y) / (v2.x*v3.x + v2.y*v3.y);
-	// console.log("0 < " + t2 + " < 1       0 < " + t1);
 	var p = undefined;
 	if(t2 > 0.0 && t2 < 1.0 && t1 > 0.0){
 		var dAB = new Vec2();
@@ -180,7 +143,7 @@ function btree(parent, value){
 	this.maxDepth = 0;
 	this.childType;
 	this.location;
-	this.dead; // set to true if there is no room for this node to grow
+	this.dead; // set true, force node to be a leaf
 
 	// manage properties related to the data structure
 	this.parent = parent;
@@ -256,7 +219,7 @@ function btree(parent, value){
 
 function buildSnowflake(node){
 	if(node != undefined){
-		if(int(random(9)) && node.depth < 5 && node.dead != true){
+		if(int(random(9)) && node.depth < DEPTH && node.dead != true){
 			// we are not a leaf
 			// var l = -1;
 			// var r = 0;
@@ -266,6 +229,15 @@ function buildSnowflake(node){
 			// }
 			// node.addChildren(l, r);
 			node.addChildren();
+
+			var i = 0;
+			while(i < 100 && node.right.value > node.left.value){
+				node.right.value = makeValue2(node.right);
+				node.left.value = makeValue2(node.left);
+				i++;
+				if(i == 100)
+					console.log("Well this is awkward");
+			}
 
 			buildSnowflake(node.left);
 			buildSnowflake(node.right);
@@ -317,7 +289,7 @@ function drawTreeWithReflections(tree, start, angle){
 
 		var endVec2 = new Vec2(start.x + tree.value * DIRECTION[angle].x, start.y + tree.value * DIRECTION[angle].y);
 
-		stroke(0 + 40*tree.depth);
+		stroke(0 + (200/DEPTH)*tree.depth);
 		line(start.x, start.y, endVec2.x, endVec2.y);
 		ellipse(start.x, start.y, 5, 5);
 
