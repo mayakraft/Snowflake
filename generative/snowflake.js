@@ -1,7 +1,7 @@
 var RIGHT = 1;
 var LEFT = 0;
-var DIRECTION = [
 //sine and cosine 60deg increments, clockwise starting from 3:00
+var DIRECTION = [
 	{x:1, y:0},
 	{x:.5,y:-0.86602540378444},
 	{x:-.5,y:-0.86602540378444},
@@ -9,46 +9,42 @@ var DIRECTION = [
 	{x:-.5,y:0.86602540378444},
 	{x:.5,y:0.86602540378444}
 ];
-
-var tree;  // the snowflake
-var age;  // global to tree
-var originSnowflake;
-var originTree;
-
-var DEPTH = 7;
-var cnv;
-
-var nodes = [];
-
 // snowflake growth animations
 var ANIMATIONS = 1;  // 0 or 1
 var ANIMATION_STEP = 1;
 
+// drawing locations, based on screen resolution
+var originSnowflake;
+var originTree;
+
+var canvas;  // HTML canvas, for saving image
+
+var tree;  // the snowflake
+
 
 function setup() {
-	cnv = createCanvas(windowWidth, windowHeight);
+	canvas = createCanvas(windowWidth, windowHeight);
 	// noLoop();
 	resizeOrigins();
-	tree = new btree();
+	tree = new btree(undefined, 20);
 }
 
 function mousePressed() {
 	makeSnowflake();
-	// draw();
+	draw();
 }
-
+var DEPTH = 7;
 function draw() {
 	background(255);
 	stroke(0);
 	var animationsDidHappen = animateGrowth(tree);
 	drawTree(tree, originTree, 0);
 	drawSnowflake(tree, originSnowflake);
-	// save(cnv, 'output.png');
-	// if(DEPTH >= 0 && !animationsDidHappen){
-		// console.log("activating animations");
-		// makeSnowflake();
-		// DEPTH--;
-	// }
+	// save(canvas, 'output.png');
+	if(DEPTH > 0 && !animationsDidHappen){
+		makeSnowflake();
+		DEPTH--;
+	}
 }
 
 function makeSnowflake(){
@@ -101,30 +97,61 @@ function growTree(tree, params){
 		}
 		if(!hasChild){
 			// do the thing
-			if(tree.value - 5 > 0)
+			if(tree.value - 5 > 0){
+				// check if new value crosses the line
+				// var pointEnd = {
+				// 	x:(tree.location.x + value * DIRECTION[start.direction].x), 
+				// 	y:(tree.location.y + value * DIRECTION[start.direction].y)
+				// };
+				// var result = RayLineIntersect(
+				// 	{x:0,y:0}, 
+				// 	{x:(cos(30/180*Math.PI)), y:(sin(30/180*Math.PI))}, 
+				// 	{x:start.location.x, y:abs(start.location.y)}, 
+				// 	{x:pEnd.x,y:abs(pEnd.y)}
+				// 	);
+
+				// var leftLocation = 
 				tree.addChildren(tree.value, tree.value - 5);
+			}
 		}
 	}
+}
+
+function makeValue2(start){
+	var value = makeValue();
+
+	var pEnd = {x:(start.location.x + value * DIRECTION[start.direction].x), y:(start.location.y + value * DIRECTION[start.direction].y)};
+	var result;
+	result = RayLineIntersect({x:0,y:0}, {x:(cos(30/180*Math.PI)), y:(sin(30/180*Math.PI))}, {x:start.location.x, y:abs(start.location.y)}, {x:pEnd.x,y:abs(pEnd.y)});
+	// console.log("RAY LINE INTERSECT: " + result.x + ", " + result.y  + "       " + pEnd.x + ", " + pEnd.y);
+
+	if(result != undefined){
+		// console.log("RESET: " + start.location.y + " " + start.location.x + "  (" (start.location.y/start.location.x) + ")");
+		var distance = Math.sqrt( (result.x-start.location.x)*(result.x-start.location.x) + (result.y-abs(start.location.y))*(result.y-abs(start.location.y)) );
+		start.dead = true;
+		return distance;
+	}
+	return value;
 }
 
 function setGlobalTreeVariables(tree){
 	// it's unclear how useful the second step is
 	// there may not be any reason to store the same variable
 	//   inside every node
-	var searchedMaxDepth = 0;
+	var searchedMaxGeneration = 0;
 	findGlobals(tree);
 	setGlobals(tree);
 
 	function findGlobals(node){
-		if(node.depth > searchedMaxDepth)
-			searchedMaxDepth = node.depth;
+		if(node.generation > searchedMaxGeneration)
+			searchedMaxGeneration = node.generation;
 		if(node.left)
 			findGlobals(node.left);
 		if(node.right)
 			findGlobals(node.right);
 	}
 	function setGlobals(node){
-		node.maxDepth = searchedMaxDepth;
+		node.maxGeneration = searchedMaxGeneration;
 		if(node.left)
 			setGlobals(node.left);
 		if(node.right)
@@ -147,8 +174,15 @@ function mod6(input){
 }
 
 function btree(parent, value){
-	if(value == 0 || value == undefined)
-		value = 20;
+// nodes contain:  value (magnitude)
+				// childType (LEFT or RIGHT)
+				// dead (force node into leaf)
+				// generation (# child away from top)
+				// branchesR (number of cumulative right branches)
+				// location (position in euclidean space)
+
+	if(value == undefined)
+		value = 0;
 	// if animations are enabled, temporarily
 	// store value in valueToBeGrown 
 	if(ANIMATIONS){
@@ -162,18 +196,22 @@ function btree(parent, value){
 	this.childType;
 	this.location;
 	this.dead; // set true, force node to be a leaf
-	this.branches;
-	this.maxDepth = 0;
+	this.branchesR;
+	this.maxGeneration = 0;
 
 	// manage properties related to the data structure
 	this.parent = parent;
 	if(parent)
-		this.depth = parent.depth+1;
+		this.generation = parent.generation+1;
 	else{
-		this.depth = 0;
-		this.location = {x:0,y:0};
+		this.generation = 0;
 		this.direction = 0;
-		this.branches = 0;
+		this.branchesR = 0;
+		// this.location = {x:0,y:0};
+		this.location = {
+			x:(0.0 + this.value * DIRECTION[this.direction].x), 
+			y:(0.0 + this.value * DIRECTION[this.direction].y)
+		};
 	}
 	this.right = undefined;
 	this.left = undefined;
@@ -187,14 +225,16 @@ function btree(parent, value){
 		this.left.parent = this;
 		this.left.direction = this.direction;
 		this.right.direction = mod6(this.direction+1);
-		// calculateNumChildren(this, 0);
-		// distributeMaxDepth(this, this.depth + 1);
-		this.left.location = {x:(this.location.x + this.value * DIRECTION[this.direction].x), y:(this.location.y + this.value * DIRECTION[this.direction].y)};		
-		this.right.location = {x:(this.location.x + this.value * DIRECTION[this.direction].x), y:(this.location.y + this.value * DIRECTION[this.direction].y)};
-		this.left.maxDepth = this.maxDepth;
-		this.right.maxDepth = this.maxDepth;
-		this.left.branches = this.branches;
-		this.right.branches = this.branches + 1;
+		this.left.location = {
+			x:(this.location.x + this.left.value * DIRECTION[this.left.direction].x), 
+			y:(this.location.y + this.left.value * DIRECTION[this.left.direction].y)
+		};		
+		this.right.location = {
+			x:(this.location.x + this.right.value * DIRECTION[this.right.direction].x), 
+			y:(this.location.y + this.right.value * DIRECTION[this.right.direction].y)
+		};
+		this.left.branchesR = this.branchesR;
+		this.right.branchesR = this.branchesR + 1;
 	}
 	// this.addLeft = function(child){
 	// 	if(child == undefined)
@@ -248,24 +288,28 @@ function drawTree(tree, start, angleDepth){
 	}
 }
 
-function drawSnowflake(tree, start){
+function drawSnowflake(tree, location){
 	for(var i = 0; i < 6; i++)
-		drawTreeWithReflections(tree, start, i);
+		drawTreeWithReflections(tree, location, i);
 
-	function drawTreeWithReflections(tree, start, angle){
+	function drawTreeWithReflections(tree, location, angle){
 		if(tree != undefined){
 
-			var endVec = {x:(start.x + tree.value * DIRECTION[angle].x), y:(start.y + tree.value * DIRECTION[angle].y)};
+			var start = location;
+			var end = {
+				x:(location.x + tree.value * DIRECTION[angle].x), 
+				y:(location.y + tree.value * DIRECTION[angle].y)
+			};
 
-			stroke(0 + (200/DEPTH)*tree.depth);
-			line(start.x, start.y, endVec.x, endVec.y);
+			// stroke(0 + (200/tree.maxGeneration)*tree.generation);
+			line(start.x, start.y, end.x, end.y);
 			// ellipse(start.x, start.y, 5, 5);
 
 			if(tree.left != undefined)
-				drawTreeWithReflections(tree.left, endVec, angle);
+				drawTreeWithReflections(tree.left, end, angle);
 			if(tree.right != undefined){
-				drawTreeWithReflections(tree.right, endVec, mod6(angle+1) );
-				drawTreeWithReflections(tree.right, endVec, mod6(angle-1) );
+				drawTreeWithReflections(tree.right, end, mod6(angle+1) );
+				drawTreeWithReflections(tree.right, end, mod6(angle-1) );
 			}
 		}
 	}
@@ -307,12 +351,14 @@ function logTree(node){
 		if(node.childType == LEFT) thisChildType = "left";
 		if(node.childType == RIGHT) thisChildType = "right";
 		console.log("Node (" + 
-			node.depth + "/" + 
-			node.maxDepth + ") VALUE:(" + 
+			node.generation + "/" + 
+			node.maxGeneration + ") VALUE:(" + 
 			node.value + ") PARENT:(" + 
 			hasChildren + ") TYPE:(" + 
 			node.childType + ") BRANCHES:(" + 
-			node.branches + ")");
+			node.branchesR + ") (" + 
+			node.location.x + "," +
+			node.location.y + ")");
 		logTree(node.left);
 		logTree(node.right);
 	}
