@@ -11,9 +11,11 @@ var DIRECTION = [
 ];
 
 // snowflake growth animations
-var ANIMATIONS = 1;  // 0 or 1
-var ANIMATION_STEP = 1;
-
+var ANIMATIONS = 1;  // 0 or 1, turn animations OFF or ON
+var GROWTH_STEP = 1;
+var ANIMATION_PROGRESS;  // updated mid loop (0.0 to 1.0) 1.0 means entering next step
+var ANIMATION_LENGTH = 30; // # of frames each growth cycle lasts
+var ANIMATION_FRAME_NUM = 1;
 var canvas;  // HTML canvas, for saving image
 // drawing locations, based on screen resolution
 var originSnowflake;
@@ -21,10 +23,9 @@ var originTree;
 
 var tree;  // the snowflake
 
-
 			var leftShorten = 2;
 			var rightShorten = 10;
-var DEPTH = 3;
+var DEPTH = 4;
 
 function setup() {
 	canvas = createCanvas(windowWidth, windowHeight);
@@ -51,46 +52,59 @@ function mousePressed() {
 
 function draw() {
 	background(255);
+	if(ANIMATIONS && ANIMATION_FRAME_NUM < ANIMATION_LENGTH){
+		ANIMATION_FRAME_NUM++;
+		ANIMATION_PROGRESS = ANIMATION_FRAME_NUM / ANIMATION_LENGTH;
+	}
 	// a 30 deg line showing the crop position on the wedge
 	// stroke(200);
 	// line(originTree.x, originTree.y, originTree.x + 100*cos(30/180*Math.PI), originTree.y - 100*sin(30/180*Math.PI));
 	stroke(0);
-	var animationsDidHappen = animateGrowth(tree);
+	var animationsDidHappen = animateGrowth(tree, ANIMATION_PROGRESS);
 	drawTree(tree, originTree, 0);
 	drawSnowflake(tree, originSnowflake);
 	// save(canvas, 'output.png');
-	if(DEPTH > 0 && !animationsDidHappen){
-		makeSnowflake();
+	if(ANIMATION_FRAME_NUM == ANIMATION_LENGTH && DEPTH > 0){
+		makeSnowflake();  // inside here it resets ANIMATION_FRAME_NUM
 		DEPTH--;
 	}
 }
 
 function makeSnowflake(){
 	growTree(tree);
-	// logTree(tree);
+	logTree(tree);
 }
 
-function animateGrowth(tree){
+// animateGrowth taps into the "valueToBeGrown" and "valueAnimated" inside of each
+// node, and increments / decrements each according to ANIMATION_PROGRESS, which
+// goes from 0.0 to 1.0, signaling end of growth cycle
+function animateGrowth(tree, progress){
 	var animationsDidHappen = false;
 
-	findLeaves(tree);
+	findLeaves(tree, progress);
 
-	function findLeaves(tree){
-		if(tree.left){
-			findLeaves(tree.left);
-		}
-		if(tree.right){
-			findLeaves(tree.right);
-		}
+	function findLeaves(tree, animProgress){  // progress is 0.0 to 1.0
 		// ANIMATIONS
 		if(tree.valueToBeGrown != undefined){
-			animationsDidHappen = true;
-			tree.valueAnimated += ANIMATION_STEP;
-			tree.valueToBeGrown -= ANIMATION_STEP;
-			if(tree.valueToBeGrown <= 0){
-				tree.valueAnimated += tree.valueToBeGrown;
+			tree.valueAnimated = tree.value * animProgress;
+			if(animProgress == 1.0){
+				console.log("setting undefined");
 				tree.valueToBeGrown = undefined;
 			}
+			// animationsDidHappen = true;
+			// tree.valueAnimated += GROWTH_STEP;
+			// tree.valueToBeGrown -= GROWTH_STEP;
+			// // if(GROWTH_STEP)
+			// if(tree.valueToBeGrown <= 0){
+			// 	tree.valueAnimated += tree.valueToBeGrown;
+			// 	tree.valueToBeGrown = undefined;
+			// }
+		}
+		if(tree.left){
+			findLeaves(tree.left, progress);
+		}
+		if(tree.right){
+			findLeaves(tree.right, progress);
 		}
 	}
 	return animationsDidHappen;
@@ -101,6 +115,8 @@ function growTree(tree, params){
 	// var pressure = params["pressure"];
 	// var time = params["time"];
 	// var time = 5;
+	if(ANIMATIONS)
+		ANIMATION_FRAME_NUM = 0;
 	findLeaves(tree);
 	setGlobalTreeVariables(tree);
 
@@ -351,41 +367,83 @@ function drawTree(tree, start, angleDepth){
 // }
 
 function drawSnowflake(tree, location){
-	for(var i = 0; i < 6; i++)
-		drawHexagonTreeWithReflections(tree, location, i);
 
+	drawCenterHexagon(tree, location);
+	var length;
+	if(ANIMATIONS){
+		length = tree.valueAnimated;
+	}
+	else{
+		length = tree.value;
+	}
+	for(var angle = 0; angle < 6; angle++){
+		var end = {
+			x:(location.x + length * DIRECTION[mod6(angle)].x),
+			y:(location.y + length * DIRECTION[mod6(angle)].y) };
+		if(tree.left != undefined ){
+			drawHexagonTreeWithReflections(tree.left, end, angle);
+		}
+		if(tree.right != undefined){
+			drawHexagonTreeWithReflections(tree.right, end, mod6(angle+1));
+			drawHexagonTreeWithReflections(tree.right, end, mod6(angle-1));
+		}
+	}
+
+	function drawCenterHexagon(tree, start){
+		var length;
+		if(ANIMATIONS){
+			length = tree.valueAnimated;
+		}
+		else{
+			length = tree.value;
+		}
+		for(var angle = 0; angle < 6; angle++){
+			var point1 = {
+					x:(start.x + length * DIRECTION[mod6(angle)].x),
+					y:(start.y + length * DIRECTION[mod6(angle)].y) };
+			var point2 = {
+					x:(start.x + length * DIRECTION[mod6(angle+1)].x),
+					y:(start.y + length * DIRECTION[mod6(angle+1)].y) };
+			line(point1.x, point1.y, point2.x, point2.y);
+		}
+	}
 	function drawHexagonTreeWithReflections(tree, start, angle){
-		var VOLUME = 10;
+		var VOLUME = 8;
 		if(tree != undefined){
 			var length;
-			if(ANIMATIONS){
+			if(ANIMATIONS)
 				length = tree.valueAnimated;
-			}
-			else{
+			else
 				length = tree.value;
-			}
-
 			var end = {
 				x:(start.x + length * DIRECTION[angle].x), 
 				y:(start.y + length * DIRECTION[angle].y)
 			};
-
 			// first go to the bottom of tree, following the main stem
 			if(tree.left != undefined)
 				drawHexagonTreeWithReflections(tree.left, end, angle);
 
 			stroke(0);
-			// stroke(0 + (200/DEPTH)*tree.depth);
-			// VOLUME = 50 - 50 * (tree.depth / tree.maxDepth) + 1 + random(2);
+			var aliveWhole = tree.maxGeneration - tree.generation;
+			var alivePart = 0;
+			if(ANIMATIONS){
+				alivePart = 1.0 - ((tree.value - tree.valueAnimated)) / tree.value;
+			}
+			// VOLUME = (aliveWhole + alivePart) * 3;
+			// stroke(0 + (200/DEPTH)*tree.generation);
+			// VOLUME = 50 - 50 * (tree.generation / tree.maxGeneration) + 1 + random(2);
 			var point1a, point1b, point2a, point2b;
-			// var distance = sqrt(Math.pow(endVec.x - start.x,2) + Math.pow(endVec.y - start.y,2) );
+			// var distance = sqrt(Math.pow(end.x - start.x,2) + Math.pow(end.y - start.y,2) );
+			var flush = 1;  // 1 or 2
+			if(tree.childType == LEFT)
+				flush = 2;
 			if( VOLUME > length ){ 
 				point1a = {
-					x:(start.x + length * DIRECTION[mod6(angle-1)].x),
-					y:(start.y + length * DIRECTION[mod6(angle-1)].y) };
+					x:(start.x + length * DIRECTION[mod6(angle-flush)].x),
+					y:(start.y + length * DIRECTION[mod6(angle-flush)].y) };
 				point1b = {
-					x:(start.x + length * DIRECTION[mod6(angle+1)].x),
-					y:(start.y + length * DIRECTION[mod6(angle+1)].y) };
+					x:(start.x + length * DIRECTION[mod6(angle+flush)].x),
+					y:(start.y + length * DIRECTION[mod6(angle+flush)].y) };
 				point2a = {
 					x:(end.x - length * DIRECTION[mod6(angle+1)].x),
 					y:(end.y - length * DIRECTION[mod6(angle+1)].y) };
@@ -395,11 +453,11 @@ function drawSnowflake(tree, location){
 			}
 			else{
 				point1a = {
-					x:(start.x + VOLUME * DIRECTION[mod6(angle-1)].x),
-					y:(start.y + VOLUME * DIRECTION[mod6(angle-1)].y) };
+					x:(start.x + VOLUME * DIRECTION[mod6(angle-flush)].x),
+					y:(start.y + VOLUME * DIRECTION[mod6(angle-flush)].y) };
 				point1b = {
-					x:(start.x + VOLUME * DIRECTION[mod6(angle+1)].x),
-					y:(start.y + VOLUME * DIRECTION[mod6(angle+1)].y) };
+					x:(start.x + VOLUME * DIRECTION[mod6(angle+flush)].x),
+					y:(start.y + VOLUME * DIRECTION[mod6(angle+flush)].y) };
 				point2a = {
 					x:(end.x - VOLUME * DIRECTION[mod6(angle+1)].x),
 					y:(end.y - VOLUME * DIRECTION[mod6(angle+1)].y) };
@@ -408,7 +466,7 @@ function drawSnowflake(tree, location){
 					y:(end.y - VOLUME * DIRECTION[mod6(angle-1)].y) };
 			}
 
-			// line(start.x, start.y, endVec.x, endVec.y);       // the major artery
+			// line(start.x, start.y, end.x, end.y);       // the major artery
 			line(start.x, start.y, point1a.x, point1a.y);
 			line(start.x, start.y, point1b.x, point1b.y);
 
@@ -417,9 +475,6 @@ function drawSnowflake(tree, location){
 
 			line(point2a.x, point2a.y, end.x, end.y);
 			line(point2b.x, point2b.y, end.x, end.y);
-
-	// ellipse? do we want the ellipse?
-			// ellipse(start.x, start.y, 5, 5);
 
 			if(tree.right != undefined){
 				drawHexagonTreeWithReflections(tree.right, end, mod6(angle+1) );
@@ -489,7 +544,7 @@ function logTree(node){
 			node.maxGeneration + ") VALUE:(" + 
 			node.value + ") PARENT:(" + 
 			hasChildren + ") TYPE:(" + 
-			node.childType + ") BRANCHES:(" + 
+			node.childType + ") RIGHT BRANCHES:(" + 
 			node.branchesR + ") (" + 
 			node.location.x + "," +
 			node.location.y + ")");
