@@ -1,3 +1,10 @@
+// Algorithmic Snowflake
+//
+// brief overview of vocabulary used here:
+//  TREE: the snowflake is a binary tree, "var tree" is the head
+//  CYCLE: one growth cycle, leaves can choose to or not to sprout new growths
+//  FRAME: CYCLEs last certain number of FRAMES, (like 30), variable.
+
 var RIGHT = 1;
 var LEFT = 0;
 //sine and cosine 60deg increments, clockwise starting from 3:00
@@ -11,12 +18,12 @@ var DIRECTION = [
 ];
 
 // snowflake growth animations
-var ANIMATIONS = 1;  // 0 or 1, turn animations OFF or ON
-var GROWTH_STEP = 1;
+const ANIMATIONS = 1;  // 0 or 1, turn animations OFF or ON
 
-var ANIMATION_PROGRESS = 0;  // updated mid loop (0.0 to 1.0) 1.0 means entering next step
-var ANIMATION_LENGTH = 30; // # of frames each growth cycle lasts
-var ANIMATION_FRAME_NUM = 0;
+var CYCLE_PROGRESS = 0;  // updated mid loop (0.0 to 1.0) 1.0 means entering next step
+var CYCLE_LENGTH = 30; // # of frames each growth cycle lasts
+var CYCLE_FRAME = 0;
+var CYCLE_NUM = 0;
 
 var canvas;  // HTML canvas, for saving image
 // drawing locations, based on screen resolution
@@ -25,15 +32,22 @@ var originTree;
 
 var tree;  // the snowflake
 
-	var rightShorten = 10;
+var rightShorten = .666;
 var DEPTH = 4;
+
+var noiseOff;
 
 function setup() {
 	canvas = createCanvas(windowWidth, windowHeight);
 	if(!ANIMATIONS)
 		noLoop();
 	resizeOrigins();
-	tree = new btree(undefined, 30);
+	tree = new btree(undefined, 40);
+	noiseOff = random(0.0, 20.0);
+	for(var i = 0; i < 10; i++){
+		console.log(noise(noiseOff));
+		noiseOff += .1;
+	}
 }
 
 // function mousePressed() {
@@ -47,9 +61,11 @@ function setup() {
 // }
 
 function mousePressed() {
-	ANIMATION_FRAME_NUM = 0;
-	makeSnowflake();
-	draw();
+	DEPTH++;
+	if(!ANIMATIONS){
+		growTree(tree);
+		draw(tree);
+	}
 }
 
 function draw() {
@@ -58,33 +74,31 @@ function draw() {
 	// stroke(200);
 	// line(originTree.x, originTree.y, originTree.x + 100*cos(30/180*Math.PI), originTree.y - 100*sin(30/180*Math.PI));
 
-	animateGrowth(tree, ANIMATION_PROGRESS);
 	stroke(0);
 	drawTree(tree, originTree, 0);
 	drawSnowflake(tree, originSnowflake);
 
 	// save(canvas, 'output.png');
 	if(ANIMATIONS){
-		ANIMATION_FRAME_NUM = (ANIMATION_FRAME_NUM + 1) % ANIMATION_LENGTH;
-		ANIMATION_PROGRESS = ANIMATION_FRAME_NUM / ANIMATION_LENGTH;
+		CYCLE_PROGRESS = CYCLE_FRAME / CYCLE_LENGTH;
+
+		animateGrowth(tree, CYCLE_PROGRESS);
 	
-		if(ANIMATION_FRAME_NUM == 0){
+		if(CYCLE_FRAME >= CYCLE_LENGTH && DEPTH > 0){
+			CYCLE_NUM++;
+			CYCLE_FRAME = 0;
+			DEPTH--;
+			CYCLE_PROGRESS = CYCLE_FRAME / CYCLE_LENGTH;
 			stopAllAnimations(tree);
-			if(DEPTH > 0){
-				makeSnowflake();
-				DEPTH--;
-			}
+			growTree(tree);
 		}
+		if(CYCLE_FRAME < CYCLE_LENGTH)
+			CYCLE_FRAME++;
 	}
 }
 
-function makeSnowflake(){
-	growTree(tree);
-	// logTree(tree);
-}
-
 // animateGrowth taps into the "valueToBeGrown" and "valueAnimated" inside of each
-// node, and increments / decrements each according to ANIMATION_PROGRESS, which
+// node, and increments / decrements each according to CYCLE_PROGRESS, which
 // goes from 0.0 to 1.0, signaling end of growth cycle
 function animateGrowth(tree, progress){
 	findLeaves(tree, progress);
@@ -118,12 +132,17 @@ function stopAllAnimations(tree){
 	}
 }
 
+var lengthThisTime = 1.0;
 
 function growTree(tree, params){
 	// var density = params["density"];
 	// var pressure = params["pressure"];
 	// var time = params["time"];
 	// var time = 5;
+
+	// lengthThisTime = Math.pow(noise(noiseOff)*2.0,1.5);
+	// noiseOff += .1;
+
 	findLeaves(tree);
 	setGlobalTreeVariables(tree);
 
@@ -139,49 +158,26 @@ function growTree(tree, params){
 		}
 		if(!hasChild && !tree.dead){
 			// do the thing
-			if(random(10) < 5){
+			if(random(10) < 2){
 				if(tree.length.value > 0){
-					tree.addLeftChild(tree.length.value)
+					tree.addLeftChild(tree.length.value * lengthThisTime)
 				}
 			}
 			else{
-				if(tree.length.value - rightShorten > 0 && tree.length.value > 0){
+				var shortenby = Math.pow(rightShorten, tree.branchesR);
+				if(tree.length.value * lengthThisTime * shortenby > 1 && tree.length.value > 0){
 					//make this relate to how many right turns, not right or left branch
-					tree.addChildren(tree.length.value, tree.length.value - rightShorten);
+					tree.addChildren(
+						tree.length.value * lengthThisTime, 
+						tree.length.value * lengthThisTime * shortenby);
 				}
 			}
 		}
+		// tree.length.set(tree.length.value*1.1);
+		// tree.thickness.set(tree.thickness.value*1.1);
 	}
 }
 
-// performs the necessary fixes to this specific problem
-// and returns true if boundary was crossed and adjustments made
-function checkBoundaryCrossing(startNode, endNode){
-	// extract euclidean locations from parent and child
-	var start = startNode.location;
-	var end = endNode.location;
-	// perform boundary check against 30 deg line
-	var result = RayLineIntersect(
-		{x:0, y:0}, 
-		{x:(cos(30/180*Math.PI)), y:(sin(30/180*Math.PI))}, 
-		{x:start.x, y:abs(start.y)}, 
-		{x:end.x, y:abs(end.y)}
-		);
-	// if result, boundary was crossed
-	if(result != undefined){
-		// result is new intersection
-		// infer new value: distance from start to new intersection
-		var newLength = Math.sqrt( (result.x-start.x)*(result.x-start.x) + (result.y-abs(start.y))*(result.y-abs(start.y)) );
-		endNode.length.set(newLength);
-		endNode.location = {
-			x:(start.x + newLength * DIRECTION[endNode.direction].x), 
-			y:(start.y + newLength * DIRECTION[endNode.direction].y)
-		};
-		endNode.dead = true;
-		return true;
-	}
-	return false;
-}
 
 function setGlobalTreeVariables(tree){
 	// it's unclear how useful the second step is
@@ -218,6 +214,10 @@ function mod6(input){
 function animatableValue(input){
 	this.set = function(input){
 		if(ANIMATIONS){
+			// if(this.value == undefined)
+			// 	this.value = 0;
+			// this.valueToBeGrown = input - this.value;
+			// this.valueAnimated = this.value;
 			this.valueToBeGrown = input;
 			this.valueAnimated = 0;
 		}
@@ -240,6 +240,12 @@ function animatableValue(input){
 	this.stopAnimation = function(){
 		this.valueToBeGrown = undefined;
 		this.animatableValue = this.value;
+	}
+	this.get = function(){
+		if(ANIMATIONS) 
+			return this.valueAnimated;
+		else
+			return this.value;
 	}
 
 	this.value;
@@ -323,6 +329,35 @@ function btree(parent, length){
 
 // GEOMETRY
 
+// performs the necessary fixes to this specific problem
+// and returns true if boundary was crossed and adjustments made
+function checkBoundaryCrossing(startNode, endNode){
+	// extract euclidean locations from parent and child
+	var start = startNode.location;
+	var end = endNode.location;
+	// perform boundary check against 30 deg line
+	var result = RayLineIntersect(
+		{x:0, y:0}, 
+		{x:(cos(30/180*Math.PI)), y:(sin(30/180*Math.PI))}, 
+		{x:start.x, y:abs(start.y)}, 
+		{x:end.x, y:abs(end.y)}
+		);
+	// if result, boundary was crossed
+	if(result != undefined){
+		// result is new intersection
+		// infer new value: distance from start to new intersection
+		var newLength = Math.sqrt( (result.x-start.x)*(result.x-start.x) + (result.y-abs(start.y))*(result.y-abs(start.y)) );
+		endNode.length.set(newLength);
+		endNode.location = {
+			x:(start.x + newLength * DIRECTION[endNode.direction].x), 
+			y:(start.y + newLength * DIRECTION[endNode.direction].y)
+		};
+		endNode.dead = true;
+		return true;
+	}
+	return false;
+}
+
 function RayLineIntersect(origin, dV, pA, pB){
 	// if intersection, returns point of intersection
 	// if no intersection, returns undefined
@@ -352,11 +387,7 @@ function drawTree(tree, start, angleDepth){
 		if(tree.right != undefined){
 			drawTree(tree.right, {x:start.x + tree.length.value * DIRECTION[angleDepth].x, y:start.y + tree.length.value * DIRECTION[angleDepth].y}, mod6(angleDepth+1));
 		}
-		var length;
-		if(ANIMATIONS)
-			length = tree.length.valueAnimated;
-		else
-			length = tree.length.value;
+		var length = tree.length.get();
 		end = {x:(start.x + length * DIRECTION[angleDepth].x),
 			   y:(start.y + length * DIRECTION[angleDepth].y)};
 		line(start.x, start.y, end.x, end.y);
@@ -401,13 +432,7 @@ function drawTree(tree, start, angleDepth){
 function drawSnowflake(tree, location){
 
 	drawCenterHexagon(tree, location);
-	var length;
-	if(ANIMATIONS){
-		length = tree.length.valueAnimated;
-	}
-	else{
-		length = tree.length.value;
-	}
+	var length = tree.length.get();
 	for(var angle = 0; angle < 6; angle++){
 		var end = {
 			x:(location.x + length * DIRECTION[mod6(angle)].x),
@@ -420,15 +445,8 @@ function drawSnowflake(tree, location){
 			drawHexagonTreeWithReflections(tree.right, end, mod6(angle-1));
 		}
 	}
-
 	function drawCenterHexagon(tree, start){
-		var length;
-		if(ANIMATIONS){
-			length = tree.length.valueAnimated;
-		}
-		else{
-			length = tree.length.value;
-		}
+		var length = tree.length.get();
 		for(var angle = 0; angle < 6; angle++){
 			var point1 = {
 					x:(start.x + length * DIRECTION[mod6(angle)].x),
@@ -440,13 +458,9 @@ function drawSnowflake(tree, location){
 		}
 	}
 	function drawHexagonTreeWithReflections(tree, start, angle){
-		var VOLUME = 8;
 		if(tree != undefined){
-			var length;
-			if(ANIMATIONS)
-				length = tree.length.valueAnimated;
-			else
-				length = tree.length.value;
+			var length = tree.length.get();
+			var thickness = tree.thickness.get();
 			var end = {
 				x:(start.x + length * DIRECTION[angle].x), 
 				y:(start.y + length * DIRECTION[angle].y)
@@ -455,56 +469,45 @@ function drawSnowflake(tree, location){
 			if(tree.left != undefined)
 				drawHexagonTreeWithReflections(tree.left, end, angle);
 
-			stroke(0);
 			var aliveWhole = tree.maxGeneration - tree.generation;
 			var alivePart = 0;
 			if(ANIMATIONS){
 				alivePart = 1.0 - ((tree.length.value - tree.length.valueAnimated)) / tree.length.value;
 			}
-			// VOLUME = (aliveWhole + alivePart) * 3;
-			// stroke(0 + (200/DEPTH)*tree.generation);
-			// VOLUME = 50 - 50 * (tree.generation / tree.maxGeneration) + 1 + random(2);
-			var point1a, point1b, point2a, point2b;
-			// var distance = sqrt(Math.pow(end.x - start.x,2) + Math.pow(end.y - start.y,2) );
+
+			// thickness grows HEXAGONALLY, not scaling proportionally
+			thickness = tree.length.get();
+			if(thickness > tree.thickness.value)
+				thickness = tree.thickness.value;
 			var flush = 1;  // 1 or 2
 			if(tree.childType == LEFT)
 				flush = 2;
-			if( VOLUME > length ){ 
-				point1a = {
-					x:(start.x + length * DIRECTION[mod6(angle-flush)].x),
-					y:(start.y + length * DIRECTION[mod6(angle-flush)].y) };
-				point1b = {
-					x:(start.x + length * DIRECTION[mod6(angle+flush)].x),
-					y:(start.y + length * DIRECTION[mod6(angle+flush)].y) };
-				point2a = {
-					x:(end.x - length * DIRECTION[mod6(angle+1)].x),
-					y:(end.y - length * DIRECTION[mod6(angle+1)].y) };
-				point2b = {
-					x:(end.x - length * DIRECTION[mod6(angle-1)].x),
-					y:(end.y - length * DIRECTION[mod6(angle-1)].y) };
-			}
-			else{
-				point1a = {
-					x:(start.x + VOLUME * DIRECTION[mod6(angle-flush)].x),
-					y:(start.y + VOLUME * DIRECTION[mod6(angle-flush)].y) };
-				point1b = {
-					x:(start.x + VOLUME * DIRECTION[mod6(angle+flush)].x),
-					y:(start.y + VOLUME * DIRECTION[mod6(angle+flush)].y) };
-				point2a = {
-					x:(end.x - VOLUME * DIRECTION[mod6(angle+1)].x),
-					y:(end.y - VOLUME * DIRECTION[mod6(angle+1)].y) };
-				point2b = {
-					x:(end.x - VOLUME * DIRECTION[mod6(angle-1)].x),
-					y:(end.y - VOLUME * DIRECTION[mod6(angle-1)].y) };
-			}
+			var point1a, point1b, point2a, point2b;
+			point1a = {
+				x:(start.x + thickness * DIRECTION[mod6(angle-flush)].x),
+				y:(start.y + thickness * DIRECTION[mod6(angle-flush)].y) };
+			point1b = {
+				x:(start.x + thickness * DIRECTION[mod6(angle+flush)].x),
+				y:(start.y + thickness * DIRECTION[mod6(angle+flush)].y) };
+			point2a = {
+				x:(end.x - thickness * DIRECTION[mod6(angle+1)].x),
+				y:(end.y - thickness * DIRECTION[mod6(angle+1)].y) };
+			point2b = {
+				x:(end.x - thickness * DIRECTION[mod6(angle-1)].x),
+				y:(end.y - thickness * DIRECTION[mod6(angle-1)].y) };
 
+			// stroke(255,0,0);
 			// line(start.x, start.y, end.x, end.y);       // the major artery
+			// start point to the outer border points
+
+			stroke(0);
+
 			line(start.x, start.y, point1a.x, point1a.y);
 			line(start.x, start.y, point1b.x, point1b.y);
-
+			// connect outer border points
 			line(point1a.x, point1a.y, point2a.x, point2a.y);
 			line(point1b.x, point1b.y, point2b.x, point2b.y);
-
+			// join outer border ot the end point
 			line(point2a.x, point2a.y, end.x, end.y);
 			line(point2b.x, point2b.y, end.x, end.y);
 
@@ -521,13 +524,7 @@ function drawSnowflakeTree(tree, location){
 		drawTreeWithReflections(tree, location, i);
 	function drawTreeWithReflections(tree, location, angle){
 		if(tree != undefined){
-			var length;
-			if(ANIMATIONS){
-				length = tree.length.valueAnimated;
-			}
-			else{
-				length = tree.length.value;
-			}
+			var length = tree.length.get();
 			var start = location;
 			var end = {
 				x:(location.x + length * DIRECTION[angle].x), 
