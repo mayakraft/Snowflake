@@ -5,6 +5,10 @@
 //  CYCLE: one growth cycle, leaves can choose to or not to sprout new growths
 //  FRAME: CYCLEs last certain number of FRAMES, (like 30), variable.
 
+
+// new rule: after a child sprouts, the parent can no longer grow "length"
+//            but it can grow in "thickness"
+
 var RIGHT = 1;
 var LEFT = 0;
 //sine and cosine 60deg increments, clockwise starting from 3:00
@@ -42,7 +46,7 @@ function setup() {
 	if(!ANIMATIONS)
 		noLoop();
 	resizeOrigins();
-	tree = new btree(undefined, 40);
+	tree = new btree(undefined, 20);
 	noiseOff = random(0.0, 20.0);
 	for(var i = 0; i < 10; i++){
 		console.log(noise(noiseOff));
@@ -158,7 +162,7 @@ function growTree(tree, params){
 		}
 		if(!hasChild && !tree.dead){
 			// do the thing
-			if(random(10) < 2){
+			if(tree.parent == undefined || random(10) < 3){
 				if(tree.length.value > 0){
 					tree.addLeftChild(tree.length.value * lengthThisTime)
 				}
@@ -174,10 +178,9 @@ function growTree(tree, params){
 			}
 		}
 		// tree.length.set(tree.length.value*1.1);
-		// tree.thickness.set(tree.thickness.value*1.1);
+		tree.thickness.set(tree.thickness.value*1.5);
 	}
 }
-
 
 function setGlobalTreeVariables(tree){
 	// it's unclear how useful the second step is
@@ -214,12 +217,12 @@ function mod6(input){
 function animatableValue(input){
 	this.set = function(input){
 		if(ANIMATIONS){
-			// if(this.value == undefined)
-			// 	this.value = 0;
-			// this.valueToBeGrown = input - this.value;
-			// this.valueAnimated = this.value;
-			this.valueToBeGrown = input;
-			this.valueAnimated = 0;
+			if(this.value == undefined)
+				this.value = 0;
+			this.valueToBeGrown = input - this.value;
+			this.valueAnimated = this.value;
+			// this.valueToBeGrown = input;
+			// this.valueAnimated = 0;
 		}
 		else{
 			this.valueToBeGrown = undefined;
@@ -254,9 +257,24 @@ function animatableValue(input){
 	this.increment = 1;
 
 	this.set(input);
+	this.setFromZero = function(input){
+		if(ANIMATIONS){
+		// 	if(this.value == undefined)
+		// 		this.value = 0;
+		// 	this.valueToBeGrown = input - this.value;
+		// 	this.valueAnimated = this.value;
+			this.valueToBeGrown = input;
+			this.valueAnimated = 0;
+		}
+		else{
+			this.valueToBeGrown = undefined;
+			this.valueAnimated = undefined;
+		}
+		this.value = input;
+	}
 }
 
-var LENGTH_TO_THICKNESS_RATIO = 0.3;
+var LENGTH_TO_THICKNESS_RATIO = 0.2;
 
 function btree(parent, length){
 // nodes contain:  value (magnitude)
@@ -277,6 +295,8 @@ function btree(parent, length){
 	this.dead; // set true, force node to be a leaf
 	this.branchesR;
 	this.maxGeneration = 0;
+
+	this.parentThicknessAtBirth;  // this is needed to draw 
 
 	// manage properties related to the data structure
 	this.parent = parent;
@@ -305,9 +325,14 @@ function btree(parent, length){
 		this.left.parent = this;
 		this.left.direction = this.direction;
 		this.left.branchesR = this.branchesR;
+		this.left.parentThicknessAtBirth = this.thickness.value;
 		this.left.location = {
-			x:(this.location.x + this.left.length.value * DIRECTION[this.left.direction].x), 
-			y:(this.location.y + this.left.length.value * DIRECTION[this.left.direction].y)
+			x:(this.location.x + 
+				this.thickness.value * DIRECTION[this.left.direction].x + 
+				this.left.length.value * DIRECTION[this.left.direction].x), 
+			y:(this.location.y + 
+				this.thickness.value * DIRECTION[this.left.direction].y + 
+				this.left.length.value * DIRECTION[this.left.direction].y)
 		};		
 		var boundaryAdjust = false;
 		boundaryAdjust |= checkBoundaryCrossing(this, this.left);
@@ -318,9 +343,14 @@ function btree(parent, length){
 		this.right.parent = this;
 		this.right.direction = mod6(this.direction+1);
 		this.right.branchesR = this.branchesR + 1;
+		this.right.parentThicknessAtBirth = this.thickness.value;
 		this.right.location = {
-			x:(this.location.x + this.right.length.value * DIRECTION[this.right.direction].x), 
-			y:(this.location.y + this.right.length.value * DIRECTION[this.right.direction].y)
+			x:(this.location.x + 
+				this.thickness.value * DIRECTION[this.right.direction].x + 
+				this.right.length.value * DIRECTION[this.right.direction].x), 
+			y:(this.location.y + 
+				this.thickness.value * DIRECTION[this.right.direction].y + 
+				this.right.length.value * DIRECTION[this.right.direction].y)
 		};
 		var boundaryAdjust = false;
 		boundaryAdjust |= checkBoundaryCrossing(this, this.right);
@@ -333,8 +363,13 @@ function btree(parent, length){
 // and returns true if boundary was crossed and adjustments made
 function checkBoundaryCrossing(startNode, endNode){
 	// extract euclidean locations from parent and child
-	var start = startNode.location;
-	var end = endNode.location;
+	// var start = startNode.location;
+	// var end = endNode.location;
+// TODO this correction isn't right
+	var start = {x:startNode.location.x + startNode.thickness.value * DIRECTION[endNode.direction].x,
+		       y:startNode.location.y + startNode.thickness.value * DIRECTION[endNode.direction].y};
+	var end = {x:endNode.location.x + endNode.thickness.value * DIRECTION[endNode.direction].x,
+		       y:endNode.location.y + endNode.thickness.value * DIRECTION[endNode.direction].y};
 	// perform boundary check against 30 deg line
 	var result = RayLineIntersect(
 		{x:0, y:0}, 
@@ -346,11 +381,15 @@ function checkBoundaryCrossing(startNode, endNode){
 	if(result != undefined){
 		// result is new intersection
 		// infer new value: distance from start to new intersection
-		var newLength = Math.sqrt( (result.x-start.x)*(result.x-start.x) + (result.y-abs(start.y))*(result.y-abs(start.y)) );
-		endNode.length.set(newLength);
+
+		var newLength = Math.sqrt( (result.x-start.x)*(result.x-start.x) + (result.y-abs(start.y))*(result.y-abs(start.y)) )
+// TODO this is not right
+		- endNode.thickness.value;
+		// endNode.length.value = newLength;
+		endNode.length.setFromZero(newLength);
 		endNode.location = {
-			x:(start.x + newLength * DIRECTION[endNode.direction].x), 
-			y:(start.y + newLength * DIRECTION[endNode.direction].y)
+			x:(startNode.location.x + newLength * DIRECTION[endNode.direction].x), 
+			y:(startNode.location.y + newLength * DIRECTION[endNode.direction].y)
 		};
 		endNode.dead = true;
 		return true;
@@ -378,6 +417,26 @@ function RayLineIntersect(origin, dV, pA, pB){
 }
 
 // DRAWING & RENDERING
+
+// function drawTree(tree, start, angleDepth){
+// 	if(tree != undefined){
+// 		if(tree.left != undefined){
+// 			drawTree(tree.left, {x:start.x + tree.length.value * DIRECTION[angleDepth].x, y:start.y + tree.length.value * DIRECTION[angleDepth].y}, angleDepth);
+// 		}
+// 		if(tree.right != undefined){
+// 			drawTree(tree.right, {x:start.x + tree.length.value * DIRECTION[angleDepth].x, y:start.y + tree.length.value * DIRECTION[angleDepth].y}, mod6(angleDepth+1));
+// 		}
+// 		var length = tree.length.get();
+// 		end = {x:(originTree.x + tree.location.x),
+// 			   y:(originTree.y + tree.location.y)};
+// 		start = {x:(end.x - length * DIRECTION[angleDepth].x),
+// 			   y:(end.y - length * DIRECTION[angleDepth].y)};
+// 		// end = {x:(start.x + length * DIRECTION[angleDepth].x),
+// 		// 	   y:(start.y + length * DIRECTION[angleDepth].y)};
+// 		line(start.x, start.y, end.x, end.y);
+// 		ellipse(end.x, end.y, 5, 5);
+// 	}
+// }
 
 function drawTree(tree, start, angleDepth){
 	if(tree != undefined){
@@ -461,13 +520,36 @@ function drawSnowflake(tree, location){
 		if(tree != undefined){
 			var length = tree.length.get();
 			var thickness = tree.thickness.get();
+
+			// thickness grows HEXAGONALLY, not scaling proportionally
+			if(tree.left == undefined){
+			thickness = tree.length.get();
+			if(thickness > tree.thickness.value)
+				thickness = tree.thickness.value;
+}
 			var end = {
 				x:(start.x + length * DIRECTION[angle].x), 
 				y:(start.y + length * DIRECTION[angle].y)
 			};
+			var endWithThicknessForward = {
+				x:(start.x + 
+					thickness * DIRECTION[angle].x + 
+					length * DIRECTION[angle].x),
+				y:(start.y + 
+					thickness * DIRECTION[angle].y + 
+					length * DIRECTION[angle].y)
+			};
+			var endWithThicknessForwardWhereSeedSprouted = {
+				x:(start.x + 
+					tree.parentThicknessAtBirth * DIRECTION[angle].x + 
+					length * DIRECTION[angle].x),
+				y:(start.y + 
+					tree.parentThicknessAtBirth * DIRECTION[angle].y + 
+					length * DIRECTION[angle].y)
+			}
 			// first go to the bottom of tree, following the main stem
 			if(tree.left != undefined)
-				drawHexagonTreeWithReflections(tree.left, end, angle);
+				drawHexagonTreeWithReflections(tree.left, endWithThicknessForwardWhereSeedSprouted, angle);
 
 			var aliveWhole = tree.maxGeneration - tree.generation;
 			var alivePart = 0;
@@ -475,12 +557,8 @@ function drawSnowflake(tree, location){
 				alivePart = 1.0 - ((tree.length.value - tree.length.valueAnimated)) / tree.length.value;
 			}
 
-			// thickness grows HEXAGONALLY, not scaling proportionally
-			thickness = tree.length.get();
-			if(thickness > tree.thickness.value)
-				thickness = tree.thickness.value;
 			var flush = 1;  // 1 or 2
-			if(tree.childType == LEFT)
+			// if(tree.childType == LEFT)
 				flush = 2;
 			var point1a, point1b, point2a, point2b;
 			point1a = {
@@ -490,14 +568,14 @@ function drawSnowflake(tree, location){
 				x:(start.x + thickness * DIRECTION[mod6(angle+flush)].x),
 				y:(start.y + thickness * DIRECTION[mod6(angle+flush)].y) };
 			point2a = {
-				x:(end.x - thickness * DIRECTION[mod6(angle+1)].x),
-				y:(end.y - thickness * DIRECTION[mod6(angle+1)].y) };
+				x:(end.x - thickness * DIRECTION[mod6(angle+2)].x),
+				y:(end.y - thickness * DIRECTION[mod6(angle+2)].y) };
 			point2b = {
-				x:(end.x - thickness * DIRECTION[mod6(angle-1)].x),
-				y:(end.y - thickness * DIRECTION[mod6(angle-1)].y) };
+				x:(end.x - thickness * DIRECTION[mod6(angle-2)].x),
+				y:(end.y - thickness * DIRECTION[mod6(angle-2)].y) };
 
-			// stroke(255,0,0);
-			// line(start.x, start.y, end.x, end.y);       // the major artery
+			stroke(255,0,0);
+			line(start.x, start.y, end.x, end.y);       // the major artery
 			// start point to the outer border points
 
 			stroke(0);
@@ -508,12 +586,44 @@ function drawSnowflake(tree, location){
 			line(point1a.x, point1a.y, point2a.x, point2a.y);
 			line(point1b.x, point1b.y, point2b.x, point2b.y);
 			// join outer border ot the end point
-			line(point2a.x, point2a.y, end.x, end.y);
-			line(point2b.x, point2b.y, end.x, end.y);
+			line(point2a.x, point2a.y, endWithThicknessForward.x, endWithThicknessForward.y);
+			line(point2b.x, point2b.y, endWithThicknessForward.x, endWithThicknessForward.y);
 
+			var endWithThicknessPlus = {
+				x:(start.x + 
+					thickness * DIRECTION[mod6(angle+1)].x + 
+					length * DIRECTION[angle].x),
+				y:(start.y + 
+					thickness * DIRECTION[mod6(angle+1)].y + 
+					length * DIRECTION[angle].y)
+			};
+			var endWithThicknessMinus = {
+				x:(start.x + 
+					thickness * DIRECTION[mod6(angle-1)].x + 
+					length * DIRECTION[angle].x),
+				y:(start.y + 
+					thickness * DIRECTION[mod6(angle-1)].y + 
+					length * DIRECTION[angle].y)
+			};
+			varendWithThicknessSeedSproutedPlus = {
+				x:(start.x + 
+							tree.parentThicknessAtBirth * DIRECTION[mod6(angle+1)].x + 
+							length * DIRECTION[angle].x),
+				y:(start.y + 
+							tree.parentThicknessAtBirth * DIRECTION[mod6(angle+1)].y + 
+							length * DIRECTION[angle].y)
+			};
+			varendWithThicknessSeedSproutedMinus = {
+				x:(start.x + 
+							tree.parentThicknessAtBirth * DIRECTION[mod6(angle-1)].x + 
+							length * DIRECTION[angle].x),
+				y:(start.y + 
+							tree.parentThicknessAtBirth * DIRECTION[mod6(angle-1)].y + 
+							length * DIRECTION[angle].y)
+			};
 			if(tree.right != undefined){
-				drawHexagonTreeWithReflections(tree.right, end, mod6(angle+1) );
-				drawHexagonTreeWithReflections(tree.right, end, mod6(angle-1) );
+				drawHexagonTreeWithReflections(tree.right, endWithThicknessSeedSproutedPlus, mod6(angle+1) );
+				drawHexagonTreeWithReflections(tree.right, endWithThicknessSeedSproutedMinus, mod6(angle-1) );
 			}
 		}
 	}
@@ -542,7 +652,6 @@ function drawSnowflakeTree(tree, location){
 		}
 	}
 }
-
 
 function resizeOrigins(){
 	if(windowWidth > windowHeight){
