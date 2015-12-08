@@ -33,7 +33,7 @@ var originTree;
 var tree;  // the snowflake
 
 var rightShorten = .666;
-var DEPTH = 3;
+var DEPTH = 8;
 
 var noiseOff;
 
@@ -49,6 +49,15 @@ function setup() {
 	resizeOrigins();
 	tree = new binaryTree(undefined, 20);
 	frameRate(60);
+	setInterval(
+		function(){
+			DEPTH = 8;
+			CYCLE_PROGRESS = 0;  // updated mid loop (0.0 to 1.0) 1.0 means entering next step
+			CYCLE_LENGTH = 30; // # of frames each growth cycle lasts
+			CYCLE_FRAME = 0;
+			CYCLE_NUM = 0;
+			tree = new binaryTree(undefined, 20);
+		}, 8000);
 }
 function mousePressed() {
 	DEPTH++;
@@ -153,7 +162,7 @@ function growTree(tree, params){
 				tree.addLeftChild(tree.length.value * random(3));//lengthThisTime)
 			}
 			// all other generations
-			else{
+			else if(tree.branchesR < 3){
 				var shortenby = Math.pow(rightShorten, tree.branchesR);
 				if(tree.length.value * lengthThisTime * shortenby > 1 && tree.length.value > 0){
 					//make this relate to how many right turns, not right or left branch
@@ -474,7 +483,6 @@ function drawSnowflake(tree, location){
 
 			// stroke(255,0,0);
 			// line(start.x, start.y, end.x, end.y);       // the major artery
-			// startThick point to the outer border points
 
 			stroke(0);
 
