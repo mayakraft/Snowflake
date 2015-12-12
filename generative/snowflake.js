@@ -18,7 +18,7 @@ var DIRECTION = [
 ];
 
 // snowflake growth animations
-const ANIMATIONS = 1;  // 0 or 1, turn animations OFF or ON
+const ANIMATIONS = 0;  // 0 or 1, turn animations OFF or ON
 
 var CYCLE_PROGRESS = 0;  // updated mid loop (0.0 to 1.0) 1.0 means entering next step
 var CYCLE_LENGTH = 30; // # of frames each growth cycle lasts
@@ -47,17 +47,17 @@ function setup() {
 	if(!ANIMATIONS)
 		noLoop();
 	resizeOrigins();
-	tree = new binaryTree(undefined, 20);
+	tree = new binaryTree(undefined, {"length":60});
 	frameRate(60);
-	setInterval(
-		function(){
-			DEPTH = 8;
-			CYCLE_PROGRESS = 0;  // updated mid loop (0.0 to 1.0) 1.0 means entering next step
-			CYCLE_LENGTH = 30; // # of frames each growth cycle lasts
-			CYCLE_FRAME = 0;
-			CYCLE_NUM = 0;
-			tree = new binaryTree(undefined, 20);
-		}, 8000);
+	// setInterval(
+	// 	function(){
+	// 		DEPTH = 8;
+	// 		CYCLE_PROGRESS = 0;  // updated mid loop (0.0 to 1.0) 1.0 means entering next step
+	// 		CYCLE_LENGTH = 30; // # of frames each growth cycle lasts
+	// 		CYCLE_FRAME = 0;
+	// 		CYCLE_NUM = 0;
+	// 		tree = new binaryTree(undefined, {"length":20});
+	// 	}, 8000);
 }
 function mousePressed() {
 	DEPTH++;
@@ -159,7 +159,7 @@ function growTree(tree, params){
 			// first branch only
 			if(tree.parent == undefined){
 				// tree.addLeftChild(tree.length.value * 3);//lengthThisTime)
-				tree.addLeftChild(tree.length.value * random(3));//lengthThisTime)
+				tree.addLeftChild({"length":tree.length.value * random(3)});//lengthThisTime)
 			}
 			// all other generations
 			else if(tree.branchesR < 3){
@@ -168,13 +168,13 @@ function growTree(tree, params){
 					//make this relate to how many right turns, not right or left branch
 					if(random(10) < 5){
 						var left = random(30) + 15;
-						tree.addChildren(left, left * .7);
+						tree.addChildren({"length":left}, {"length":left * .7});
 						// tree.addChildren(
 						// 	tree.length.value * lengthThisTime, 
 						// 	tree.length.value * lengthThisTime * shortenby);
 					}
 					else{
-						tree.addLeftChild(random(30) + 15);
+						tree.addLeftChild({"length":random(30) + 15});
 						// tree.addLeftChild(tree.length.value * lengthThisTime);
 					}
 				}
@@ -276,7 +276,8 @@ function animatableValue(input, zeroPointIn){
 	this.set(input, zeroPointIn);
 }
 
-function binaryTree(parent, length){
+// data is expecting to contain {"length": ... , "thickness:" ... , }
+function binaryTree(parent, data){
 // nodes contain:  value (magnitude)
 				// childType (LEFT or RIGHT)
 				// dead (T/F: force node into leaf)
@@ -284,8 +285,8 @@ function binaryTree(parent, length){
 				// branchesR (number of cumulative right branches)
 				// location ({x,y} position in euclidean space)
 	// fix inputs
-	if(length == undefined)
-		length = 0;
+	if(data.length == undefined)
+		data.length = 0;
 
 	this.parent = parent;
 	this.right = undefined;
@@ -299,7 +300,7 @@ function binaryTree(parent, length){
 	if(parent){
 		this.generation = parent.generation+1;
 		// IMPORTANT: this jumps the growth by "parent.thickness", gives it a head start
-		this.length = new animatableValue(length, parent.thickness.value);
+		this.length = new animatableValue(data.length, parent.thickness.value);
 		// HERE: no head start
 		// this.length = new animatableValue(length, 0);
 	}else{
@@ -307,20 +308,20 @@ function binaryTree(parent, length){
 		this.generation = 0;
 		this.direction = 0;
 		this.branchesR = 0;
-		this.length = new animatableValue(length);
+		this.length = new animatableValue(data.length);
 		this.location = {
 			x:(0.0 + length * DIRECTION[this.direction].x), 
 			y:(0.0 + length * DIRECTION[this.direction].y)
 		};
 	}
-	this.thickness = new animatableValue(length * LENGTH_TO_THICKNESS_RATIO);
+	this.thickness = new animatableValue(data.length);// * LENGTH_TO_THICKNESS_RATIO);
 
-	this.addChildren = function(leftLength, rightLength){
-		this.addLeftChild(leftLength);
-		this.addRightChild(rightLength);
+	this.addChildren = function(leftData, rightData){//leftLength, rightLength){
+		this.addLeftChild(leftData);
+		this.addRightChild(rightData);
 	}
-	this.addLeftChild = function(leftLength){
-		this.left = new binaryTree(this, leftLength);
+	this.addLeftChild = function(leftData){//leftLength){
+		this.left = new binaryTree(this, leftData);
 		this.left.childType = LEFT;
 		this.left.direction = this.direction;
 		this.left.branchesR = this.branchesR;
@@ -331,8 +332,8 @@ function binaryTree(parent, length){
 		var boundaryAdjust = false;
 		boundaryAdjust |= checkBoundaryCrossing(this, this.left);
 	}
-	this.addRightChild = function(rightLength){
-		this.right = new binaryTree(this, rightLength);
+	this.addRightChild = function(rightData){//rightLength){
+		this.right = new binaryTree(this, rightData);
 		this.right.childType = RIGHT;
 		this.right.direction = mod6(this.direction+1);
 		this.right.branchesR = this.branchesR + 1;
