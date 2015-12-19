@@ -1,13 +1,18 @@
 // Algorithmic Snowflake
 //
+// apologize, i'm new to javacript and i'm a messy coder already
+//
 // brief overview of vocabulary used here:
 //  TREE: the snowflake is a binary tree, "var tree" is the head
 //  CYCLE: one growth cycle, leaves can choose to or not to sprout new growths
 //  FRAME: CYCLEs last certain number of FRAMES, (like 30), variable.
 
-var RIGHT = 1;
-var LEFT = 0;
-//sine and cosine 60deg increments, clockwise starting from 3:00
+
+// PROGRAM PARAMETERS
+const ANIMATIONS = 1;  // 0 or 1, turn animations OFF or ON
+
+// enum sine and cosine 60deg increments for quick lookup 
+// clockwise starting from 3:00
 var DIRECTION = [
 	{x:1, y:0},
 	{x:.5,y:-0.86602540378444},
@@ -16,28 +21,25 @@ var DIRECTION = [
 	{x:-.5,y:0.86602540378444},
 	{x:.5,y:0.86602540378444}
 ];
-
-// snowflake growth animations
-const ANIMATIONS = 0;  // 0 or 1, turn animations OFF or ON
-
+var RIGHT = 1;
+var LEFT = 0;
+// these refer to the animation cycle, the time between 2 frames of growth
 var CYCLE_PROGRESS = 0;  // updated mid loop (0.0 to 1.0) 1.0 means entering next step
 var CYCLE_LENGTH = 30; // # of frames each growth cycle lasts
 var CYCLE_FRAME = 0;
 var CYCLE_NUM = 0;
-
+// canvas stuff
 var canvas;  // HTML canvas, for saving image
-// drawing locations, based on screen resolution
-var originSnowflake;
-var originTree;
+var originSnowflake;  // screen coordinates
+var originTree;       // screen coordinates
 
-var tree;  // the snowflake
-
+var tree;  // the snowflake data model
+// GENERATOR PARAMETERS 
 var rightShorten = .666;
-var DEPTH = 8;
+var DEPTH = 4;
+var LENGTH_TO_THICKNESS_RATIO = 0.2;
 
 var noiseOff;
-
-var LENGTH_TO_THICKNESS_RATIO = 0.2;
 
 ////////////////////////////////
 //  P5.JS
@@ -46,18 +48,20 @@ function setup() {
 	canvas = createCanvas(windowWidth, windowHeight);
 	if(!ANIMATIONS)
 		noLoop();
+	else{
+		setInterval(
+			function(){
+				DEPTH = 4;
+				CYCLE_PROGRESS = 0;  // updated mid loop (0.0 to 1.0) 1.0 means entering next step
+				CYCLE_LENGTH = 30; // # of frames each growth cycle lasts
+				CYCLE_FRAME = 0;
+				CYCLE_NUM = 0;
+				tree = new binaryTree(undefined, {"length":20});
+			}, 8000);
+	}
 	resizeOrigins();
-	tree = new binaryTree(undefined, {"length":60});
+	tree = new binaryTree(undefined, {"length":20});
 	frameRate(60);
-	// setInterval(
-	// 	function(){
-	// 		DEPTH = 8;
-	// 		CYCLE_PROGRESS = 0;  // updated mid loop (0.0 to 1.0) 1.0 means entering next step
-	// 		CYCLE_LENGTH = 30; // # of frames each growth cycle lasts
-	// 		CYCLE_FRAME = 0;
-	// 		CYCLE_NUM = 0;
-	// 		tree = new binaryTree(undefined, {"length":20});
-	// 	}, 8000);
 }
 function mousePressed() {
 	DEPTH++;
@@ -67,13 +71,26 @@ function mousePressed() {
 	}
 }
 function draw() {
-	background(255);
+	background(0);
 	// a 30 deg line showing the crop position on the wedge
 	// stroke(200);
-	// line(originTree.x, originTree.y, originTree.x + 100*cos(30/180*Math.PI), originTree.y - 100*sin(30/180*Math.PI));
-	stroke(0);
+	// line(originTree.x, originTree.y, originTree.x + 200*cos(30/180*Math.PI), originTree.y - 200*sin(30/180*Math.PI));
+
+	var SLICE_LENGTH = 100;
+
+	fill(20, 255);
+	beginShape();
+	vertex(originTree.x, originTree.y);
+	vertex(originTree.x + SLICE_LENGTH*cos(30/180*Math.PI), originTree.y - SLICE_LENGTH*sin(30/180*Math.PI));
+	vertex(originTree.x + SLICE_LENGTH/(sqrt(3)*.5), originTree.y);
+	endShape(CLOSE);
+
+	stroke(255);
+	noFill();
 	drawTree(tree, originTree, 0);
-	drawSnowflake(tree, originSnowflake);
+	noStroke();
+	fill(255, 80);
+	drawFilledSnowflake(tree, originSnowflake);
 	// save(canvas, 'output.png');
 	if(ANIMATIONS){
 		CYCLE_PROGRESS = CYCLE_FRAME / CYCLE_LENGTH;
@@ -145,12 +162,26 @@ function growTree(tree, params){
 	setGlobalTreeVariables(tree);
 
 	function findLeaves(tree){
+		function growThicker(tree){
+			// tree.length.set(tree.length.value*1.1);
+			if(tree.maxGeneration - tree.generation < 3){
+				if(tree.maxGeneration - tree.generation == 0)
+					tree.thickness.set(tree.thickness.value*1.5);
+				else if(tree.maxGeneration - tree.generation == 1)
+					tree.thickness.set(tree.thickness.value*1.25);
+				else if(tree.maxGeneration - tree.generation == 2)
+					tree.thickness.set(tree.thickness.value*1.1);
+			}
+			// tree.thickness.set(tree.thickness.value*1.1);
+		}
 		var hasChild = false;
 		if(tree.left){
+			growThicker(tree);
 			hasChild = true;
 			findLeaves(tree.left);
 		}
 		if(tree.right){
+			growThicker(tree);
 			hasChild = true;
 			findLeaves(tree.right);
 		}
@@ -159,29 +190,35 @@ function growTree(tree, params){
 			// first branch only
 			if(tree.parent == undefined){
 				// tree.addLeftChild(tree.length.value * 3);//lengthThisTime)
-				tree.addLeftChild({"length":tree.length.value * random(3)});//lengthThisTime)
+				tree.addLeftChild({"length":tree.length.value * random(1.5)});//lengthThisTime)
 			}
 			// all other generations
 			else if(tree.branchesR < 3){
 				var shortenby = Math.pow(rightShorten, tree.branchesR);
 				if(tree.length.value * lengthThisTime * shortenby > 1 && tree.length.value > 0){
 					//make this relate to how many right turns, not right or left branch
-					if(random(10) < 5){
-						var left = random(30) + 15;
-						tree.addChildren({"length":left}, {"length":left * .7});
+					var newLength = random(10) + 15;
+					if(tree.thickness.value > newLength){
+						console.log("adjusting value");
+						newLength = tree.thickness.value + 3;
+					}
+					if(random(10) < 7){
+						// before adding right child, check with tree.parent.left
+						// if it exists, make right shorter than tree.parent.left's length
+						tree.addChildren({"length":newLength}, {"length":newLength * .7});
 						// tree.addChildren(
 						// 	tree.length.value * lengthThisTime, 
 						// 	tree.length.value * lengthThisTime * shortenby);
 					}
 					else{
-						tree.addLeftChild({"length":random(30) + 15});
+						tree.addLeftChild({"length":newLength});
 						// tree.addLeftChild(tree.length.value * lengthThisTime);
 					}
 				}
 			}
 		}
-		// tree.length.set(tree.length.value*1.1);
-		// tree.thickness.set(tree.thickness.value*1.1, tree.thickness.value);
+
+		//
 	}
 }
 /////////////////////////////
@@ -205,6 +242,7 @@ function setGlobalTreeVariables(tree){
 	}
 	function setGlobals(node){
 		node.maxGeneration = searchedMaxGeneration;
+		node.age = searchedMaxGeneration - node.generation + 1; 
 		if(node.left)
 			setGlobals(node.left);
 		if(node.right)
@@ -222,22 +260,17 @@ function mod6(input){
 // zeroPoint is lower bounds of growth
 function animatableValue(input, zeroPointIn){
 	this.set = function(input, zeroPointIn){
+		if(zeroPointIn == undefined){
+			if(this.value != undefined){
+				zeroPointIn = this.value;
+			}
+			else{
+				zeroPointIn = 0;
+			}
+		}
+		this.zeroPoint = zeroPointIn;
 		this.value = input;
-		if(this.zeroPoint == undefined){
-			if(zeroPointIn == undefined)
-				this.zeroPoint = 0;
-			else
-				this.zeroPoint = zeroPointIn;
-		}
-		else{
-			// this.zeroPoint = zeroPointIn;
-		}
-
 		if(ANIMATIONS){
-			// if(this.value == undefined)
-			// 	this.value = 0;
-			// this.valueToBeGrown = input - this.value;
-			// this.valueAnimated = this.value;
 			this.valueToBeGrown = input - this.zeroPoint;
 			this.valueAnimated = this.zeroPoint;
 		}
@@ -261,7 +294,6 @@ function animatableValue(input, zeroPointIn){
 		this.animatableValue = this.value;
 	}
 	this.get = function(){
-		// console.log(this.valueAnimated + " = " + this.valueToBeGrown + " " + this.zeroPoint);
 		if(ANIMATIONS) 
 			return this.valueAnimated;
 		else
@@ -295,7 +327,11 @@ function binaryTree(parent, data){
 	this.location;
 	this.dead; // set true, force node to be a leaf
 	this.branchesR;
+	this.age;    // how many generations old this node is  (maxGenerations - this.generation)
 	this.maxGeneration = 0;
+	// each node has a persisting set of random values that can be assigned to anything
+	this.randomValue = [ random(0,10), random(0,10), random(0,10), random(0,10), random(0,10), random(0,10) ];  
+
 	// manage properties related to the data structure
 	if(parent){
 		this.generation = parent.generation+1;
@@ -308,13 +344,14 @@ function binaryTree(parent, data){
 		this.generation = 0;
 		this.direction = 0;
 		this.branchesR = 0;
+		this.age = 1;
 		this.length = new animatableValue(data.length);
 		this.location = {
 			x:(0.0 + length * DIRECTION[this.direction].x), 
 			y:(0.0 + length * DIRECTION[this.direction].y)
 		};
 	}
-	this.thickness = new animatableValue(data.length);// * LENGTH_TO_THICKNESS_RATIO);
+	this.thickness = new animatableValue(data.length * random(LENGTH_TO_THICKNESS_RATIO, 1.0));
 
 	this.addChildren = function(leftData, rightData){//leftLength, rightLength){
 		this.addLeftChild(leftData);
@@ -414,6 +451,8 @@ function drawTree(tree, start, angleDepth){
 }
 function drawSnowflake(tree, location){
 	drawCenterHexagon(tree, location);
+	// for(var angle = 0; angle < 6; angle++)
+	// 	drawHexagonTreeWithReflections(tree, location, angle);
 	var length = tree.length.get();
 	for(var angle = 0; angle < 6; angle++){
 		var end = {
@@ -465,16 +504,21 @@ function drawSnowflake(tree, location){
 				x:(start.x + pThickness * DIRECTION[angle].x), 
 				y:(start.y + pThickness * DIRECTION[angle].y)
 			};
-			// first go to the bottom of tree, following the main stem
+			var thckAng = 2;
+			if(thickness > pThickness){
+				startThick = start;
+				thckAng = 1;
+			}
+			//first go to the bottom of tree, following the main stem
 			if(tree.left != undefined)
 				drawHexagonTreeWithReflections(tree.left, end, angle);
 			
 			var point1a = {
-				x:(startThick.x + thickness * DIRECTION[mod6(angle-2)].x),
-				y:(startThick.y + thickness * DIRECTION[mod6(angle-2)].y) };
+				x:(startThick.x + thickness * DIRECTION[mod6(angle-thckAng)].x),
+				y:(startThick.y + thickness * DIRECTION[mod6(angle-thckAng)].y) };
 			var point1b = {
-				x:(startThick.x + thickness * DIRECTION[mod6(angle+2)].x),
-				y:(startThick.y + thickness * DIRECTION[mod6(angle+2)].y) };
+				x:(startThick.x + thickness * DIRECTION[mod6(angle+thckAng)].x),
+				y:(startThick.y + thickness * DIRECTION[mod6(angle+thckAng)].y) };
 			var point2a = {
 				x:(end.x - thickness * DIRECTION[mod6(angle+2)].x),
 				y:(end.y - thickness * DIRECTION[mod6(angle+2)].y) };
@@ -503,6 +547,152 @@ function drawSnowflake(tree, location){
 		}
 	}
 }
+		// beginShape(TRIANGLE_STRIP);
+		// vertex(start.x, start.y);
+		// vertex(point1a.x, point1a.y);
+		// vertex(point1b.x, point1b.y);
+		// vertex(point2a.x, point2a.y);
+		// vertex(point2b.x, point2b.y);
+		// vertex(endVec2.x, endVec2.y);
+		// endShape();
+
+		// fill(255, 80);
+		// noStroke();
+		// beginShape();
+		// vertex(start.x, start.y);
+		// vertex(point1a.x, point1a.y);
+		// vertex(point1b.x, point1b.y);
+		// vertex(point2a.x, point2a.y);
+		// vertex(point2b.x, point2b.y);
+		// vertex(endVec2.x, endVec2.y);
+		// endShape(CLOSE);
+
+function drawFilledSnowflake(tree, location){
+	// for(var angle = 0; angle < 6; angle++)
+	// 	drawHexagonTreeWithReflections(tree, location, angle);
+	var length = tree.length.get();
+	// draw alternating every arm, 3 then 3, so no neighbors overlap
+	for(var angle = 0; angle < 6; angle+=2){
+		var end = {
+			x:(location.x + length * DIRECTION[mod6(angle)].x),
+			y:(location.y + length * DIRECTION[mod6(angle)].y) };
+		if(tree.left != undefined ){
+			drawHexagonTreeWithReflections(tree.left, end, angle);
+		}
+		if(tree.right != undefined){
+			drawHexagonTreeWithReflections(tree.right, end, mod6(angle+1));
+			drawHexagonTreeWithReflections(tree.right, end, mod6(angle-1));
+		}
+	}
+	for(var angle = 1; angle < 6; angle+=2){
+		var end = {
+			x:(location.x + length * DIRECTION[mod6(angle)].x),
+			y:(location.y + length * DIRECTION[mod6(angle)].y) };
+		if(tree.left != undefined ){
+			drawHexagonTreeWithReflections(tree.left, end, angle);
+		}
+		if(tree.right != undefined){
+			drawHexagonTreeWithReflections(tree.right, end, mod6(angle+1));
+			drawHexagonTreeWithReflections(tree.right, end, mod6(angle-1));
+		}
+	}
+	fill(20*tree.age + 150, 255);
+	drawCenterHexagon(tree, location);
+
+	function drawCenterHexagon(tree, start){
+		var length = tree.length.get();
+		var thickness = tree.thickness.get();
+		beginShape();
+		for(var angle = 0; angle < 6; angle++){
+			var point = {
+					x:(start.x + (length+thickness) * DIRECTION[mod6(angle)].x),
+					y:(start.y + (length+thickness) * DIRECTION[mod6(angle)].y) };
+			vertex(point.x, point.y);
+		}
+		endShape(CLOSE);
+	}
+	function drawHexagonTreeWithReflections(tree, start, angle){
+		if(tree != undefined){
+			// LENGTH and THICKNESS
+			var length = tree.length.get();
+			var thickness = tree.thickness.get();
+			var pThickness;
+			if(tree.parent) pThickness = tree.parent.thickness.get();
+			else 			pThickness = 0;
+			// thickness grows HEXAGONALLY, not scaling proportionally
+			thickness = tree.thickness.get();
+			if(thickness > tree.thickness.value)			
+				thickness = tree.thickness.value;
+			// START AND END
+			var end = {
+				x:(start.x + length * DIRECTION[angle].x), 
+				y:(start.y + length * DIRECTION[angle].y)
+			};
+			var endThick = {
+				x:(start.x + (length+thickness) * DIRECTION[angle].x), 
+				y:(start.y + (length+thickness) * DIRECTION[angle].y)
+			};
+			var startThick = {
+				x:(start.x + pThickness * DIRECTION[angle].x), 
+				y:(start.y + pThickness * DIRECTION[angle].y)
+			};
+			var thckAng = 2;
+			if(thickness > pThickness){
+				startThick = start;
+				thckAng = 1;
+			}
+			//first go to the bottom of tree, following the main stem
+			if(tree.left != undefined)
+				drawHexagonTreeWithReflections(tree.left, end, angle);
+			
+			var point1a = {
+				x:(startThick.x + thickness * DIRECTION[mod6(angle-thckAng)].x),
+				y:(startThick.y + thickness * DIRECTION[mod6(angle-thckAng)].y) };
+			var point1b = {
+				x:(startThick.x + thickness * DIRECTION[mod6(angle+thckAng)].x),
+				y:(startThick.y + thickness * DIRECTION[mod6(angle+thckAng)].y) };
+			var point2a = {
+				x:(end.x - thickness * DIRECTION[mod6(angle+2)].x),
+				y:(end.y - thickness * DIRECTION[mod6(angle+2)].y) };
+			var point2b = {
+				x:(end.x - thickness * DIRECTION[mod6(angle-2)].x),
+				y:(end.y - thickness * DIRECTION[mod6(angle-2)].y) };
+
+			// stroke(255,0,0);
+			// line(start.x, start.y, end.x, end.y);       // the major artery
+
+			// stroke(0);
+
+			// fill(255, 128 * sqrt(1.0/tree.generation));
+
+			fill(20*tree.age + 150 + (tree.randomValue[angle%6]-5)*2, 255);
+
+			beginShape();
+			vertex(startThick.x, startThick.y);
+			vertex(point1a.x, point1a.y);
+			vertex(point2a.x, point2a.y);
+			vertex(endThick.x, endThick.y);
+			vertex(point2b.x, point2b.y);
+			vertex(point1b.x, point1b.y);
+			endShape(CLOSE);
+
+			// line(startThick.x, startThick.y, point1a.x, point1a.y);
+			// line(startThick.x, startThick.y, point1b.x, point1b.y);
+			// connect outer border points
+			// line(point1a.x, point1a.y, point2a.x, point2a.y);
+			// line(point1b.x, point1b.y, point2b.x, point2b.y);
+			// join outer border ot the end point
+			// line(point2a.x, point2a.y, endThick.x, endThick.y);
+			// line(point2b.x, point2b.y, endThick.x, endThick.y);
+
+			if(tree.right != undefined){
+				drawHexagonTreeWithReflections(tree.right, end, mod6(angle+1) );
+				drawHexagonTreeWithReflections(tree.right, end, mod6(angle-1) );
+			}
+		}
+	}
+}
+
 
 function drawSnowflakeTree(tree, location){
 	for(var i = 0; i < 6; i++)
