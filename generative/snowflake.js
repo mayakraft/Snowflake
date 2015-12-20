@@ -1,11 +1,11 @@
 // Algorithmic Snowflake
 //
-// apologize, i'm terrible at javacript and already a messy coder
+// sorry bad at javascript
 //
-// brief overview of vocabulary used here:
+// vocabulary:
 //  TREE: the snowflake is a binary tree, "var tree" is the head
-//  CYCLE: one growth cycle, leaves can choose to or not to sprout new growths
-//  FRAME: CYCLEs last certain number of FRAMES, (like 30), variable.
+//  CYCLE: one growth cycle
+//  FRAME: a CYCLE contain many FRAMES
 
 
 // PROGRAM PARAMETERS
@@ -41,6 +41,16 @@ var LENGTH_TO_THICKNESS_RATIO = 0.8;
 
 var noiseOff;
 
+var atmosphere = [.8, .6, .3, .1, .05, .2, .6, .9];
+
+// var atmosphere = [{ "length":30, "thickness":20},
+//                   { "length":30, "thickness":20},
+//                   { "length":30, "thickness":20},
+//                   { "length":30, "thickness":20},
+//                   { "length":30, "thickness":20},
+//                   { "length":30, "thickness":20},
+//                  ];
+
 ////////////////////////////////
 //  P5.JS
 //////////////////////////////
@@ -60,7 +70,7 @@ function setup() {
 	// 		}, 8000);
 	// }
 	resizeOrigins();
-	tree = new binaryTree(undefined, {"length":15, "thickness":10});
+	tree = new binaryTree(undefined, {"length":50, "thickness":30});
 	frameRate(60);
 }
 function mousePressed() {
@@ -121,7 +131,7 @@ function animateGrowth(tree, progress){
 	function findLeaves(tree, progress){  // progress is 0.0 to 1.0
 		// ANIMATIONS
 		tree.length.animate(progress);
-		tree.thickness.animate(progress);// / LENGTH_TO_THICKNESS_RATIO);
+		tree.thickness.animate(progress);
 		if(tree.left){
 			findLeaves(tree.left, progress);
 		}
@@ -159,6 +169,40 @@ function growTree(tree, params){
 
 	findLeaves(tree);
 	setGlobalTreeVariables(tree);
+	operateOnEntireTree(tree);
+
+	function operateOnEntireTree(tree){
+
+		
+		// run neighbor arm too near on all the leaves
+		if(tree.left != undefined)
+			operateOnEntireTree(tree.left);
+		if(tree.right != undefined)
+			operateOnEntireTree(tree.right);
+		if(tree.left == undefined && tree.right == undefined)
+			neighborArmTooNear(tree);
+
+		function neighborArmTooNear(tree){
+			var stepsUp = traverseUpUntilBranch(tree, 0);
+			if(stepsUp != -1)
+				console.log("Steps Back: " + stepsUp);
+			function innerHuntForNextBranch(tree, howManyUp){
+
+			}
+			function traverseUpUntilBranch(tree, howManyUp){
+				if(tree.parent == undefined){
+					return -1;
+				}
+				if(tree.childType == LEFT){
+					return traverseUpUntilBranch(tree.parent, howManyUp+1);
+				}
+				else{
+					return howManyUp+1;
+				}
+			}
+		}
+
+	}
 
 	function findLeaves(tree){
 		function growThicker(tree){
@@ -184,7 +228,7 @@ function growTree(tree, params){
 			hasChild = true;
 			findLeaves(tree.right);
 		}
-	// GROW ANOTHER SNOWFLAKE
+	// GROW MORE CRYSTALS
 		if(!hasChild && !tree.dead){
 			// first branch only
 			if(tree.parent == undefined){
@@ -201,8 +245,8 @@ function growTree(tree, params){
 				if(tree.length.value * lengthThisTime * shortenby > 1 && tree.length.value > 0){
 					//make this relate to how many right turns, not right or left branch
 					var newLength = tree.length.value * random(1.3);
-					if(newLength < 5)
-						newLength = 5;
+					if(newLength < 30)
+						newLength = 30;
 					if(tree.thickness.value > newLength){
 						console.log("adjusting value");
 						newLength = tree.thickness.value + 3;
@@ -224,8 +268,6 @@ function growTree(tree, params){
 			}
 		}
 		growThicker(tree);
-
-		//
 	}
 }
 /////////////////////////////
@@ -360,7 +402,6 @@ function binaryTree(parent, data){
 			y:(0.0 + length * DIRECTION[this.direction].y)
 		};
 	}
-	// this.thickness = new animatableValue(data.length * random(LENGTH_TO_THICKNESS_RATIO, 1.0));
 
 	this.addChildren = function(leftData, rightData){//leftLength, rightLength){
 		this.addLeftChild(leftData);
@@ -375,10 +416,11 @@ function binaryTree(parent, data){
 			x:(this.location.x + this.left.length.value * DIRECTION[this.left.direction].x), 
 			y:(this.location.y + this.left.length.value * DIRECTION[this.left.direction].y)
 		};		
-		var boundaryAdjust = false;
-		boundaryAdjust |= checkBoundaryCrossing(this, this.left);
-		if(boundaryAdjust)
+		var newLength = checkBoundaryCrossing(this, this.left);
+		if(newLength != undefined){
 			console.log("shortening left child");
+			makeNodeDead(this.left, newLength, newLength * LENGTH_TO_THICKNESS_RATIO);
+		}
 	}
 	this.addRightChild = function(rightData){//rightLength){
 		this.right = new binaryTree(this, rightData);
@@ -389,10 +431,23 @@ function binaryTree(parent, data){
 			x:(this.location.x + this.right.length.value * DIRECTION[this.right.direction].x), 
 			y:(this.location.y + this.right.length.value * DIRECTION[this.right.direction].y)
 		};
-		var boundaryAdjust = false;
-		boundaryAdjust |= checkBoundaryCrossing(this, this.right);
-		if(boundaryAdjust)
+		var newLength = checkBoundaryCrossing(this, this.right);
+		if(newLength != undefined){
 			console.log("shortening right child");
+			makeNodeDead(this.right, newLength, newLength * LENGTH_TO_THICKNESS_RATIO);
+		}
+	}
+	function makeNodeDead(node, newLength, newThickness){
+		node.dead = true;
+		if(newThickness != undefined)
+			node.thickness.set(newThickness, 0);
+		if(newLength != undefined){
+			node.length.set(newLength, 0);
+			node.location = {
+				x:(node.parent.x + newLength * DIRECTION[node.direction].x), 
+				y:(node.parent.y + newLength * DIRECTION[node.direction].y)
+			};
+		}
 	}
 }
 /////////////////////////////////
@@ -411,22 +466,11 @@ function checkBoundaryCrossing(startNode, endNode){
 			{x:start.x, y:abs(start.y)}, 
 			{x:end.x, y:abs(end.y)}
 		);
-	// if result, boundary was crossed
-	if(result != undefined){
-		// result is new intersection
-		// infer new value: distance from start to new intersection
-		var newLength = Math.sqrt( (result.x-start.x)*(result.x-start.x) + (result.y-abs(start.y))*(result.y-abs(start.y)) );
-		endNode.length.set(newLength, 0);
-		var newThickness = newLength * LENGTH_TO_THICKNESS_RATIO;
-		endNode.thickness.set(newThickness, 0);
-		endNode.location = {
-			x:(start.x + newLength * DIRECTION[endNode.direction].x), 
-			y:(start.y + newLength * DIRECTION[endNode.direction].y)
-		};
-		endNode.dead = true;
-		return true;
+	if(result != undefined){   // if yes, the boundary was crossed, result is new intersection
+		// return distance from start to new intersection
+		return Math.sqrt( (result.x-start.x)*(result.x-start.x) + (result.y-abs(start.y))*(result.y-abs(start.y)) );
 	}
-	return false;
+	return undefined;
 }
 function RayLineIntersect(origin, dV, pA, pB){
 	// if intersection, returns point of intersection
