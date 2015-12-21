@@ -35,13 +35,13 @@ var originTree;       // screen coordinates
 
 var tree;  // the snowflake data model
 // GENERATOR PARAMETERS 
-var rightShorten = .666;
-var DEPTH = 7;
-var LENGTH_TO_THICKNESS_RATIO = 0.8;
+var DEPTH = 8;
+var matter = 40;
+// var atmosphere = [.8, .6, .3, .1, .05, .2, .6, .9];
+var atmosphere = [];// = [.2, .05, .1, .03, .1, .5, .05, .5, .8];
+var pressure = [];// = [false, true, false, false, true, true, false, true, true, true];
 
-var noiseOff;
 
-var atmosphere = [.8, .6, .3, .1, .05, .2, .6, .9];
 
 // var atmosphere = [{ "length":30, "thickness":20},
 //                   { "length":30, "thickness":20},
@@ -54,24 +54,39 @@ var atmosphere = [.8, .6, .3, .1, .05, .2, .6, .9];
 ////////////////////////////////
 //  P5.JS
 //////////////////////////////
+function initTree(){
+	console.log("calling init tree");
+	DEPTH = 8;
+	CYCLE_PROGRESS = 0;  // updated mid loop (0.0 to 1.0) 1.0 means entering next step
+	CYCLE_LENGTH = 30; // # of frames each growth cycle lasts
+	CYCLE_FRAME = 0;
+	CYCLE_NUM = 0;
+	tree = new binaryTree(undefined, {"length":0, "thickness":matter});
+	for(var i = 0; i < DEPTH; i++){
+		atmosphere[i] = random(1.0);
+		if(random(10) > 5)
+			pressure[i] = true;
+		else 
+			pressure[i] = false;
+	}
+	for(var i = 0; i < 3; i++){
+		var index = int(random(DEPTH));
+		atmosphere[index] = random(0.0, 0.1);
+	}
+	for(var i = 0; i < DEPTH; i++)
+		console.log("ATMOSPHERE: " + atmosphere[i] + "    PRESSURE: " + pressure[i]);
+}
+
 function setup() {
 	canvas = createCanvas(windowWidth, windowHeight);
+	resizeOrigins();
+	frameRate(60);
 	if(!ANIMATIONS)
 		noLoop();
-	// else{
-	// 	setInterval(
-	// 		function(){
-	// 			DEPTH = 3;
-	// 			CYCLE_PROGRESS = 0;  // updated mid loop (0.0 to 1.0) 1.0 means entering next step
-	// 			CYCLE_LENGTH = 30; // # of frames each growth cycle lasts
-	// 			CYCLE_FRAME = 0;
-	// 			CYCLE_NUM = 0;
-	// 			tree = new binaryTree(undefined, {"length":40});
-	// 		}, 8000);
-	// }
-	resizeOrigins();
-	tree = new binaryTree(undefined, {"length":50, "thickness":30});
-	frameRate(60);
+	else{
+		setInterval(function(){initTree();}, 12000);
+	}
+	initTree();
 }
 function mousePressed() {
 	DEPTH++;
@@ -86,13 +101,13 @@ function draw() {
 	// stroke(200);
 	// line(originTree.x, originTree.y, originTree.x + 200*cos(30/180*Math.PI), originTree.y - 200*sin(30/180*Math.PI));
 
-	fill(40, 255);
-	beginShape();
-	var SLICE_LENGTH = 140;
-	vertex(originTree.x, originTree.y);
-	vertex(originTree.x + SLICE_LENGTH*cos(30/180*Math.PI), originTree.y - SLICE_LENGTH*sin(30/180*Math.PI));
-	vertex(originTree.x + SLICE_LENGTH/(sqrt(3)*.5), originTree.y);
-	endShape(CLOSE);
+	// fill(40, 255);
+	// beginShape();
+	// var SLICE_LENGTH = 140;
+	// vertex(originTree.x, originTree.y);
+	// vertex(originTree.x + SLICE_LENGTH*cos(30/180*Math.PI), originTree.y - SLICE_LENGTH*sin(30/180*Math.PI));
+	// vertex(originTree.x + SLICE_LENGTH/(sqrt(3)*.5), originTree.y);
+	// endShape(CLOSE);
 
 	stroke(255);
 	noFill();
@@ -155,121 +170,92 @@ function stopAllAnimations(tree){
 	}
 }
 
-var lengthThisTime = 1.0;
-
 function growTree(tree, params){
 	// var density = params["density"];
 	// var pressure = params["pressure"];
 	// var time = params["time"];
 	// var time = 5;
 
-	// lengthThisTime = Math.pow(noise(noiseOff)*2.0,1.5);
-	lengthThisTime = .8;
-	// noiseOff += .1;
-
 	findLeaves(tree);
 	setGlobalTreeVariables(tree);
-	operateOnEntireTree(tree);
-
-	function operateOnEntireTree(tree){
-
-		
-		// run neighbor arm too near on all the leaves
-		if(tree.left != undefined)
-			operateOnEntireTree(tree.left);
-		if(tree.right != undefined)
-			operateOnEntireTree(tree.right);
-		if(tree.left == undefined && tree.right == undefined)
-			neighborArmTooNear(tree);
-
-		function neighborArmTooNear(tree){
-			var stepsUp = traverseUpUntilBranch(tree, 0);
-			if(stepsUp != -1)
-				console.log("Steps Back: " + stepsUp);
-			function innerHuntForNextBranch(tree, howManyUp){
-
-			}
-			function traverseUpUntilBranch(tree, howManyUp){
-				if(tree.parent == undefined){
-					return -1;
-				}
-				if(tree.childType == LEFT){
-					return traverseUpUntilBranch(tree.parent, howManyUp+1);
-				}
-				else{
-					return howManyUp+1;
-				}
-			}
-		}
-
-	}
 
 	function findLeaves(tree){
-		function growThicker(tree){
-			// tree.length.set(tree.length.value*1.1);
-			if(tree.age < 3){
-				if(tree.maxGeneration - tree.generation == 0)
-					tree.thickness.set(tree.thickness.value*(1+(1/(tree.maxGeneration+2))) );
-				else if(tree.maxGeneration - tree.generation == 1)
-					tree.thickness.set(tree.thickness.value*(1+(1/(tree.maxGeneration+3))) );
-				else if(tree.maxGeneration - tree.generation == 2)
-					tree.thickness.set(tree.thickness.value*(1+(1/(tree.maxGeneration+4))) );
-			}
-			// tree.thickness.set(tree.thickness.value*1.1);
-		}
-		var hasChild = false;
-		if(tree.left){
-			// growThicker(tree);
-			hasChild = true;
-			findLeaves(tree.left);
-		}
-		if(tree.right){
-			// growThicker(tree);
-			hasChild = true;
+		if(tree.left)
+			findLeaves(tree.left);		
+		if(tree.right)
 			findLeaves(tree.right);
-		}
+
 	// GROW MORE CRYSTALS
-		if(!hasChild && !tree.dead){
-			// first branch only
-			if(tree.parent == undefined){
-				// tree.addLeftChild(tree.length.value * 3);//lengthThisTime)
-				var newLength = tree.length.value * random(3);
-				if(newLength < tree.length.value)
-					newLength = tree.length.value + 10;
-				var newThickness = newLength * random(LENGTH_TO_THICKNESS_RATIO);
-				tree.addLeftChild({"length":newLength, "thickness": newThickness});//lengthThisTime)
+		if(tree.left == undefined && tree.right == undefined && !tree.dead && tree.branchesR < 3){
+			
+			// var twoBranches = (random(10) < 8);
+			var twoBranches = pressure[DEPTH];
+			if(tree.parent == undefined) twoBranches = false;  // force first seed to branch only left
+
+			var shortenby = Math.pow(0.4, tree.branchesR);
+			// var newLength = tree.length.value * atmosphere[DEPTH];
+			var newLength = matter * cos(PI * .5 * atmosphere[DEPTH])  * shortenby;
+			var newThickness = matter * sin(PI * .5 * atmosphere[DEPTH]) * shortenby;
+
+			if(newLength < tree.thickness.value){
+				console.log("adjusting value");
+				newLength = tree.thickness.value + 3;
 			}
-			// all other generations
-			else if(tree.branchesR < 3){
-				var shortenby = Math.pow(rightShorten, tree.branchesR);
-				if(tree.length.value * lengthThisTime * shortenby > 1 && tree.length.value > 0){
-					//make this relate to how many right turns, not right or left branch
-					var newLength = tree.length.value * random(1.3);
-					if(newLength < 30)
-						newLength = 30;
-					if(tree.thickness.value > newLength){
-						console.log("adjusting value");
-						newLength = tree.thickness.value + 3;
-					}
-					var newThickness = newLength * random(LENGTH_TO_THICKNESS_RATIO);
-					if(random(10) < 8){
-						// before adding right child, check with tree.parent.left
-						// if it exists, make right shorter than tree.parent.left's length
-						tree.addChildren({"length":newLength, "thickness":newThickness}, {"length":newLength * .7, "thickness":newThickness * .7});
-						// tree.addChildren(
-						// 	tree.length.value * lengthThisTime, 
-						// 	tree.length.value * lengthThisTime * shortenby);
-					}
-					else{
-						tree.addLeftChild({"length":newLength, "thickness":newThickness});
-						// tree.addLeftChild(tree.length.value * lengthThisTime);
-					}
+
+			if(1){//newLength > 5){
+				// if(newLength < 30)
+				// 	newLength = 30;
+
+				// ADD CHILDREN
+				// left
+				tree.addLeftChild({"length":newLength, "thickness":newThickness});
+				var leftIntersect = checkBoundaryCrossing(tree, tree.left);
+				if(leftIntersect != undefined)
+					makeNodeDead(tree.left, leftIntersect, newThickness );
+				// right
+				if(twoBranches){
+					tree.addRightChild({"length":newLength * .7, "thickness":newThickness * .7});
+					var rightIntersect = checkBoundaryCrossing(tree, tree.right);
+					if(rightIntersect != undefined)
+						makeNodeDead(tree.right, rightIntersect, newThickness );
 				}
 			}
 		}
-		growThicker(tree);
+		// grow thicker
+		if(tree.age < 3){
+			if(tree.maxGeneration - tree.generation == 0)
+				tree.thickness.set(tree.thickness.value*(1+(1/(tree.maxGeneration+2))) );
+			else if(tree.maxGeneration - tree.generation == 1)
+				tree.thickness.set(tree.thickness.value*(1+(1/(tree.maxGeneration+3))) );
+			else if(tree.maxGeneration - tree.generation == 2)
+				tree.thickness.set(tree.thickness.value*(1+(1/(tree.maxGeneration+4))) );
+		}
+
 	}
+	// function operateOnEntireTree(tree){
+	// 	// run neighbor arm too near on all the leaves
+	// 	if(tree.left != undefined)
+	// 		operateOnEntireTree(tree.left);
+	// 	if(tree.right != undefined)
+	// 		operateOnEntireTree(tree.right);
+	// 	if(tree.left == undefined && tree.right == undefined)
+	// 		neighborArmTooNear(tree);
+
+	// 	function neighborArmTooNear(tree){
+	// 		var stepsUp = traverseUpUntilBranch(tree, 0);
+	// 		// if(stepsUp != -1)
+	// 		// 	console.log("Steps Back: " + stepsUp);
+	// 		function traverseUpUntilBranch(tree, howManyUp){
+	// 			if(tree.parent == undefined)
+	// 				return -1;
+	// 			if(tree.childType == LEFT)
+	// 				return traverseUpUntilBranch(tree.parent, howManyUp+1);
+	// 			return howManyUp+1;
+	// 		}
+	// 	}
+	// }	
 }
+
 /////////////////////////////
 //  DATA STRUCTURES
 ////////////////////////////////
@@ -310,12 +296,10 @@ function mod6(input){
 function animatableValue(input, zeroPointIn){
 	this.set = function(input, zeroPointIn){
 		if(zeroPointIn == undefined){
-			if(this.value != undefined){
+			if(this.value != undefined)
 				zeroPointIn = this.value;
-			}
-			else{
+			else
 				zeroPointIn = 0;
-			}
 		}
 		this.zeroPoint = zeroPointIn;
 		this.value = input;
@@ -355,6 +339,19 @@ function animatableValue(input, zeroPointIn){
 	this.valueToBeGrown;
 	
 	this.set(input, zeroPointIn);
+}
+
+function makeNodeDead(node, newLength, newThickness){
+	node.dead = true;
+	if(newThickness != undefined)
+		node.thickness.set(newThickness, 0);
+	if(newLength != undefined){
+		node.length.set(newLength, 0);
+		node.location = {
+			x:(node.parent.x + newLength * DIRECTION[node.direction].x), 
+			y:(node.parent.y + newLength * DIRECTION[node.direction].y)
+		};
+	}
 }
 
 // data is expecting to contain {"length": ... , "thickness:" ... , }
@@ -398,16 +395,15 @@ function binaryTree(parent, data){
 		this.length = new animatableValue(data.length, 0);
 		this.thickness = new animatableValue(data.thickness, 0);
 		this.location = {
-			x:(0.0 + length * DIRECTION[this.direction].x), 
-			y:(0.0 + length * DIRECTION[this.direction].y)
+			x:(0.0 + this.length.value * DIRECTION[this.direction].x), 
+			y:(0.0 + this.length.value * DIRECTION[this.direction].y)
 		};
 	}
-
-	this.addChildren = function(leftData, rightData){//leftLength, rightLength){
+	this.addChildren = function(leftData, rightData){
 		this.addLeftChild(leftData);
 		this.addRightChild(rightData);
 	}
-	this.addLeftChild = function(leftData){//leftLength){
+	this.addLeftChild = function(leftData){
 		this.left = new binaryTree(this, leftData);
 		this.left.childType = LEFT;
 		this.left.direction = this.direction;
@@ -416,13 +412,8 @@ function binaryTree(parent, data){
 			x:(this.location.x + this.left.length.value * DIRECTION[this.left.direction].x), 
 			y:(this.location.y + this.left.length.value * DIRECTION[this.left.direction].y)
 		};		
-		var newLength = checkBoundaryCrossing(this, this.left);
-		if(newLength != undefined){
-			console.log("shortening left child");
-			makeNodeDead(this.left, newLength, newLength * LENGTH_TO_THICKNESS_RATIO);
-		}
 	}
-	this.addRightChild = function(rightData){//rightLength){
+	this.addRightChild = function(rightData){
 		this.right = new binaryTree(this, rightData);
 		this.right.childType = RIGHT;
 		this.right.direction = mod6(this.direction+1);
@@ -431,23 +422,6 @@ function binaryTree(parent, data){
 			x:(this.location.x + this.right.length.value * DIRECTION[this.right.direction].x), 
 			y:(this.location.y + this.right.length.value * DIRECTION[this.right.direction].y)
 		};
-		var newLength = checkBoundaryCrossing(this, this.right);
-		if(newLength != undefined){
-			console.log("shortening right child");
-			makeNodeDead(this.right, newLength, newLength * LENGTH_TO_THICKNESS_RATIO);
-		}
-	}
-	function makeNodeDead(node, newLength, newThickness){
-		node.dead = true;
-		if(newThickness != undefined)
-			node.thickness.set(newThickness, 0);
-		if(newLength != undefined){
-			node.length.set(newLength, 0);
-			node.location = {
-				x:(node.parent.x + newLength * DIRECTION[node.direction].x), 
-				y:(node.parent.y + newLength * DIRECTION[node.direction].y)
-			};
-		}
 	}
 }
 /////////////////////////////////
@@ -579,7 +553,7 @@ function drawSnowflake(tree, location){
 				y:(end.y - thickness * DIRECTION[mod6(angle-2)].y) };
 
 			// fill(255, 128 * sqrt(1.0/tree.generation));
-			fill(12*tree.age + 120 + (tree.randomValue[angle%6]-5)*2, 255);
+			fill(12*tree.age + 120 + (tree.randomValue[angle%6]-5)*2, 250);
 			beginShape();
 			vertex(startThick.x, startThick.y);
 			vertex(point1a.x, point1a.y);
@@ -588,7 +562,6 @@ function drawSnowflake(tree, location){
 			vertex(point2b.x, point2b.y);
 			vertex(point1b.x, point1b.y);
 			endShape(CLOSE);
-
 		}
 	}
 }
