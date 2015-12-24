@@ -1,8 +1,5 @@
 // Algorithmic Snowflake
 //
-// sorry bad at javascript
-//
-// vocabulary:
 //  TREE: the snowflake is a binary tree, "var tree" is the head
 //  CYCLE: one growth cycle
 //  FRAME: a CYCLE contain many FRAMES
@@ -35,15 +32,15 @@ var originTree;       // screen coordinates
 
 var tree;  // the snowflake data model
 // GENERATOR PARAMETERS 
-var DEPTH = 8;
 var matter = 40;
-// var atmosphere = [.8, .6, .3, .1, .05, .2, .6, .9];
-var atmosphere = [];// = [.2, .05, .1, .03, .1, .5, .05, .5, .8];
-var pressure = [];// = [false, true, false, false, true, true, false, true, true, true];
+// var pressure = [.8, .6, .3, .1, .05, .2, .6, .9];
+var pressure = [];// = [.2, .05, .1, .03, .1, .5, .05, .5, .8];
+var density = [];// = [false, true, false, false, true, true, false, true, true, true];
+var moisture = [];
 
+var ITERATIONS;
 
-
-// var atmosphere = [{ "length":30, "thickness":20},
+// var pressure = [{ "length":30, "thickness":20},
 //                   { "length":30, "thickness":20},
 //                   { "length":30, "thickness":20},
 //                   { "length":30, "thickness":20},
@@ -54,46 +51,72 @@ var pressure = [];// = [false, true, false, false, true, true, false, true, true
 ////////////////////////////////
 //  P5.JS
 //////////////////////////////
-function initTree(){
-	console.log("calling init tree");
-	DEPTH = 8;
+function buildAtmosphere(){
+	ITERATIONS = random(10) + 6;
+	for(var i = 0; i < ITERATIONS; i++){
+		pressure[i] = random(1);
+		if(random(10) > 5)
+			density[i] = true;
+		else 
+			density[i] = false;
+		moisture[i] = random(1);
+	}
+	for(var i = 0; i < 3; i++){
+		var index = int(random(ITERATIONS));
+		pressure[index] = random(0.0, 0.1);
+	}
+	for(var i = 0; i < ITERATIONS; i++)
+		console.log("ATMOSPHERE: pressure:" + pressure[i] + "  density:" + density[i] + "  moisture:" + moisture[i]);
+}
+
+function resetAnimation(){
 	CYCLE_PROGRESS = 0;  // updated mid loop (0.0 to 1.0) 1.0 means entering next step
 	CYCLE_LENGTH = 30; // # of frames each growth cycle lasts
 	CYCLE_FRAME = 0;
 	CYCLE_NUM = 0;
+}
+
+function initTree(){
+	resetAnimation();
 	tree = new binaryTree(undefined, {"length":0, "thickness":matter});
-	for(var i = 0; i < DEPTH; i++){
-		atmosphere[i] = random(1.0);
-		if(random(10) > 5)
-			pressure[i] = true;
-		else 
-			pressure[i] = false;
-	}
-	for(var i = 0; i < 3; i++){
-		var index = int(random(DEPTH));
-		atmosphere[index] = random(0.0, 0.1);
-	}
-	for(var i = 0; i < DEPTH; i++)
-		console.log("ATMOSPHERE: " + atmosphere[i] + "    PRESSURE: " + pressure[i]);
+	buildAtmosphere();
 }
 
 function setup() {
 	canvas = createCanvas(windowWidth, windowHeight);
 	resizeOrigins();
 	frameRate(60);
-	if(!ANIMATIONS)
-		noLoop();
-	else{
-		setInterval(function(){initTree();}, 12000);
-	}
 	initTree();
-}
-function mousePressed() {
-	DEPTH++;
-	if(!ANIMATIONS){
-		growTree(tree);
-		draw(tree);
+	if(ANIMATIONS)
+		setInterval(function(){initTree();}, 12000);
+	else{
+		noLoop();
+		// grow and draw a tree
+		for(var i = 0; i < ITERATIONS; i++){
+			growTree(tree, {"pressure":pressure[i], "density":density[i], "moisture":moisture[i]});
+		}
+		draw();
 	}
+}
+
+function saveImage(){
+	var c=document.getElementById("defaultCanvas");
+	var d=c.toDataURL("image/png");
+	var w=window.open('about:blank','image from canvas');
+	w.document.write("<img src='"+d+"' alt='from canvas'/>");
+}
+
+function mousePressed() {
+	// DEPTH++;
+	// if(!ANIMATIONS){
+	// 	growTree(tree);
+	// 	draw(tree);
+	// }
+	initTree();
+	for(var i = 0; i < ITERATIONS; i++){
+		growTree(tree, {"pressure":pressure[i], "density":density[i], "moisture":moisture[i]});
+	}
+	draw();
 }
 function draw() {
 	background(0);
@@ -123,13 +146,14 @@ function draw() {
 
 		animateGrowth(tree, CYCLE_PROGRESS);
 	
-		if(CYCLE_FRAME >= CYCLE_LENGTH && DEPTH > 0){
+		if(CYCLE_FRAME >= CYCLE_LENGTH && CYCLE_NUM < ITERATIONS){
+			stopAllAnimations(tree);
+			growTree(tree, {"pressure":pressure[CYCLE_NUM], "density":density[CYCLE_NUM], "moisture":moisture[CYCLE_NUM]});
 			CYCLE_NUM++;
 			CYCLE_FRAME = 0;
-			DEPTH--;
 			CYCLE_PROGRESS = CYCLE_FRAME / CYCLE_LENGTH;
-			stopAllAnimations(tree);
-			growTree(tree);
+			// stopAllAnimations(tree);
+			// growTree(tree);
 		}
 		if(CYCLE_FRAME < CYCLE_LENGTH)
 			CYCLE_FRAME++;
@@ -170,11 +194,10 @@ function stopAllAnimations(tree){
 	}
 }
 
-function growTree(tree, params){
-	// var density = params["density"];
-	// var pressure = params["pressure"];
-	// var time = params["time"];
-	// var time = 5;
+function growTree(tree, atmosphere){
+	var nPressure = atmosphere["pressure"];
+	var nDensity = atmosphere["density"];
+	var nMoisture = atmosphere["moisture"];
 
 	findLeaves(tree);
 	setGlobalTreeVariables(tree);
@@ -189,13 +212,13 @@ function growTree(tree, params){
 		if(tree.left == undefined && tree.right == undefined && !tree.dead && tree.branchesR < 3){
 			
 			// var twoBranches = (random(10) < 8);
-			var twoBranches = pressure[DEPTH];
+			var twoBranches = nDensity;
 			if(tree.parent == undefined) twoBranches = false;  // force first seed to branch only left
 
 			var shortenby = Math.pow(0.4, tree.branchesR);
-			// var newLength = tree.length.value * atmosphere[DEPTH];
-			var newLength = matter * cos(PI * .5 * atmosphere[DEPTH])  * shortenby;
-			var newThickness = matter * sin(PI * .5 * atmosphere[DEPTH]) * shortenby;
+			// var newLength = tree.length.value * nPressure[DEPTH];
+			var newLength = matter * cos(PI * .5 * nPressure)  * shortenby;
+			var newThickness = matter * sin(PI * .5 * nPressure) * shortenby;
 
 			if(newLength < tree.thickness.value){
 				console.log("adjusting value");
