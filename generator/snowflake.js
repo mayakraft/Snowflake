@@ -32,7 +32,7 @@ var originTree;       // screen coordinates
 
 var tree;  // the snowflake data model
 // GENERATOR PARAMETERS 
-var matter = 40;
+var matter = 20;
 // var pressure = [.8, .6, .3, .1, .05, .2, .6, .9];
 var pressure = [];// = [.2, .05, .1, .03, .1, .5, .05, .5, .8];
 var density = [];// = [false, true, false, false, true, true, false, true, true, true];
@@ -51,24 +51,36 @@ var ITERATIONS;
 ////////////////////////////////
 //  P5.JS
 //////////////////////////////
+// function buildAtmosphere(){
+// 	ITERATIONS = 3;//random(5) + 6;
+// 	for(var i = 0; i < ITERATIONS; i++){
+// 		pressure[i] = random(1);
+// 		if(random(10) > 5)
+// 			density[i] = true;
+// 		else 
+// 			density[i] = false;
+// 		moisture[i] = random(1);
+// 	}
+// 	for(var i = 0; i < 3; i++){
+// 		var index = int(random(ITERATIONS));
+// 		pressure[index] = random(0.0, 0.1);
+// 	}
+// 	for(var i = 0; i < ITERATIONS; i++)
+// 		console.log("ATMOSPHERE: pressure:" + pressure[i] + "  density:" + density[i] + "  moisture:" + moisture[i]);
+// }
 function buildAtmosphere(){
-	ITERATIONS = random(10) + 6;
+	ITERATIONS = 3;//random(5) + 6;
 	for(var i = 0; i < ITERATIONS; i++){
-		pressure[i] = random(1);
+		pressure[i] = random(.5) + .5;
 		if(random(10) > 5)
 			density[i] = true;
 		else 
 			density[i] = false;
-		moisture[i] = random(1);
-	}
-	for(var i = 0; i < 3; i++){
-		var index = int(random(ITERATIONS));
-		pressure[index] = random(0.0, 0.1);
+		moisture[i] = random(.5);
 	}
 	for(var i = 0; i < ITERATIONS; i++)
 		console.log("ATMOSPHERE: pressure:" + pressure[i] + "  density:" + density[i] + "  moisture:" + moisture[i]);
 }
-
 function resetAnimation(){
 	CYCLE_PROGRESS = 0;  // updated mid loop (0.0 to 1.0) 1.0 means entering next step
 	CYCLE_LENGTH = 30; // # of frames each growth cycle lasts
@@ -217,11 +229,14 @@ function growTree(tree, atmosphere){
 
 			var shortenby = Math.pow(0.4, tree.branchesR);
 			// var newLength = tree.length.value * nPressure[DEPTH];
-			var newLength = matter * cos(PI * .5 * nPressure)  * shortenby;
-			var newThickness = matter * sin(PI * .5 * nPressure) * shortenby;
+			var newLength = matter * cos(PI * .5 * nPressure)  * shortenby * (3+tree.generation);
+			var newThickness = matter * sin(PI * .5 * nPressure) * shortenby * (tree.generation);
+			var newThinness = undefined;
+			if(nMoisture < .5) 
+				newThinness = random(.15)+.05;
 
 			if(newLength < tree.thickness.value){
-				console.log("adjusting value");
+				console.log("adjusting value, length is smaller than thickness");
 				newLength = tree.thickness.value + 3;
 			}
 
@@ -231,13 +246,13 @@ function growTree(tree, atmosphere){
 
 				// ADD CHILDREN
 				// left
-				tree.addLeftChild({"length":newLength, "thickness":newThickness});
+				tree.addLeftChild({"length":newLength, "thickness":newThickness, "thinness":newThinness});
 				var leftIntersect = checkBoundaryCrossing(tree, tree.left);
 				if(leftIntersect != undefined)
 					makeNodeDead(tree.left, leftIntersect, newThickness );
 				// right
 				if(twoBranches){
-					tree.addRightChild({"length":newLength * .7, "thickness":newThickness * .7});
+					tree.addRightChild({"length":newLength * .7, "thickness":newThickness * .7, "thinness":newThinness});
 					var rightIntersect = checkBoundaryCrossing(tree, tree.right);
 					if(rightIntersect != undefined)
 						makeNodeDead(tree.right, rightIntersect, newThickness );
@@ -399,7 +414,9 @@ function binaryTree(parent, data){
 	this.age;    // how many generations old this node is  (maxGenerations - this.generation)
 	this.maxGeneration = 0;
 	// each node has a persisting set of random values that can be assigned to anything
-	this.randomValue = [ random(0,10), random(0,10), random(0,10), random(0,10), random(0,10), random(0,10) ];  
+	this.randomValue = [ random(0,10), random(0,10), random(0,10), random(0,10), random(0,10), random(0,10) ]; 
+	// this.details = undefined;
+	this.details = {"phalanges":undefined, "thinner":data.thinness};
 
 	// manage properties related to the data structure
 	if(parent){
@@ -585,6 +602,42 @@ function drawSnowflake(tree, location){
 			vertex(point2b.x, point2b.y);
 			vertex(point1b.x, point1b.y);
 			endShape(CLOSE);
+
+			// HEXAGON ARTIFACTS
+			// edge thinning
+			if(tree.details.thinner != undefined){
+				var thinness = (tree.details.thinner) * thickness;
+
+				var edges = [point1b, point2b, endThick, point2a, point1a];
+
+				for(var i = 0; i < 4; i++){
+					// make color universally directionally dependent
+					var fillVal = 1;//mod6(angle-(i - 1.5));
+					if(mod6(angle-(i - 1.5)) >= 3)
+						fillVal = -1;
+					fillVal = sin(mod6(angle-(i - 1.5)));
+					fill(12*(tree.age + (fillVal*3.5)) + 120 + (tree.randomValue[angle%6]-5)*2, 250);
+					var edgeNear = {
+						x:(edges[i].x + thinness * DIRECTION[mod6(angle-i)].x),
+						y:(edges[i].y + thinness * DIRECTION[mod6(angle-i)].y) };
+					var edgeFar = {
+						x:(edges[i+1].x + thinness * DIRECTION[mod6(angle-i + 3)].x),
+						y:(edges[i+1].y + thinness * DIRECTION[mod6(angle-i + 3)].y) };
+					var innerNear = {
+						x:(edgeNear.x + thinness * DIRECTION[mod6(angle-i+2 + 3)].x),
+						y:(edgeNear.y + thinness * DIRECTION[mod6(angle-i+2 + 3)].y) };
+					var innerFar = {
+						x:(edgeFar.x + thinness * DIRECTION[mod6(angle-i+4)].x),
+						y:(edgeFar.y + thinness * DIRECTION[mod6(angle-i+4)].y) };
+					beginShape();
+					vertex(edgeNear.x, edgeNear.y);
+					vertex(edgeFar.x, edgeFar.y);
+					vertex(innerFar.x, innerFar.y);
+					vertex(innerNear.x, innerNear.y);
+					endShape(CLOSE);
+				}
+			}
+
 		}
 	}
 }

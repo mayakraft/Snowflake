@@ -1,22 +1,3 @@
-
-//void setup(){
-//  size(640, 320);
-//  background(50);
-//    noStroke();
-//  for(int i = 0; i < 5000; i++){
-//    fill(random(255), 0, random(255), 5);
-//    ellipse(random(width), random(height), 50, 50);
-//  }
-//  save("output.png");
-//  exit();
-//}
-
-// Algorithmic Snowflake
-//
-//  TREE: the snowflake is a binary tree, "var tree" is the head
-//  CYCLE: one growth cycle
-//  FRAME: a CYCLE contain many FRAMES
-
 class Point{
   float x;
   float y;
@@ -33,11 +14,31 @@ class Point{
 class Properties{
   float length;
   float thickness;
-  Properties(float l, float t){
+  float thinness;
+  Properties(float l, float t, float thn){
     this.length = l;
     this.thickness = t;
+    this.thinness = thn;
   }
 };
+
+//void setup(){
+//  size(640, 320);
+//  background(50);
+//    noStroke();
+//  for(int i = 0; i < 5000; i++){
+//    fill(random(255), 0, random(255), 5);
+//    ellipse(random(width), random(height), 50, 50);
+//  }
+ //save("output.png");
+ //exit();
+//}
+
+// Algorithmic Snowflake
+//
+//  TREE: the snowflake is a binary tree, "var tree" is the head
+//  CYCLE: one growth cycle
+//  FRAME: a CYCLE contain many FRAMES
 
 
 // PROGRAM PARAMETERS
@@ -45,6 +46,13 @@ boolean ANIMATIONS = false;  // 0 or 1, turn animations OFF or ON
 
 // enum sine and cosine 60deg increments for quick lookup 
 // clockwise starting from 3:00
+//float[] DIRECTION = {1, 0,
+//  .5,  -0.86602540378444,
+//  -.5, -0.86602540378444,
+//  -1,  0,
+//  -.5, 0.86602540378444,
+//  .5,  0.86602540378444};
+  
 Point[] DIRECTION = {new Point(1, 0),
   new Point(.5,  -0.86602540378444),
   new Point(-.5, -0.86602540378444),
@@ -60,7 +68,7 @@ int CYCLE_FRAME = 0;
 int CYCLE_NUM = 0;
 // canvas stuff
 //var canvas;  // HTML canvas, for saving image
-Point originSnowflake;  // screen coordinates
+Point originSnowflake = new Point(400, 400);  // screen coordinates
 Point originTree;       // screen coordinates
 
 binaryTree tree;  // the snowflake data model
@@ -108,7 +116,7 @@ void resetAnimations(){
 }
 void initTree(){
   resetAnimations();
-  tree = new binaryTree(null, new Properties(0.0, matter));
+  tree = new binaryTree(null, new Properties(0.0, matter, 0.0));
   buildAtmosphere();
 }
 
@@ -133,6 +141,8 @@ void setup() {
     }
     draw();
   }
+  //save("output.png");
+  //exit();
 }
 void mousePressed() {
   // DEPTH++;
@@ -161,9 +171,9 @@ void draw() {
   // vertex(originTree.x + SLICE_LENGTH/(sqrt(3)*.5), originTree.y);
   // endShape(CLOSE);
 
-  stroke(255);
-  noFill();
-  drawTree(tree, originTree, 0);
+  //stroke(255);
+  //noFill();
+  //drawTree(tree, originTree, 0);
   noStroke();
   fill(255, 80);
   drawSnowflake(tree, originSnowflake);
@@ -246,6 +256,9 @@ void growTree(binaryTree node, float kPressure, boolean kDensity, float kMoistur
       // var newLength = node.length.value * pressure[DEPTH];
       float newLength = matter * cos(PI * .5 * kPressure)  * shortenby;
       float newThickness = matter * sin(PI * .5 * kPressure) * shortenby;
+      float newThinness = 0.0;
+      if(kMoisture < .5)
+        newThinness = random(.15) + .05;
 
       if(newLength < node.thickness){
         println("adjusting value");
@@ -258,13 +271,13 @@ void growTree(binaryTree node, float kPressure, boolean kDensity, float kMoistur
 
         // ADD CHILDREN
         // left
-        node.addLeftChild(new Properties(newLength, newThickness));
+        node.addLeftChild(new Properties(newLength, newThickness, newThinness));
         float leftIntersect = checkBoundaryCrossing(node, node.left);
         if(leftIntersect != -9999)
           makeNodeDead(node.left, leftIntersect, newThickness );
         // right
         if(twoBranches){
-          node.addRightChild(new Properties(newLength * .7, newThickness * .7));
+          node.addRightChild(new Properties(newLength * .7, newThickness * .7, newThinness));
           float rightIntersect = checkBoundaryCrossing(node, node.right);
           if(rightIntersect != -9999)
             makeNodeDead(node.right, rightIntersect, newThickness );
@@ -463,6 +476,37 @@ void drawSnowflake(binaryTree node, Point location){
       vertex(point2b.x, point2b.y);
       vertex(point1b.x, point1b.y);
       endShape(CLOSE);
+      
+      
+      // HEXAGON ARTIFACTS
+      // edge thinning
+      if(node.thinness != 0.0){
+        float thinness = (node.thinness) * thickness;
+
+        Point[] edges = {point1b, point2b, endThick, point2a, point1a};
+
+        for(int i = 0; i < 4; i++){
+          // make color universally directionally dependent
+          float fillVal = sin(mod6(int(angle-(i - 1.5))));
+          
+          fill(12*(node.age + (fillVal*3.5)) + 120 + (node.randomValue[angle%6]-5)*2, 250);
+          Point edgeNear = new Point(edges[i].x + thinness * DIRECTION[mod6(angle-i)].x,
+                                     edges[i].y + thinness * DIRECTION[mod6(angle-i)].y);
+          Point edgeFar = new Point(edges[i+1].x + thinness * DIRECTION[mod6(angle-i + 3)].x,
+                                    edges[i+1].y + thinness * DIRECTION[mod6(angle-i + 3)].y);
+          Point innerNear = new Point(edgeNear.x + thinness * DIRECTION[mod6(angle-i+2 + 3)].x,
+                                      edgeNear.y + thinness * DIRECTION[mod6(angle-i+2 + 3)].y);
+          Point innerFar = new Point(edgeFar.x + thinness * DIRECTION[mod6(angle-i+4)].x,
+                                     edgeFar.y + thinness * DIRECTION[mod6(angle-i+4)].y);
+          beginShape();
+          vertex(edgeNear.x, edgeNear.y);
+          vertex(edgeFar.x, edgeFar.y);
+          vertex(innerFar.x, innerFar.y);
+          vertex(innerNear.x, innerNear.y);
+          endShape(CLOSE);
+        }
+      }
+
     }
   }
   

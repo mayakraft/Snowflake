@@ -10,13 +10,13 @@ class binaryTree{
     int age;    // how many generations old this node is  (maxGenerations - this.generation)
     int maxGeneration = 0;
     // each node has a persisting set of random values that can be assigned to anything
-    float[] randomValue = { random(0,10), random(0,10), random(0,10), random(0,10), random(0,10), random(0,10) };    
     int generation;
     float length; //new animatableValue(data.length, 0);//parent.thickness.value);
     float thickness;//new animatableValue(data.thickness, 0);
-
     int direction;
 
+    float[] randomValue = { random(0,10), random(0,10), random(0,10), random(0,10), random(0,10), random(0,10) };    
+    float thinness;
         
         
   binaryTree(binaryTree parent, Properties data){
@@ -32,8 +32,8 @@ class binaryTree{
 
     //this.randomValue = { random(0,10), random(0,10), random(0,10), random(0,10), random(0,10), random(0,10) };    
 
-    float length = data.length; //new animatableValue(data.length, 0);//parent.thickness.value);
-    float thickness = data.thickness;//new animatableValue(data.thickness, 0);
+    //float length = data.length; //new animatableValue(data.length, 0);//parent.thickness.value);
+    //float thickness = data.thickness;//new animatableValue(data.thickness, 0);
 
     // manage properties related to the data structure
     if(parent != null){
@@ -41,6 +41,7 @@ class binaryTree{
       // IMPORTANT: this jumps the growth by "parent.thickness", gives it a head start
       this.length = data.length;//new animatableValue(data.length, 0);//parent.thickness.value);
       this.thickness = data.thickness;//new animatableValue(data.thickness, 0);
+      this.thinness = data.thinness;
       this.generation = parent.generation+1;
       // HERE: no head start
       // this.length = new animatableValue(length, 0);
@@ -52,6 +53,7 @@ class binaryTree{
       this.age = 1;
       this.length = data.length;//new animatableValue(data.length, 0);
       this.thickness = data.thickness;//new animatableValue(data.thickness, 0);
+      this.thinness = data.thinness;
       this.location = new Point(0.0 + this.length * DIRECTION[this.direction].x, 
                             0.0 + this.length * DIRECTION[this.direction].y);
     }
