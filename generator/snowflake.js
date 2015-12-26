@@ -1,3 +1,13 @@
+
+//TODO 
+//lines that go through the center
+// lines that also go inside, but pointing toward the far edges
+//    - both in 60 deg and also 30 deg angles
+//    - do the latter if the length v thickness equivocates to about a regular hexagon
+//
+
+
+
 // Algorithmic Snowflake
 //
 //  TREE: the snowflake is a binary tree, "var tree" is the head
@@ -10,7 +20,7 @@ const ANIMATIONS = 1;  // 0 or 1, turn animations OFF or ON
 
 // enum sine and cosine 60deg increments for quick lookup 
 // clockwise starting from 3:00
-var DIRECTION = [
+var DIRECTION_30OFF = [
 	{x:1, y:0},
 	{x:.5,y:-0.86602540378444},
 	{x:-.5,y:-0.86602540378444},
@@ -18,6 +28,17 @@ var DIRECTION = [
 	{x:-.5,y:0.86602540378444},
 	{x:.5,y:0.86602540378444}
 ];
+
+var DIRECTION = [
+	{x:0.866025403784439, y:0.5},
+	{x:0, y:1},
+	{x:-0.866025403784439, y:0.5},
+	{x:-0.866025403784439, y:-0.5},
+	{x:0, y:-1},
+	{x:0.866025403784439, y:-0.5} 
+];
+
+
 var RIGHT = 1;
 var LEFT = 0;
 // these refer to the animation cycle, the time between 2 frames of growth
@@ -32,7 +53,7 @@ var originTree;       // screen coordinates
 
 var tree;  // the snowflake data model
 // GENERATOR PARAMETERS 
-var matter = 20;
+var matter = 12;
 // var pressure = [.8, .6, .3, .1, .05, .2, .6, .9];
 var pressure = [];// = [.2, .05, .1, .03, .1, .5, .05, .5, .8];
 var density = [];// = [false, true, false, false, true, true, false, true, true, true];
@@ -51,8 +72,43 @@ var ITERATIONS;
 ////////////////////////////////
 //  P5.JS
 //////////////////////////////
+function buildAtmosphere(){
+
+	ITERATIONS = random(5) + 10;
+	var curves = [];
+	for(var waves = 0; waves < 3; waves++){
+		var curve = [];
+			// capture a sine curve with some frequency and offset, relative to this nuber of ITERATIONS
+		var offset = random(2*PI)-PI;
+		var frequency = (random(2)+.5) / ITERATIONS;
+		if(waves == 1)
+			frequency = (random(2)+4.5) / ITERATIONS;
+
+		for(var i = 0; i < ITERATIONS; i++){
+			curve.push(cos(offset + PI*frequency * i));
+		}
+		curves.push(curve);
+	}
+	console.log("HERE IT IS");
+	console.log(curves);
+	for(var i = 0; i < ITERATIONS; i++){
+		pressure[i] = (curves[0][i]) * .5 + .25;      //random(1);
+		if(curves[1][i] > 0.0)//random(10) > 5)
+			density[i] = true;
+		else 
+			density[i] = false;
+		moisture[i] = (curves[2][i]) * .5 + .25;    //random(1);
+	}
+	for(var i = 0; i < 3; i++){
+		var index = int(random(ITERATIONS));
+		pressure[index] = random(0.0, 0.1);
+	}
+	for(var i = 0; i < ITERATIONS; i++)
+		console.log("ATMOSPHERE: pressure:" + pressure[i] + "  density:" + density[i] + "  moisture:" + moisture[i]);
+}
+
 // function buildAtmosphere(){
-// 	ITERATIONS = 3;//random(5) + 6;
+// 	ITERATIONS = random(5) + 6;
 // 	for(var i = 0; i < ITERATIONS; i++){
 // 		pressure[i] = random(1);
 // 		if(random(10) > 5)
@@ -68,19 +124,24 @@ var ITERATIONS;
 // 	for(var i = 0; i < ITERATIONS; i++)
 // 		console.log("ATMOSPHERE: pressure:" + pressure[i] + "  density:" + density[i] + "  moisture:" + moisture[i]);
 // }
-function buildAtmosphere(){
-	ITERATIONS = 3;//random(5) + 6;
-	for(var i = 0; i < ITERATIONS; i++){
-		pressure[i] = random(.5) + .5;
-		if(random(10) > 5)
-			density[i] = true;
-		else 
-			density[i] = false;
-		moisture[i] = random(.5);
-	}
-	for(var i = 0; i < ITERATIONS; i++)
-		console.log("ATMOSPHERE: pressure:" + pressure[i] + "  density:" + density[i] + "  moisture:" + moisture[i]);
-}
+
+
+
+
+
+// function buildAtmosphere(){
+// 	ITERATIONS = 3;//random(5) + 6;
+// 	for(var i = 0; i < ITERATIONS; i++){
+// 		pressure[i] = random(.5) + .5;
+// 		if(random(10) > 5)
+// 			density[i] = true;
+// 		else 
+// 			density[i] = false;
+// 		moisture[i] = random(.5);
+// 	}
+// 	for(var i = 0; i < ITERATIONS; i++)
+// 		console.log("ATMOSPHERE: pressure:" + pressure[i] + "  density:" + density[i] + "  moisture:" + moisture[i]);
+// }
 function resetAnimation(){
 	CYCLE_PROGRESS = 0;  // updated mid loop (0.0 to 1.0) 1.0 means entering next step
 	CYCLE_LENGTH = 30; // # of frames each growth cycle lasts
@@ -100,7 +161,8 @@ function setup() {
 	frameRate(60);
 	initTree();
 	if(ANIMATIONS)
-		setInterval(function(){initTree();}, 12000);
+		;
+		// setInterval(function(){initTree();}, 12000);
 	else{
 		noLoop();
 		// grow and draw a tree
@@ -136,13 +198,13 @@ function draw() {
 	// stroke(200);
 	// line(originTree.x, originTree.y, originTree.x + 200*cos(30/180*Math.PI), originTree.y - 200*sin(30/180*Math.PI));
 
-	// fill(40, 255);
-	// beginShape();
-	// var SLICE_LENGTH = 140;
-	// vertex(originTree.x, originTree.y);
-	// vertex(originTree.x + SLICE_LENGTH*cos(30/180*Math.PI), originTree.y - SLICE_LENGTH*sin(30/180*Math.PI));
-	// vertex(originTree.x + SLICE_LENGTH/(sqrt(3)*.5), originTree.y);
-	// endShape(CLOSE);
+	fill(40, 255);
+	beginShape();
+	var SLICE_LENGTH = 140;
+	vertex(originTree.x, originTree.y);
+	vertex(originTree.x + SLICE_LENGTH*cos(30/180*Math.PI), originTree.y - SLICE_LENGTH*sin(30/180*Math.PI));
+	vertex(originTree.x + SLICE_LENGTH/(sqrt(3)*.5), originTree.y);
+	endShape(CLOSE);
 
 	stroke(255);
 	noFill();
@@ -206,19 +268,20 @@ function stopAllAnimations(tree){
 	}
 }
 
+
 function growTree(tree, atmosphere){
 	var nPressure = atmosphere["pressure"];
 	var nDensity = atmosphere["density"];
 	var nMoisture = atmosphere["moisture"];
 
-	findLeaves(tree);
+	visitLeaves(tree);
 	setGlobalTreeVariables(tree);
 
-	function findLeaves(tree){
+	function visitLeaves(tree){
 		if(tree.left)
-			findLeaves(tree.left);		
+			visitLeaves(tree.left);		
 		if(tree.right)
-			findLeaves(tree.right);
+			visitLeaves(tree.right);
 
 	// GROW MORE CRYSTALS
 		if(tree.left == undefined && tree.right == undefined && !tree.dead && tree.branchesR < 3){
@@ -229,8 +292,8 @@ function growTree(tree, atmosphere){
 
 			var shortenby = Math.pow(0.4, tree.branchesR);
 			// var newLength = tree.length.value * nPressure[DEPTH];
-			var newLength = matter * cos(PI * .5 * nPressure)  * shortenby * (3+tree.generation);
-			var newThickness = matter * sin(PI * .5 * nPressure) * shortenby * (tree.generation);
+			var newLength = matter * cos(PI * .5 * nPressure)  * shortenby;// * (3+tree.generation);
+			var newThickness = matter * sin(PI * .5 * nPressure) * shortenby;// * (tree.generation);
 			var newThinness = undefined;
 			if(nMoisture < .5) 
 				newThinness = random(.15)+.05;
@@ -252,10 +315,13 @@ function growTree(tree, atmosphere){
 					makeNodeDead(tree.left, leftIntersect, newThickness );
 				// right
 				if(twoBranches){
+					console.log("two branches");
 					tree.addRightChild({"length":newLength * .7, "thickness":newThickness * .7, "thinness":newThinness});
 					var rightIntersect = checkBoundaryCrossing(tree, tree.right);
-					if(rightIntersect != undefined)
+					if(rightIntersect != undefined){
 						makeNodeDead(tree.right, rightIntersect, newThickness );
+						console.log("making this right node dead because " + rightIntersect);
+					}
 				}
 			}
 		}
@@ -270,6 +336,71 @@ function growTree(tree, atmosphere){
 		}
 
 	}
+
+// function growTree(tree, atmosphere){
+// 	var nPressure = atmosphere["pressure"];
+// 	var nDensity = atmosphere["density"];
+// 	var nMoisture = atmosphere["moisture"];
+
+// 	findLeaves(tree);
+// 	setGlobalTreeVariables(tree);
+
+// 	function findLeaves(tree){
+// 		if(tree.left)
+// 			findLeaves(tree.left);		
+// 		if(tree.right)
+// 			findLeaves(tree.right);
+
+// 	// GROW MORE CRYSTALS
+// 		if(tree.left == undefined && tree.right == undefined && !tree.dead && tree.branchesR < 3){
+			
+// 			// var twoBranches = (random(10) < 8);
+// 			var twoBranches = nDensity;
+// 			if(tree.parent == undefined) twoBranches = false;  // force first seed to branch only left
+
+// 			var shortenby = Math.pow(0.4, tree.branchesR);
+// 			// var newLength = tree.length.value * nPressure[DEPTH];
+// 			var newLength = matter * cos(PI * .5 * nPressure)  * shortenby;// * (3+tree.generation);
+// 			var newThickness = matter * sin(PI * .5 * nPressure) * shortenby;// * (tree.generation);
+// 			var newThinness = undefined;
+// 			if(nMoisture < .5) 
+// 				newThinness = random(.15)+.05;
+
+// 			if(newLength < tree.thickness.value){
+// 				console.log("adjusting value, length is smaller than thickness");
+// 				newLength = tree.thickness.value + 3;
+// 			}
+
+// 			if(1){//newLength > 5){
+// 				// if(newLength < 30)
+// 				// 	newLength = 30;
+
+// 				// ADD CHILDREN
+// 				// left
+// 				tree.addLeftChild({"length":newLength, "thickness":newThickness, "thinness":newThinness});
+// 				var leftIntersect = checkBoundaryCrossing(tree, tree.left);
+// 				if(leftIntersect != undefined)
+// 					makeNodeDead(tree.left, leftIntersect, newThickness );
+// 				// right
+// 				if(twoBranches){
+// 					tree.addRightChild({"length":newLength * .7, "thickness":newThickness * .7, "thinness":newThinness});
+// 					var rightIntersect = checkBoundaryCrossing(tree, tree.right);
+// 					if(rightIntersect != undefined)
+// 						makeNodeDead(tree.right, rightIntersect, newThickness );
+// 				}
+// 			}
+// 		}
+// 		// grow thicker
+// 		if(tree.age < 3){
+// 			if(tree.maxGeneration - tree.generation == 0)
+// 				tree.thickness.set(tree.thickness.value*(1+(1/(tree.maxGeneration+2))) );
+// 			else if(tree.maxGeneration - tree.generation == 1)
+// 				tree.thickness.set(tree.thickness.value*(1+(1/(tree.maxGeneration+3))) );
+// 			else if(tree.maxGeneration - tree.generation == 2)
+// 				tree.thickness.set(tree.thickness.value*(1+(1/(tree.maxGeneration+4))) );
+// 		}
+
+// 	}
 	// function operateOnEntireTree(tree){
 	// 	// run neighbor arm too near on all the leaves
 	// 	if(tree.left != undefined)
@@ -417,6 +548,8 @@ function binaryTree(parent, data){
 	this.randomValue = [ random(0,10), random(0,10), random(0,10), random(0,10), random(0,10), random(0,10) ]; 
 	// this.details = undefined;
 	this.details = {"phalanges":undefined, "thinner":data.thinness};
+	this.seedMoment = 1.0 // 0.0 to 1.0 sprout point, between 100% inside the parent crystal to the very tip.
+	                     // nothing should ever be 1.0, technically or it would break off 
 
 	// manage properties related to the data structure
 	if(parent){
@@ -476,7 +609,8 @@ function checkBoundaryCrossing(startNode, endNode){
 	// perform boundary check against 30 deg line
 	var result = RayLineIntersect(
 			{x:0, y:0}, 
-			{x:(cos(30/180*Math.PI)), y:(sin(30/180*Math.PI))}, 
+			{x:(cos(60/180*Math.PI)), y:(sin(60/180*Math.PI))}, 
+			// {x:(cos(30/180*Math.PI)), y:(sin(30/180*Math.PI))}, 
 			{x:start.x, y:abs(start.y)}, 
 			{x:end.x, y:abs(end.y)}
 		);
@@ -510,23 +644,41 @@ function RayLineIntersect(origin, dV, pA, pB){
 function drawTree(tree, start, angleDepth){
 	if(tree != undefined){
 		if(tree.left != undefined){
-			drawTree(tree.left, {x:start.x + tree.length.value * DIRECTION[angleDepth].x, y:start.y + tree.length.value * DIRECTION[angleDepth].y}, angleDepth);
+			drawTree(tree.left, {x:start.x + tree.length.value * DIRECTION_30OFF[angleDepth].x, y:start.y + tree.length.value * DIRECTION_30OFF[angleDepth].y}, angleDepth);
 		}
 		if(tree.right != undefined){
-			drawTree(tree.right, {x:start.x + tree.length.value * DIRECTION[angleDepth].x, y:start.y + tree.length.value * DIRECTION[angleDepth].y}, mod6(angleDepth+1));
+			drawTree(tree.right, {x:start.x + tree.length.value * DIRECTION_30OFF[angleDepth].x, y:start.y + tree.length.value * DIRECTION_30OFF[angleDepth].y}, mod6(angleDepth+1));
 		}
 		var length = tree.length.get();
-		end = {x:(start.x + length * DIRECTION[angleDepth].x),
-			   y:(start.y + length * DIRECTION[angleDepth].y)};
+		end = {x:(start.x + length * DIRECTION_30OFF[angleDepth].x),
+			   y:(start.y + length * DIRECTION_30OFF[angleDepth].y)};
 		line(start.x, start.y, end.x, end.y);
 		ellipse(end.x, end.y, 5, 5);
 	}
 }
 function drawSnowflake(tree, location){
-	for(var angle = 0; angle < 6; angle+=2)
-		drawHexagonTreeWithReflections(tree, location, angle);
-	for(var angle = 1; angle < 6; angle+=2)
-		drawHexagonTreeWithReflections(tree, location, angle);
+	for(var angle = 0; angle < 6; angle+=2){
+		if(tree.seedMoment != undefined && tree.parent != undefined){
+			var distance = tree.seedMoment * tree.parent.thickness.value;
+			var adjustedLocation = {x:(location.x + length * DIRECTION[tree.angle].x),
+			                        y:(location.y + length * DIRECTION[tree.angle].y)};
+			drawHexagonTreeWithReflections(tree, adjustedLocation, angle);
+		}
+		else{
+			drawHexagonTreeWithReflections(tree, location, angle);
+		}
+	}
+	for(var angle = 1; angle < 6; angle+=2){
+		if(tree.seedMoment != undefined && tree.parent != undefined){
+			var distance = tree.seedMoment * tree.parent.thickness.value;
+			var adjustedLocation = {x:(location.x + length * DIRECTION[tree.angle].x),
+			                        y:(location.y + length * DIRECTION[tree.angle].y)};
+			drawHexagonTreeWithReflections(tree, adjustedLocation, angle);
+		}
+		else{
+			drawHexagonTreeWithReflections(tree, location, angle);
+		}
+	}
 	// fill(20*tree.age + 150, 255);
 	// drawCenterHexagon(tree, location);
 	function drawCenterHexagon(tree, start){
@@ -612,10 +764,11 @@ function drawSnowflake(tree, location){
 
 				for(var i = 0; i < 4; i++){
 					// make color universally directionally dependent
-					var fillVal = 1;//mod6(angle-(i - 1.5));
-					if(mod6(angle-(i - 1.5)) >= 3)
-						fillVal = -1;
-					fillVal = sin(mod6(angle-(i - 1.5)));
+					// var fillVal = 1;//mod6(angle-(i - 1.5));
+					// if(mod6(angle-(i - 1.5)) >= 3)
+					// 	fillVal = -1;
+
+					var fillVal = pow( (sin(-.05 + mod6(angle-(i - 1.5)))*2), 3) * .1;  // dramatic lighting
 					fill(12*(tree.age + (fillVal*3.5)) + 120 + (tree.randomValue[angle%6]-5)*2, 250);
 					var edgeNear = {
 						x:(edges[i].x + thinness * DIRECTION[mod6(angle-i)].x),
