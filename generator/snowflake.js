@@ -61,6 +61,8 @@ var moisture = [];
 
 var ITERATIONS;
 
+var segmentJoinPoints;
+
 // var pressure = [{ "length":30, "thickness":20},
 //                   { "length":30, "thickness":20},
 //                   { "length":30, "thickness":20},
@@ -103,6 +105,8 @@ function buildAtmosphere(){
 	// }
 	for(var i = 0; i < ITERATIONS; i++)
 		console.log("ATMOSPHERE: pressure:" + pressure[i] + "  density:" + density[i] + "  moisture:" + moisture[i]);
+
+	segmentJoinPoints = [];
 }
 
 // function buildAtmosphere(){
@@ -167,6 +171,7 @@ function setup() {
 		for(var i = 0; i < ITERATIONS; i++){
 			growTree(tree, {"pressure":pressure[i], "density":density[i], "moisture":moisture[i]});
 		}
+		reviewTree();
 		draw();
 	}
 }
@@ -188,6 +193,7 @@ function mousePressed() {
 	for(var i = 0; i < ITERATIONS; i++){
 		growTree(tree, {"pressure":pressure[i], "density":density[i], "moisture":moisture[i]});
 	}
+	reviewTree();
 	draw();
 }
 function draw() {
@@ -272,6 +278,11 @@ function stopAllAnimations(tree){
 }
 
 
+function reviewTree(){
+
+}
+
+
 function growTree(tree, atmosphere){
 	var nPressure = atmosphere["pressure"];
 	var nDensity = atmosphere["density"];
@@ -321,10 +332,8 @@ function growTree(tree, atmosphere){
 					console.log("two branches");
 					tree.addRightChild({"length":newLength * .7, "thickness":newThickness * .7, "thinness":newThinness});
 					var rightIntersect = checkBoundaryCrossing(tree, tree.right);
-					if(rightIntersect != undefined){
+					if(rightIntersect != undefined)
 						makeNodeDead(tree.right, rightIntersect, newThickness );
-						console.log("making this right node dead because " + rightIntersect);
-					}
 				}
 			}
 		}
@@ -426,6 +435,14 @@ function growTree(tree, atmosphere){
 	// 		}
 	// 	}
 	// }	
+}
+
+function intersectionWasHit(location, node){
+	if(node.branchesR == 2){
+	var distance = Math.sqrt( (location.x)*(location.x) + (location.y)*(location.y) );
+	distance *= 1.15470053837925;
+	segmentJoinPoints.push(distance);
+}
 }
 
 /////////////////////////////
@@ -618,6 +635,7 @@ function checkBoundaryCrossing(startNode, endNode){
 			{x:end.x, y:abs(end.y)}
 		);
 	if(result != undefined){   // if yes, the boundary was crossed, result is new intersection
+		intersectionWasHit(result, endNode);
 		// return distance from start to new intersection
 		return Math.sqrt( (result.x-start.x)*(result.x-start.x) + (result.y-abs(start.y))*(result.y-abs(start.y)) );
 	}
@@ -645,7 +663,7 @@ function RayLineIntersect(origin, dV, pA, pB){
 // DRAWING & RENDERING
 ////////////////////////////////
 function drawAtmosphere(origin){
-	var SCALE_Y = 40;
+	var SCALE_Y = 20;
 	var SCALE_X = matter;
 	noStroke();
 	fill(40,255);
@@ -685,6 +703,13 @@ function drawTree(node, start, angleDepth){
 	}
 }
 function drawSnowflake(node, location){
+	var largest = Math.max.apply(Math, segmentJoinPoints);
+	fill(255, 128);
+	drawCenterHexagon(location, largest);
+	fill(255, 128 / segmentJoinPoints.length);
+	for(var i = 0; i < segmentJoinPoints.length; i++)
+		drawCenterHexagon(location, segmentJoinPoints[i]);
+	
 	for(var angle = 0; angle < 6; angle+=2){
 		// if(node.seedMoment != undefined && node.parent != undefined){
 		// 	var distance = node.seedMoment * node.parent.thickness.value;
@@ -709,14 +734,12 @@ function drawSnowflake(node, location){
 	}
 	// fill(20*node.age + 150, 255);
 	// drawCenterHexagon(node, location);
-	function drawCenterHexagon(node, start){
-		var length = node.length.get();
-		var thickness = node.thickness.get();
+	function drawCenterHexagon(start, radius){
 		beginShape();
 		for(var angle = 0; angle < 6; angle++){
 			var point = {
-					x:(start.x + (length+thickness) * DIRECTION[mod6(angle)].x),
-					y:(start.y + (length+thickness) * DIRECTION[mod6(angle)].y) };
+					x:(start.x + (radius) * DIRECTION[mod6(angle)].x),
+					y:(start.y + (radius) * DIRECTION[mod6(angle)].y) };
 			vertex(point.x, point.y);
 		}
 		endShape(CLOSE);
