@@ -13,7 +13,7 @@ var a;
 
 // this demonstrates a simple recursive tree building function based on random with a cap at 8th generation
 function buildTree(tree){
-	if(tree.generation > 8)
+	if(tree.generation > 5)
 		return;
 
 	if(random(0, 1) > 0.25){
@@ -43,13 +43,13 @@ function mousePressed() {
 function draw() {
 	clear(255);
 
-	var treePosition = {'x':windowWidth*.5, 'y':10};
+	var treePosition = {'x':windowWidth*.5, 'y':40};
 	drawBinaryTree(a, treePosition);
 
 	fill(0);
 	stroke(0);
 
-	var rBranchTreePosition = {'x':windowWidth*.5, 'y':windowHeight*.75};
+	var rBranchTreePosition = {'x':windowWidth*.5, 'y':windowHeight - 40};
 	drawRightBranchingBinaryTree(a, rBranchTreePosition)
 
 }

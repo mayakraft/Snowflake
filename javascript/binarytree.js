@@ -7,7 +7,7 @@ var BinaryTree = function(parent, data){
 	this.parent = parent;
 	this.right = undefined;
 	this.left = undefined;
-	this.generation = 0;  // (INT) number child away from top
+	this.generation;  // (INT) number child away from top
 	this.leaf = true;
 
 	// these get set in the SETTER, not enough info to set now
@@ -41,6 +41,7 @@ var BinaryTree = function(parent, data){
 	this.addLeftChild = function(leftData){
 		this.leaf = false;
 		this.left = new BinaryTree(this, leftData);
+		this.left.generation = this.generation + 1;
 		this.left.childType = LEFT;
 		this.left.lBranches = this.lBranches + 1;
 		this.left.rBranches = this.rBranches;
@@ -49,6 +50,7 @@ var BinaryTree = function(parent, data){
 	this.addRightChild = function(rightData){
 		this.leaf = false;
 		this.right = new BinaryTree(this, rightData);
+		this.right.generation = this.generation + 1;
 		this.right.childType = RIGHT;
 		this.right.lBranches = this.lBranches;
 		this.right.rBranches = this.rBranches + 1;
@@ -109,14 +111,13 @@ function setGlobalTreeVariables(tree){
 
 
 function drawBinaryTree(tree, position){
-	fill(0);
-	if(tree.leaf){
-		stroke(0, 200, 0)
-		fill(50, 255, 50);
-	}
+	if(tree.leaf)
+		fill(50, 255, 50);		
+	else
+		fill( 255 * (int(tree.generation)%2) );
+	
 	ellipse(position.x, position.y, 6, 6);
 
-	stroke(0);
 	if(tree.left != undefined){
 		var newPosition = {'x':position.x-(windowWidth*.45)/Math.pow(2,tree.left.generation), 'y':position.y + 30};
 		line(position.x, position.y, newPosition.x, newPosition.y);
@@ -129,27 +130,29 @@ function drawBinaryTree(tree, position){
 	}
 }
 
-function drawRightBranchingBinaryTree(node, position){
-	var HEX_30_ANGLE = [ {x:1, y:0}, {x:.5,y:-0.866}, {x:-.5,y:-0.866}, {x:-1, y:0}, {x:-.5,y:0.866}, {x:.5,y:0.866} ];
-	var LENGTH = 10;
+function drawRightBranchingBinaryTree(tree, position){
+	var HEX_BRANCH = [ {x:1, y:0}, {x:.5,y:-0.866}, {x:-.5,y:-0.866}, {x:-1, y:0}, {x:-.5,y:0.866}, {x:.5,y:0.866} ];
 
-	if(node == undefined)
-		return;
+	if(tree.leaf)
+		fill(50, 255, 50);		
+	else
+		fill( 255 * (int(tree.generation)%2) );
 
-	end = {x:(position.x + LENGTH * HEX_30_ANGLE[int(node.rBranches)%6].x),
-		   y:(position.y + LENGTH * HEX_30_ANGLE[int(node.rBranches)%6].y)};
+	ellipse(position.x, position.y, 6, 6);
 
-	if(node.left != undefined){
-		drawRightBranchingBinaryTree(node.left, end);
+	var LENGTH = 100/Math.pow(tree.generation+1, .9);
+
+	if(tree.left != undefined){
+		var end = {x:(position.x + LENGTH * HEX_BRANCH[int(tree.left.rBranches)%6].x),
+		           y:(position.y + LENGTH * HEX_BRANCH[int(tree.left.rBranches)%6].y)};
+		line(position.x, position.y, end.x, end.y);
+		drawRightBranchingBinaryTree(tree.left, end);
 	}
-	if(node.right != undefined){
-		drawRightBranchingBinaryTree(node.right, end);
+	if(tree.right != undefined){
+		var end = {x:(position.x + LENGTH * HEX_BRANCH[int(tree.right.rBranches)%6].x),
+		           y:(position.y + LENGTH * HEX_BRANCH[int(tree.right.rBranches)%6].y)};
+		line(position.x, position.y, end.x, end.y);
+		drawRightBranchingBinaryTree(tree.right, end);
 	}
-	end = {x:(position.x + LENGTH * HEX_30_ANGLE[int(node.rBranches)%6].x),
-		   y:(position.y + LENGTH * HEX_30_ANGLE[int(node.rBranches)%6].y)};
-	line(position.x, position.y, end.x, end.y);
-	ellipse(end.x, end.y, 5, 5);
-
-
 }
 
