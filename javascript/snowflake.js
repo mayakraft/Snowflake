@@ -7,14 +7,6 @@
 //
 
 
-
-// Algorithmic Snowflake
-//
-//  TREE: the snowflake is a binary tree, "var tree" is the head
-//  CYCLE: one growth cycle
-//  FRAME: a CYCLE contain many FRAMES
-
-
 // #DEFS
 var RIGHT = 1;
 var LEFT = 0;
@@ -34,22 +26,141 @@ var HEX_30_ANGLE = [
 	{x:-.5,y:0.86602540378444},
 	{x:.5,y:0.86602540378444} ];
 
-
-var tree;  // the snowflake data model
-// GENERATOR PARAMETERS 
 var matter = 24;
-var atmos;  // atmosphere conditions {pressure, moisture, density}
 
-var ITERATIONS;
-
-var mainArmRejoinPoints;  // when two arms grow wide enough that they touch
-
-////////////////////////////////
-//  P5.JS
-//////////////////////////////
+// Algorithmic Snowflake
+//
+//  TREE: the snowflake is a binary tree, "var tree" is the head
+//  CYCLE: one growth cycle
+//  FRAME: a CYCLE contain many FRAMES
 
 
-var SnowflakeData = function(location, length, direction, thickness, thinness, active){
+var Snowflake = function(){
+
+	this.init = function(){
+		// var location = { x:(0.0 + length * HEX_ANGLE[direction].x), 
+		//                  y:(0.0 + length * HEX_ANGLE[direction].y) };
+		var thickness = 24;
+		var data = new SnowflakeNode({x:(0.0),y:(0.0)}, 0, 0, thickness, 0, true);
+		this.tree = new BinaryTree(undefined, data);		
+
+		this.mainArmRejoinPoints = [];
+	}
+
+	this.tree;  // the parent node of the binary tree
+	this.init();
+	this.mainArmRejoinPoints;  // when two arms grow wide enough that they touch
+
+	this.grow = function(atmosphere){
+		for(var i = 0; i < atmosphere.length; i++)
+			growTree(this.tree, {"pressure":atmosphere.pressure[i], "density":atmosphere.density[i], "moisture":atmosphere.moisture[i]});
+	}
+
+	this.draw = function(position){
+
+		for(var angle = 0; angle < 6; angle+=2)
+			drawHexagonTreeWithReflections(this.tree, position, angle);
+		
+		for(var angle = 1; angle < 6; angle+=2)
+			drawHexagonTreeWithReflections(this.tree, position, angle);
+
+		function drawHexagonTreeWithReflections(node, start, angle){
+			if(node != undefined){
+				// LENGTH and THICKNESS
+				var length = node.length;
+				var thickness = node.thickness;
+				var pThickness;
+				if(node.parent) pThickness = node.parent.thickness;
+				else 			pThickness = 0;
+				// thickness grows HEXAGONALLY, not scaling proportionally
+				// thickness = node.length;
+				if(thickness > node.thickness)			
+					thickness = node.thickness;
+				// START AND END
+				var end = {
+					x:(start.x + length * HEX_ANGLE[angle].x), 
+					y:(start.y + length * HEX_ANGLE[angle].y)
+				};
+				var endThick = {
+					x:(start.x + (length+thickness) * HEX_ANGLE[angle].x), 
+					y:(start.y + (length+thickness) * HEX_ANGLE[angle].y)
+				};
+				var startThick = {
+					x:(start.x + pThickness * HEX_ANGLE[angle].x), 
+					y:(start.y + pThickness * HEX_ANGLE[angle].y)
+				};
+				var thckAng = 2;
+				if(thickness > pThickness){
+					startThick = start;
+					thckAng = 1;
+				}
+				if(node.right != undefined){
+					drawHexagonTreeWithReflections(node.right, end, mod6(angle+1) );
+					drawHexagonTreeWithReflections(node.right, end, mod6(angle-1) );
+				}
+				//first go to the bottom of tree, following the main stem
+				if(node.left != undefined)
+					drawHexagonTreeWithReflections(node.left, end, angle);
+				
+				var point1a = {
+					x:(startThick.x + thickness * HEX_ANGLE[mod6(angle-thckAng)].x),
+					y:(startThick.y + thickness * HEX_ANGLE[mod6(angle-thckAng)].y) };
+				var point1b = {
+					x:(startThick.x + thickness * HEX_ANGLE[mod6(angle+thckAng)].x),
+					y:(startThick.y + thickness * HEX_ANGLE[mod6(angle+thckAng)].y) };
+				var point2a = {
+					x:(end.x - thickness * HEX_ANGLE[mod6(angle+2)].x),
+					y:(end.y - thickness * HEX_ANGLE[mod6(angle+2)].y) };
+				var point2b = {
+					x:(end.x - thickness * HEX_ANGLE[mod6(angle-2)].x),
+					y:(end.y - thickness * HEX_ANGLE[mod6(angle-2)].y) };
+
+				// fill(255, 128 * sqrt(1.0/node.generation));
+				var fillValue = 5*node.age + 150;// + (node.randomValue[angle%6]-5)*2;
+				fill(fillValue, 250);
+				beginShape();
+				vertex(startThick.x, startThick.y);
+				vertex(point1a.x, point1a.y);
+				vertex(point2a.x, point2a.y);
+				vertex(endThick.x, endThick.y);
+				vertex(point2b.x, point2b.y);
+				vertex(point1b.x, point1b.y);
+				endShape(CLOSE);
+
+				// HEXAGON ARTIFACTS
+				// edge thinning
+				// if(node.data.thinness != undefined){
+				// 	var thinness = (node.data.thinness) * thickness;
+				// 	var edges = [point1b, point2b, endThick, point2a, point1a];
+				// 	for(var i = 0; i < 4; i++){
+				// 		var fillChange = - (sin(-.05 + mod6(angle-(i - 1.5)))*2);  // dramatic lighting
+				// 		fill(fillValue + fillChange*10, 250);
+				// 		var edgeNear = {
+				// 			x:(edges[i].x + thinness * HEX_ANGLE[mod6(angle-i)].x),
+				// 			y:(edges[i].y + thinness * HEX_ANGLE[mod6(angle-i)].y) };
+				// 		var edgeFar = {
+				// 			x:(edges[i+1].x + thinness * HEX_ANGLE[mod6(angle-i + 3)].x),
+				// 			y:(edges[i+1].y + thinness * HEX_ANGLE[mod6(angle-i + 3)].y) };
+				// 		var innerNear = {
+				// 			x:(edgeNear.x + thinness * HEX_ANGLE[mod6(angle-i+2 + 3)].x),
+				// 			y:(edgeNear.y + thinness * HEX_ANGLE[mod6(angle-i+2 + 3)].y) };
+				// 		var innerFar = {
+				// 			x:(edgeFar.x + thinness * HEX_ANGLE[mod6(angle-i+4)].x),
+				// 			y:(edgeFar.y + thinness * HEX_ANGLE[mod6(angle-i+4)].y) };
+				// 		beginShape();
+				// 		vertex(edgeNear.x, edgeNear.y);
+				// 		vertex(edgeFar.x, edgeFar.y);
+				// 		vertex(innerFar.x, innerFar.y);
+				// 		vertex(innerNear.x, innerNear.y);
+				// 		endShape(CLOSE);
+				// 	}
+				// }
+			}
+		}
+	}
+};
+
+var SnowflakeNode = function(location, length, direction, thickness, thinness, active){
 	this.location = {'x':undefined, 'y':undefined};
 	this.length = undefined;
 	this.direction = 0;
@@ -70,29 +181,10 @@ var SnowflakeData = function(location, length, direction, thickness, thinness, a
 		this.active = active;
 };
 
-function initTree(){
-	resetAnimation();
-	mainArmRejoinPoints = [];
-
-	// atmosphere initial conditions
-	atmos = new Atmosphere(ITERATIONS);
-
-	// snowflake initial conditions
-	var length = 0;//new animatableValue(0, 0);
-	var direction = 0;
-	var location = { x:(0.0 + length * HEX_ANGLE[direction].x), 
-	                 y:(0.0 + length * HEX_ANGLE[direction].y) };
-	var thickness = matter;//new animatableValue(matter, 0);
-	var data = new SnowflakeData(location, length, direction, thickness, 0, true);
-
-	tree = new BinaryTree(undefined, data);
-}
-
 
 ///////////////////////////////
 //  SNOWFLAKE GROWING
 ///////////////////////////////
-
 
 function growTree(tree, atmosphere){
 	var nPressure = atmosphere["pressure"];
@@ -102,8 +194,6 @@ function growTree(tree, atmosphere){
 	visitLeaves(tree);
 	setGlobalTreeVariables(tree);
 
-	logTree(tree);
-
 	function visitLeaves(tree){
 		if(tree.left)
 			visitLeaves(tree.left);		
@@ -111,7 +201,8 @@ function growTree(tree, atmosphere){
 			visitLeaves(tree.right);
 
 	// GROW MORE CRYSTALS
-		if(tree.left == undefined && tree.right == undefined && tree.data.active && tree.rBranches < 3){
+		// if(tree.left == undefined && tree.right == undefined && tree.data != undefined && tree.data.active && tree.rBranches < 3){
+		if(tree.left == undefined && tree.right == undefined){
 			
 			// var twoBranches = (random(10) < 8);
 			var twoBranches = nDensity;
@@ -146,7 +237,7 @@ function growTree(tree, atmosphere){
 					x:(tree.data.location.x + newLength * HEX_ANGLE[leftDirection].x), 
 					y:(tree.data.location.y + newLength * HEX_ANGLE[leftDirection].y)
 				};		
-				var leftData = new SnowflakeData(leftLocation, newLength, leftDirection, newThickness, newThinness, true);
+				var leftData = new SnowflakeNode(leftLocation, newLength, leftDirection, newThickness, newThinness, true);
 
 				tree.addLeftChild( leftData );
 
@@ -162,7 +253,7 @@ function growTree(tree, atmosphere){
 						x:(tree.data.location.x + newLength*.7 * HEX_ANGLE[rightDirection].x), 
 						y:(tree.data.location.y + newLength*.7 * HEX_ANGLE[rightDirection].y)
 					};
-					var rightData = new SnowflakeData(rightLocation, newLength * .7, rightDirection, newThickness * .7, newThinness, true);
+					var rightData = new SnowflakeNode(rightLocation, newLength * .7, rightDirection, newThickness * .7, newThinness, true);
 
 					tree.addRightChild( rightData );
 
@@ -173,14 +264,14 @@ function growTree(tree, atmosphere){
 			}
 		}
 		// grow thicker
-		if(tree.age < 3){
-			if(tree.maxGeneration - tree.generation == 0)
-				tree.data.thickness = (tree.data.thickness*(1+(1/(tree.maxGeneration+2))) );
-			else if(tree.maxGeneration - tree.generation == 1)
-				tree.data.thickness = (tree.data.thickness*(1+(1/(tree.maxGeneration+3))) );
-			else if(tree.maxGeneration - tree.generation == 2)
-				tree.data.thickness = (tree.data.thickness*(1+(1/(tree.maxGeneration+4))) );
-		}
+		// if(tree.age < 3){
+		// 	if(tree.maxGeneration - tree.generation == 0)
+		// 		tree.data.thickness = (tree.data.thickness*(1+(1/(tree.maxGeneration+2))) );
+		// 	else if(tree.maxGeneration - tree.generation == 1)
+		// 		tree.data.thickness = (tree.data.thickness*(1+(1/(tree.maxGeneration+3))) );
+		// 	else if(tree.maxGeneration - tree.generation == 2)
+		// 		tree.data.thickness = (tree.data.thickness*(1+(1/(tree.maxGeneration+4))) );
+		// }
 
 	}
 }
@@ -312,6 +403,7 @@ function makeNodeDead(node, newLength, newThickness){
 /////////////////////////////////
 // performs the necessary fixes to this specific problem
 // and returns true if boundary was crossed and adjustments made
+
 function checkBoundaryCrossing(startNode, endNode){
 	// extract euclidean locations from parent and child
 	var start = startNode.data.location;
@@ -331,6 +423,7 @@ function checkBoundaryCrossing(startNode, endNode){
 	}
 	return undefined;
 }
+
 function RayLineIntersect(origin, dV, pA, pB){
 	// if intersection, returns point of intersection
 	// if no intersection, returns undefined
@@ -348,26 +441,4 @@ function RayLineIntersect(origin, dV, pA, pB){
 		p = {x:(pA.x + lengthAB * t2 * dAB.x), y:(pA.y + lengthAB * t2 * dAB.y)};
 	}
 	return p;
-}
-
-function logTree(node){
-	if(node != undefined){
-		var hasChildren = false;
-		if(node.left != undefined || node.right != undefined)
-			hasChildren = true;
-		var thisChildType;
-		if(node.childType == LEFT) thisChildType = "left";
-		if(node.childType == RIGHT) thisChildType = "right";
-		console.log("Node (" + 
-			node.generation + "/" + 
-			node.maxGeneration + ") LENGTH:(" + 
-			node.data.length + ") PARENT:(" + 
-			hasChildren + ") TYPE:(" + 
-			node.childType + ") RIGHT BRANCHES:(" + 
-			node.rBranches + ") (" + 
-			node.data.location.x + "," +
-			node.data.location.y + ")");
-		logTree(node.left);
-		logTree(node.right);
-	}
 }
