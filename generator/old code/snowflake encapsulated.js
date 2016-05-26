@@ -1,13 +1,4 @@
-
-//TODO 
-//lines that go through the center
-// lines that also go inside, but pointing toward the far edges
-//    - both in 60 deg and also 30 deg angles
-//    - do the latter if the length v thickness equivocates to about a regular hexagon
-//
-
-
-
+var snowflakeP5Gen = function(p){
 // Algorithmic Snowflake
 //
 //  TREE: the snowflake is a binary tree, "var tree" is the head
@@ -20,7 +11,7 @@ const ANIMATIONS = 0;  // 0 or 1, turn animations OFF or ON
 
 // enum sine and cosine 60deg increments for quick lookup 
 // clockwise starting from 3:00
-var DIRECTION_30OFF = [
+var DIRECTION = [
 	{x:1, y:0},
 	{x:.5,y:-0.86602540378444},
 	{x:-.5,y:-0.86602540378444},
@@ -28,17 +19,6 @@ var DIRECTION_30OFF = [
 	{x:-.5,y:0.86602540378444},
 	{x:.5,y:0.86602540378444}
 ];
-
-var DIRECTION = [
-	{x:0.866025403784439, y:0.5},
-	{x:0, y:1},
-	{x:-0.866025403784439, y:0.5},
-	{x:-0.866025403784439, y:-0.5},
-	{x:0, y:-1},
-	{x:0.866025403784439, y:-0.5} 
-];
-
-
 var RIGHT = 1;
 var LEFT = 0;
 // these refer to the animation cycle, the time between 2 frames of growth
@@ -53,166 +33,99 @@ var originTree;       // screen coordinates
 
 var tree;  // the snowflake data model
 // GENERATOR PARAMETERS 
-var matter = 24;
-// var pressure = [.8, .6, .3, .1, .05, .2, .6, .9];
-var pressure = [];// = [.2, .05, .1, .03, .1, .5, .05, .5, .8];
-var density = [];// = [false, true, false, false, true, true, false, true, true, true];
+var DEPTH = 8;
+var matter = 40;
+// var atmosphere = [.8, .6, .3, .1, .05, .2, .6, .9];
+var atmosphere = [];// = [.2, .05, .1, .03, .1, .5, .05, .5, .8];
+var pressure = [];// = [false, true, false, false, true, true, false, true, true, true];
 var moisture = [];
 
-var ITERATIONS;
 
-var segmentJoinPoints;
+// var atmosphere = [{ "length":30, "thickness":20},
+//                   { "length":30, "thickness":20},
+//                   { "length":30, "thickness":20},
+//                   { "length":30, "thickness":20},
+//                   { "length":30, "thickness":20},
+//                   { "length":30, "thickness":20},
+//                  ];
 
 ////////////////////////////////
 //  P5.JS
 //////////////////////////////
-function buildAtmosphere(){
-
-	ITERATIONS = random(8) + 14;
-	var curves = [];
-	for(var waves = 0; waves < 3; waves++){
-		var curve = [];
-			// capture a sine curve with some frequency and offset, relative to this nuber of ITERATIONS
-		var offset = random(2*PI)-PI;
-		var frequency = (random(8)+.5) / ITERATIONS;
-		if(waves == 1)
-			frequency = (random(2)+4.5) / ITERATIONS;
-
-		for(var i = 0; i < ITERATIONS; i++){
-			curve.push( cos(offset + PI*frequency * i)*.5 + .5 );  // betwee 0 and 1
-		}
-		curves.push(curve);
-	}
-	for(var i = 0; i < ITERATIONS; i++){
-		pressure[i] = (curves[0][i]) * .9 + .05;      //random(1);
-		if(curves[1][i] > 0.5)//random(10) > 5)
-			density[i] = true;
-		else 
-			density[i] = false;
-		moisture[i] = (curves[2][i]) * .9 + .05;    //random(1);
-	}
-	// for(var i = 0; i < 3; i++){
-	// 	var index = int(random(ITERATIONS));
-	// 	pressure[index] = random(0.0, 0.1);
-	// }
-	for(var i = 0; i < ITERATIONS; i++)
-		console.log("ATMOSPHERE: pressure:" + pressure[i] + "  density:" + density[i] + "  moisture:" + moisture[i]);
-
-	segmentJoinPoints = [];
-}
-
-// function buildAtmosphere(){
-// 	ITERATIONS = random(5) + 6;
-// 	for(var i = 0; i < ITERATIONS; i++){
-// 		pressure[i] = random(1);
-// 		if(random(10) > 5)
-// 			density[i] = true;
-// 		else 
-// 			density[i] = false;
-// 		moisture[i] = random(1);
-// 	}
-// 	for(var i = 0; i < 3; i++){
-// 		var index = int(random(ITERATIONS));
-// 		pressure[index] = random(0.0, 0.1);
-// 	}
-// 	for(var i = 0; i < ITERATIONS; i++)
-// 		console.log("ATMOSPHERE: pressure:" + pressure[i] + "  density:" + density[i] + "  moisture:" + moisture[i]);
-// }
-
-
-
-
-
-// function buildAtmosphere(){
-// 	ITERATIONS = 3;//random(5) + 6;
-// 	for(var i = 0; i < ITERATIONS; i++){
-// 		pressure[i] = random(.5) + .5;
-// 		if(random(10) > 5)
-// 			density[i] = true;
-// 		else 
-// 			density[i] = false;
-// 		moisture[i] = random(.5);
-// 	}
-// 	for(var i = 0; i < ITERATIONS; i++)
-// 		console.log("ATMOSPHERE: pressure:" + pressure[i] + "  density:" + density[i] + "  moisture:" + moisture[i]);
-// }
-function resetAnimation(){
+function initTree(){
+	console.log("calling init tree");
+	DEPTH = 8;
 	CYCLE_PROGRESS = 0;  // updated mid loop (0.0 to 1.0) 1.0 means entering next step
 	CYCLE_LENGTH = 30; // # of frames each growth cycle lasts
 	CYCLE_FRAME = 0;
 	CYCLE_NUM = 0;
-}
-
-function initTree(){
-	resetAnimation();
 	tree = new binaryTree(undefined, {"length":0, "thickness":matter});
-	buildAtmosphere();
+	for(var i = 0; i <= DEPTH; i++){
+		atmosphere[i] = p.random(1.0);
+		if(p.random(10) > 5)
+			pressure[i] = true;
+		else 
+			pressure[i] = false;
+	}
+	for(var i = 0; i < 3; i++){
+		var index = int(p.random(DEPTH));
+		atmosphere[index] = p.random(0.0, 0.1);
+	}
+	for(var i = 0; i < DEPTH; i++)
+		console.log("ATMOSPHERE: " + atmosphere[i] + "    PRESSURE: " + pressure[i]);
 }
 
-function setup() {
-	canvas = createCanvas(windowWidth, windowHeight);
+p.setup = function() {
+	canvas = p.createCanvas(windowWidth, windowHeight);
 	resizeOrigins();
-	frameRate(60);
+	p.frameRate(60);
 	initTree();
 	if(ANIMATIONS)
-		;
-		// setInterval(function(){initTree();}, 12000);
+		setInterval(function(){initTree();}, 12000);
 	else{
-		noLoop();
+		p.noLoop();
 		// grow and draw a tree
-		for(var i = 0; i < ITERATIONS; i++){
-			growTree(tree, {"pressure":pressure[i], "density":density[i], "moisture":moisture[i]});
+		for(DEPTH = 8; DEPTH >= 0; DEPTH--){
+			growTree(tree);
 		}
-		reviewTree();
-		draw();
+		p.draw();
 	}
 }
-
-function saveImage(){
-	var c=document.getElementById("defaultCanvas");
-	var d=c.toDataURL("image/png");
-	var w=window.open('about:blank','image from canvas');
-	w.document.write("<img src='"+d+"' alt='from canvas'/>");
-}
-
-function mousePressed() {
+p.mousePressed = function() {
 	// DEPTH++;
 	// if(!ANIMATIONS){
 	// 	growTree(tree);
 	// 	draw(tree);
 	// }
-	initTree();
-	for(var i = 0; i < ITERATIONS; i++){
-		growTree(tree, {"pressure":pressure[i], "density":density[i], "moisture":moisture[i]});
-	}
-	reviewTree();
-	draw();
+
+	// var c=document.getElementById("defaultCanvas");
+	// console.log(canvas);
+	// console.log(c);
+	// var d=c.toDataURL("image/png");
+	// var w=window.open('about:blank','image from canvas');
+	// w.document.write("<img src='"+d+"' alt='from canvas'/>");
+
 }
-function draw() {
-	background(0);
+p.draw = function() {
+	p.background(0);
 	// a 30 deg line showing the crop position on the wedge
 	// stroke(200);
 	// line(originTree.x, originTree.y, originTree.x + 200*cos(30/180*Math.PI), originTree.y - 200*sin(30/180*Math.PI));
 
-	var SLICE_LENGTH = 160;
-	fill(40, 255);
-	beginShape();
-	vertex(originTree.x, originTree.y);
-	vertex(originTree.x + SLICE_LENGTH*cos(30/180*Math.PI), originTree.y - SLICE_LENGTH*sin(30/180*Math.PI));
-	vertex(originTree.x + SLICE_LENGTH/(sqrt(3)*.5), originTree.y);
-	endShape(CLOSE);
+	// fill(40, 255);
+	// beginShape();
+	// var SLICE_LENGTH = 140;
+	// vertex(originTree.x, originTree.y);
+	// vertex(originTree.x + SLICE_LENGTH*cos(30/180*Math.PI), originTree.y - SLICE_LENGTH*sin(30/180*Math.PI));
+	// vertex(originTree.x + SLICE_LENGTH/(sqrt(3)*.5), originTree.y);
+	// endShape(CLOSE);
 
-	drawAtmosphere({x:originTree.x, y:originTree.y+80});
-
-	stroke(255);
-	noFill();
+	p.stroke(255);
+	p.noFill();
 	drawTree(tree, originTree, 0);
-	noStroke();
-	fill(255, 80);
+	p.noStroke();
+	p.fill(255, 80);
 	drawSnowflake(tree, originSnowflake);
-	// stroke(255);
-	// noFill();
-	// drawSnowflakeTree(tree, originSnowflake);
 	// stroke(0);
 	// drawSnowflakeTree(tree, originSnowflake);
 	// save(canvas, 'output.png');
@@ -221,18 +134,27 @@ function draw() {
 
 		animateGrowth(tree, CYCLE_PROGRESS);
 	
-		if(CYCLE_FRAME >= CYCLE_LENGTH && CYCLE_NUM < ITERATIONS){
-			stopAllAnimations(tree);
-			growTree(tree, {"pressure":pressure[CYCLE_NUM], "density":density[CYCLE_NUM], "moisture":moisture[CYCLE_NUM]});
+		if(CYCLE_FRAME >= CYCLE_LENGTH && DEPTH > 0){
 			CYCLE_NUM++;
 			CYCLE_FRAME = 0;
+			DEPTH--;
 			CYCLE_PROGRESS = CYCLE_FRAME / CYCLE_LENGTH;
-			// stopAllAnimations(tree);
-			// growTree(tree);
+			stopAllAnimations(tree);
+			growTree(tree);
 		}
 		if(CYCLE_FRAME < CYCLE_LENGTH)
 			CYCLE_FRAME++;
 	}
+
+	// setTimeout(function(){ saveImage() }, 500);
+
+}
+
+function saveImage(){
+	var c=document.getElementById("defaultCanvas");
+	var d=c.toDataURL("image/png");
+	var w=window.open('about:blank','image from canvas');
+	w.document.write("<img src='"+d+"' alt='from canvas'/>");
 }
 ///////////////////////////////
 //  SNOWFLAKE GROWING
@@ -269,49 +191,37 @@ function stopAllAnimations(tree){
 	}
 }
 
+function growTree(tree, params){
+	// var density = params["density"];
+	// var pressure = params["pressure"];
+	// var time = params["time"];
+	// var time = 5;
 
-function reviewTree(){
-
-}
-
-
-function growTree(tree, atmosphere){
-	var nPressure = atmosphere["pressure"];
-	var nDensity = atmosphere["density"];
-	var nMoisture = atmosphere["moisture"];
-
-	visitLeaves(tree);
+	findLeaves(tree);
 	setGlobalTreeVariables(tree);
 
-	function visitLeaves(tree){
+	function findLeaves(tree){
+		// console.log("entering findLeaves");
 		if(tree.left)
-			visitLeaves(tree.left);		
+			findLeaves(tree.left);		
 		if(tree.right)
-			visitLeaves(tree.right);
+			findLeaves(tree.right);
 
 	// GROW MORE CRYSTALS
 		if(tree.left == undefined && tree.right == undefined && !tree.dead && tree.branchesR < 3){
 			
-			// var twoBranches = (random(10) < 8);
-			var twoBranches = nDensity;
+			// var twoBranches = (p.random(10) < 8);
+			var twoBranches = pressure[DEPTH];
 			if(tree.parent == undefined) twoBranches = false;  // force first seed to branch only left
 
 			var shortenby = Math.pow(0.4, tree.branchesR);
-			// var newLength = tree.length.value * nPressure[DEPTH];
-			var newLength = matter * cos(PI * .5 * nPressure)  * shortenby;// * (3+tree.generation);
-			var newThickness = matter * sin(PI * .5 * nPressure) * shortenby;// * (tree.generation);
-			var newThinness = undefined;
-			if(nMoisture < .5) 
-				newThinness = random(.15)+.05;
+			// var newLength = tree.length.value * atmosphere[DEPTH];
+			var newLength = matter * cos(PI * .5 * atmosphere[DEPTH])  * shortenby;
+			var newThickness = matter * sin(PI * .5 * atmosphere[DEPTH]) * shortenby;
 
-			// if(newLength < tree.thickness.value){
-			// 	console.log("adjusting value, length is smaller than thickness");
-			// 	newLength = tree.thickness.value + 3;
-			// }
-
-			if(tree.branchesR < 1 && nPressure < 0){
-				newLength = 0;
-				newThickness = tree.parent.thickness.value * 1.1;
+			if(newLength < tree.thickness.value){
+				console.log("adjusting value");
+				newLength = tree.thickness.value + 3;
 			}
 
 			if(1){//newLength > 5){
@@ -320,17 +230,18 @@ function growTree(tree, atmosphere){
 
 				// ADD CHILDREN
 				// left
-				tree.addLeftChild({"length":newLength, "thickness":newThickness, "thinness":newThinness});
+				tree.addLeftChild({"length":newLength, "thickness":newThickness});
 				var leftIntersect = checkBoundaryCrossing(tree, tree.left);
-				if(leftIntersect != undefined)
+				if(leftIntersect != undefined){
 					makeNodeDead(tree.left, leftIntersect, newThickness );
+				}
 				// right
 				if(twoBranches){
-					console.log("two branches");
-					tree.addRightChild({"length":newLength * .7, "thickness":newThickness * .7, "thinness":newThinness});
+					tree.addRightChild({"length":newLength * .7, "thickness":newThickness * .7});
 					var rightIntersect = checkBoundaryCrossing(tree, tree.right);
-					if(rightIntersect != undefined)
+					if(rightIntersect != undefined){
 						makeNodeDead(tree.right, rightIntersect, newThickness );
+					}
 				}
 			}
 		}
@@ -345,71 +256,6 @@ function growTree(tree, atmosphere){
 		}
 
 	}
-
-// function growTree(tree, atmosphere){
-// 	var nPressure = atmosphere["pressure"];
-// 	var nDensity = atmosphere["density"];
-// 	var nMoisture = atmosphere["moisture"];
-
-// 	findLeaves(tree);
-// 	setGlobalTreeVariables(tree);
-
-// 	function findLeaves(tree){
-// 		if(tree.left)
-// 			findLeaves(tree.left);		
-// 		if(tree.right)
-// 			findLeaves(tree.right);
-
-// 	// GROW MORE CRYSTALS
-// 		if(tree.left == undefined && tree.right == undefined && !tree.dead && tree.branchesR < 3){
-			
-// 			// var twoBranches = (random(10) < 8);
-// 			var twoBranches = nDensity;
-// 			if(tree.parent == undefined) twoBranches = false;  // force first seed to branch only left
-
-// 			var shortenby = Math.pow(0.4, tree.branchesR);
-// 			// var newLength = tree.length.value * nPressure[DEPTH];
-// 			var newLength = matter * cos(PI * .5 * nPressure)  * shortenby;// * (3+tree.generation);
-// 			var newThickness = matter * sin(PI * .5 * nPressure) * shortenby;// * (tree.generation);
-// 			var newThinness = undefined;
-// 			if(nMoisture < .5) 
-// 				newThinness = random(.15)+.05;
-
-// 			if(newLength < tree.thickness.value){
-// 				console.log("adjusting value, length is smaller than thickness");
-// 				newLength = tree.thickness.value + 3;
-// 			}
-
-// 			if(1){//newLength > 5){
-// 				// if(newLength < 30)
-// 				// 	newLength = 30;
-
-// 				// ADD CHILDREN
-// 				// left
-// 				tree.addLeftChild({"length":newLength, "thickness":newThickness, "thinness":newThinness});
-// 				var leftIntersect = checkBoundaryCrossing(tree, tree.left);
-// 				if(leftIntersect != undefined)
-// 					makeNodeDead(tree.left, leftIntersect, newThickness );
-// 				// right
-// 				if(twoBranches){
-// 					tree.addRightChild({"length":newLength * .7, "thickness":newThickness * .7, "thinness":newThinness});
-// 					var rightIntersect = checkBoundaryCrossing(tree, tree.right);
-// 					if(rightIntersect != undefined)
-// 						makeNodeDead(tree.right, rightIntersect, newThickness );
-// 				}
-// 			}
-// 		}
-// 		// grow thicker
-// 		if(tree.age < 3){
-// 			if(tree.maxGeneration - tree.generation == 0)
-// 				tree.thickness.set(tree.thickness.value*(1+(1/(tree.maxGeneration+2))) );
-// 			else if(tree.maxGeneration - tree.generation == 1)
-// 				tree.thickness.set(tree.thickness.value*(1+(1/(tree.maxGeneration+3))) );
-// 			else if(tree.maxGeneration - tree.generation == 2)
-// 				tree.thickness.set(tree.thickness.value*(1+(1/(tree.maxGeneration+4))) );
-// 		}
-
-// 	}
 	// function operateOnEntireTree(tree){
 	// 	// run neighbor arm too near on all the leaves
 	// 	if(tree.left != undefined)
@@ -432,14 +278,6 @@ function growTree(tree, atmosphere){
 	// 		}
 	// 	}
 	// }	
-}
-
-function intersectionWasHit(location, node){
-	if(node.branchesR == 2){
-		var distance = Math.sqrt( (location.x)*(location.x) + (location.y)*(location.y) );
-		distance *= 1.15470053837925;
-		segmentJoinPoints.push(distance);
-	}
 }
 
 /////////////////////////////
@@ -510,7 +348,7 @@ function animatableValue(input, zeroPointIn){
 	}
 	this.stopAnimation = function(){
 		this.valueToBeGrown = undefined;
-		this.animatableValue = this.value;
+		this.valueAnimated = this.value;
 	}
 	this.get = function(){
 		if(ANIMATIONS) 
@@ -519,9 +357,9 @@ function animatableValue(input, zeroPointIn){
 			return this.value;
 	}
 
-	this.value;
+	this.value;// = input;
 	this.valueAnimated;
-	this.zeroPoint = zeroPointIn;
+	this.zeroPoint;// = zeroPointIn;
 	this.valueToBeGrown;
 	
 	this.set(input, zeroPointIn);
@@ -562,11 +400,7 @@ function binaryTree(parent, data){
 	this.age;    // how many generations old this node is  (maxGenerations - this.generation)
 	this.maxGeneration = 0;
 	// each node has a persisting set of random values that can be assigned to anything
-	this.randomValue = [ random(0,10), random(0,10), random(0,10), random(0,10), random(0,10), random(0,10) ]; 
-	// this.details = undefined;
-	this.details = {"phalanges":undefined, "thinner":data.thinness};
-	this.seedMoment = 1.0 // 0.0 to 1.0 sprout point, between 100% inside the parent crystal to the very tip.
-	                     // nothing should ever be 1.0, technically or it would break off 
+	this.randomValue = [ p.random(0,10), p.random(0,10), p.random(0,10), p.random(0,10), p.random(0,10), p.random(0,10) ];  
 
 	// manage properties related to the data structure
 	if(parent){
@@ -626,13 +460,11 @@ function checkBoundaryCrossing(startNode, endNode){
 	// perform boundary check against 30 deg line
 	var result = RayLineIntersect(
 			{x:0, y:0}, 
-			{x:(cos(60/180*Math.PI)), y:(sin(60/180*Math.PI))}, 
-			// {x:(cos(30/180*Math.PI)), y:(sin(30/180*Math.PI))}, 
+			{x:(cos(30/180*Math.PI)), y:(sin(30/180*Math.PI))}, 
 			{x:start.x, y:abs(start.y)}, 
 			{x:end.x, y:abs(end.y)}
 		);
 	if(result != undefined){   // if yes, the boundary was crossed, result is new intersection
-		intersectionWasHit(result, endNode);
 		// return distance from start to new intersection
 		return Math.sqrt( (result.x-start.x)*(result.x-start.x) + (result.y-abs(start.y))*(result.y-abs(start.y)) );
 	}
@@ -659,100 +491,52 @@ function RayLineIntersect(origin, dV, pA, pB){
 ////////////////////////////////
 // DRAWING & RENDERING
 ////////////////////////////////
-function drawAtmosphere(origin){
-	var SCALE_Y = 20;
-	var SCALE_X = matter * .5;
-	noStroke();
-	fill(40,255);
-	beginShape();
-	vertex(origin.x, origin.y - SCALE_Y);
-	vertex(origin.x + (ITERATIONS-.5)*SCALE_X, origin.y - SCALE_Y);
-	vertex(origin.x + (ITERATIONS-.5)*SCALE_X, origin.y);
-	vertex(origin.x, origin.y);
-	endShape(CLOSE);
-
-	for(var i = 0; i < ITERATIONS - 1; i++){
-		stroke(255,0,0);
-		line(origin.x + (i)*SCALE_X, origin.y - pressure[i] * SCALE_Y, 
-			origin.x + (i+1)*SCALE_X, origin.y - pressure[i+1] * SCALE_Y);
-		stroke(0,255,0);
-		line(origin.x + (i)*SCALE_X, origin.y - moisture[i] * SCALE_Y, 
-			origin.x + (i+1)*SCALE_X, origin.y - moisture[i+1] * SCALE_Y);
-		stroke(70,70,255);
-		line(origin.x + (i)*SCALE_X, origin.y - density[i] * SCALE_Y, 
-			origin.x + (i+1)*SCALE_X, origin.y - density[i+1] * SCALE_Y);
+function drawTree(tree, start, angleDepth){
+	if(tree != undefined){
+		if(tree.left != undefined){
+			drawTree(tree.left, {x:start.x + tree.length.value * DIRECTION[angleDepth].x, y:start.y + tree.length.value * DIRECTION[angleDepth].y}, angleDepth);
+		}
+		if(tree.right != undefined){
+			drawTree(tree.right, {x:start.x + tree.length.value * DIRECTION[angleDepth].x, y:start.y + tree.length.value * DIRECTION[angleDepth].y}, mod6(angleDepth+1));
+		}
+		var length = tree.length.get();
+		end = {x:(start.x + length * DIRECTION[angleDepth].x),
+			   y:(start.y + length * DIRECTION[angleDepth].y)};
+		p.line(start.x, start.y, end.x, end.y);
+		p.ellipse(end.x, end.y, 5, 5);
 	}
 }
-
-function drawTree(node, start, angleDepth){
-	if(node != undefined){
-		if(node.left != undefined){
-			drawTree(node.left, {x:start.x + node.length.value * DIRECTION_30OFF[angleDepth].x, y:start.y + node.length.value * DIRECTION_30OFF[angleDepth].y}, angleDepth);
-		}
-		if(node.right != undefined){
-			drawTree(node.right, {x:start.x + node.length.value * DIRECTION_30OFF[angleDepth].x, y:start.y + node.length.value * DIRECTION_30OFF[angleDepth].y}, mod6(angleDepth+1));
-		}
-		var length = node.length.get();
-		end = {x:(start.x + length * DIRECTION_30OFF[angleDepth].x),
-			   y:(start.y + length * DIRECTION_30OFF[angleDepth].y)};
-		line(start.x, start.y, end.x, end.y);
-		ellipse(end.x, end.y, 5, 5);
-	}
-}
-function drawSnowflake(node, location){
-	// var largest = Math.max.apply(Math, segmentJoinPoints);
-	// fill(255, 128);
-	// drawCenterHexagon(location, largest);
-	// fill(255, 128 / segmentJoinPoints.length);
-	// for(var i = 0; i < segmentJoinPoints.length; i++)
-	// 	drawCenterHexagon(location, segmentJoinPoints[i]);
-	
-	for(var angle = 0; angle < 6; angle+=2){
-		// if(node.seedMoment != undefined && node.parent != undefined){
-		// 	var distance = node.seedMoment * node.parent.thickness.value;
-		// 	var adjustedLocation = {x:(location.x + length * DIRECTION[node.angle].x),
-		// 	                        y:(location.y + length * DIRECTION[node.angle].y)};
-		// 	drawHexagonTreeWithReflections(node, adjustedLocation, angle);
-		// }
-		// else{
-			drawHexagonTreeWithReflections(node, location, angle);
-		// }
-	}
-	for(var angle = 1; angle < 6; angle+=2){
-		// if(node.seedMoment != undefined && node.parent != undefined){
-		// 	var distance = node.seedMoment * node.parent.thickness.value;
-		// 	var adjustedLocation = {x:(location.x + length * DIRECTION[node.angle].x),
-		// 	                        y:(location.y + length * DIRECTION[node.angle].y)};
-		// 	drawHexagonTreeWithReflections(node, adjustedLocation, angle);
-		// }
-		// else{
-			drawHexagonTreeWithReflections(node, location, angle);
-		// }
-	}
-	// fill(20*node.age + 150, 255);
-	// drawCenterHexagon(node, location);
-	function drawCenterHexagon(start, radius){
-		beginShape();
+function drawSnowflake(tree, location){
+	for(var angle = 0; angle < 6; angle+=2)
+		drawHexagonTreeWithReflections(tree, location, angle);
+	for(var angle = 1; angle < 6; angle+=2)
+		drawHexagonTreeWithReflections(tree, location, angle);
+	// fill(20*tree.age + 150, 255);
+	// drawCenterHexagon(tree, location);
+	function drawCenterHexagon(tree, start){
+		var length = tree.length.get();
+		var thickness = tree.thickness.get();
+		p.beginShape();
 		for(var angle = 0; angle < 6; angle++){
 			var point = {
-					x:(start.x + (radius) * DIRECTION[mod6(angle)].x),
-					y:(start.y + (radius) * DIRECTION[mod6(angle)].y) };
-			vertex(point.x, point.y);
+					x:(start.x + (length+thickness) * DIRECTION[mod6(angle)].x),
+					y:(start.y + (length+thickness) * DIRECTION[mod6(angle)].y) };
+			p.vertex(point.x, point.y);
 		}
-		endShape(CLOSE);
+		p.endShape(CLOSE);
 	}
-	function drawHexagonTreeWithReflections(node, start, angle){
-		if(node != undefined){
+	function drawHexagonTreeWithReflections(tree, start, angle){
+		if(tree != undefined){
 			// LENGTH and THICKNESS
-			var length = node.length.get();
-			var thickness = node.thickness.get();
+			var length = tree.length.get();
+			var thickness = tree.thickness.get();
 			var pThickness;
-			if(node.parent) pThickness = node.parent.thickness.get();
+			if(tree.parent) pThickness = tree.parent.thickness.get();
 			else 			pThickness = 0;
 			// thickness grows HEXAGONALLY, not scaling proportionally
-			// thickness = node.length.get();
-			if(thickness > node.thickness.value)			
-				thickness = node.thickness.value;
+			// thickness = tree.length.get();
+			if(thickness > tree.thickness.value)			
+				thickness = tree.thickness.value;
 			// START AND END
 			var end = {
 				x:(start.x + length * DIRECTION[angle].x), 
@@ -771,13 +555,13 @@ function drawSnowflake(node, location){
 				startThick = start;
 				thckAng = 1;
 			}
-			if(node.right != undefined){
-				drawHexagonTreeWithReflections(node.right, end, mod6(angle+1) );
-				drawHexagonTreeWithReflections(node.right, end, mod6(angle-1) );
+			if(tree.right != undefined){
+				drawHexagonTreeWithReflections(tree.right, end, mod6(angle+1) );
+				drawHexagonTreeWithReflections(tree.right, end, mod6(angle-1) );
 			}
 			//first go to the bottom of tree, following the main stem
-			if(node.left != undefined)
-				drawHexagonTreeWithReflections(node.left, end, angle);
+			if(tree.left != undefined)
+				drawHexagonTreeWithReflections(tree.left, end, angle);
 			
 			var point1a = {
 				x:(startThick.x + thickness * DIRECTION[mod6(angle-thckAng)].x),
@@ -792,47 +576,16 @@ function drawSnowflake(node, location){
 				x:(end.x - thickness * DIRECTION[mod6(angle-2)].x),
 				y:(end.y - thickness * DIRECTION[mod6(angle-2)].y) };
 
-			// fill(255, 128 * sqrt(1.0/node.generation));
-			var fillValue = 5*node.age + 150 + (node.randomValue[angle%6]-5)*2;
-			fill(fillValue, 250);
-			beginShape();
-			vertex(startThick.x, startThick.y);
-			vertex(point1a.x, point1a.y);
-			vertex(point2a.x, point2a.y);
-			vertex(endThick.x, endThick.y);
-			vertex(point2b.x, point2b.y);
-			vertex(point1b.x, point1b.y);
-			endShape(CLOSE);
-
-			// HEXAGON ARTIFACTS
-			// edge thinning
-			if(node.details.thinner != undefined){
-				var thinness = (node.details.thinner) * thickness;
-				var edges = [point1b, point2b, endThick, point2a, point1a];
-				for(var i = 0; i < 4; i++){
-					var fillChange = - (sin(-.05 + mod6(angle-(i - 1.5)))*2);  // dramatic lighting
-					fill(fillValue + fillChange*10, 250);
-					var edgeNear = {
-						x:(edges[i].x + thinness * DIRECTION[mod6(angle-i)].x),
-						y:(edges[i].y + thinness * DIRECTION[mod6(angle-i)].y) };
-					var edgeFar = {
-						x:(edges[i+1].x + thinness * DIRECTION[mod6(angle-i + 3)].x),
-						y:(edges[i+1].y + thinness * DIRECTION[mod6(angle-i + 3)].y) };
-					var innerNear = {
-						x:(edgeNear.x + thinness * DIRECTION[mod6(angle-i+2 + 3)].x),
-						y:(edgeNear.y + thinness * DIRECTION[mod6(angle-i+2 + 3)].y) };
-					var innerFar = {
-						x:(edgeFar.x + thinness * DIRECTION[mod6(angle-i+4)].x),
-						y:(edgeFar.y + thinness * DIRECTION[mod6(angle-i+4)].y) };
-					beginShape();
-					vertex(edgeNear.x, edgeNear.y);
-					vertex(edgeFar.x, edgeFar.y);
-					vertex(innerFar.x, innerFar.y);
-					vertex(innerNear.x, innerNear.y);
-					endShape(CLOSE);
-				}
-			}
-
+			// fill(255, 128 * sqrt(1.0/tree.generation));
+			p.fill(12*tree.age + 120 + (tree.randomValue[angle%6]-5)*2, 250);
+			p.beginShape();
+			p.vertex(startThick.x, startThick.y);
+			p.vertex(point1a.x, point1a.y);
+			p.vertex(point2a.x, point2a.y);
+			p.vertex(endThick.x, endThick.y);
+			p.vertex(point2b.x, point2b.y);
+			p.vertex(point1b.x, point1b.y);
+			p.endShape(CLOSE);
 		}
 	}
 }
@@ -849,14 +602,14 @@ function drawSnowflakeTree(tree, location){
 				y:(location.y + length * DIRECTION[angle].y)
 			};
 			// stroke(0 + (200/tree.maxGeneration)*tree.generation);
-			line(start.x, start.y, end.x, end.y);
+			p.line(start.x, start.y, end.x, end.y);
 			if(tree.left != undefined)
 				drawTreeWithReflections(tree.left, end, angle);
 			if(tree.right != undefined){
 				drawTreeWithReflections(tree.right, end, mod6(angle+1) );
 				drawTreeWithReflections(tree.right, end, mod6(angle-1) );
 			}
-			ellipse(end.x, end.y, 5, 5);
+			p.ellipse(end.x, end.y, 5, 5);
 		}
 	}
 }
@@ -897,3 +650,7 @@ function logTree(node){
 		logTree(node.right);
 	}
 }
+
+
+}
+var snowGen = new p5(snowflakeGenerator, 'snowflakeGenerator');
