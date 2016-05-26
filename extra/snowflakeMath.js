@@ -96,7 +96,8 @@ function RayLineIntersectQuick(origin, dV, pA, pB, lengthAB, dAB){
 	}
 	return p;
 }
-// full robust like gma's homemade chicken
+
+// no shortcut function
 // function RayLineIntersect(origin, dV, pA, pB){
 // 	var v1 = new Point();
 // 	var v2 = new Point();
