@@ -35,11 +35,6 @@ var HEX_30_ANGLE = [
 	{x:.5,y:0.86602540378444} ];
 
 
-// canvas stuff
-var canvas;  // HTML canvas, for saving image
-var originSnowflake;  // screen coordinates
-var originTree;       // screen coordinates
-
 // var tree;  // the snowflake data model
 // GENERATOR PARAMETERS 
 var matter = 24;
@@ -55,7 +50,14 @@ var mainArmRejoinPoints;  // when two arms grow wide enough that they touch
 
 function initTree(){
 	resetAnimation();
-	tree = new binaryTree(undefined, {"length":0, "thickness":matter});
+	tree = new BinaryTree(undefined, undefined);
+	tree.length = 0;//new animatableValue(0, 0);
+	tree.thickness = matter;//new animatableValue(matter, 0);
+	tree.location = {
+		x:(0.0 + tree.length.value * HEX_ANGLE[tree.direction].x), 
+		y:(0.0 + tree.length.value * HEX_ANGLE[tree.direction].y)
+	};
+
 	mainArmRejoinPoints = [];
 	atmos = new Atmosphere(ITERATIONS);
 }
@@ -117,13 +119,13 @@ function growTree(tree, atmosphere){
 			visitLeaves(tree.right);
 
 	// GROW MORE CRYSTALS
-		if(tree.left == undefined && tree.right == undefined && !tree.dead && tree.branchesR < 3){
+		if(tree.left == undefined && tree.right == undefined && !tree.dead && tree.rBranches < 3){
 			
 			// var twoBranches = (random(10) < 8);
 			var twoBranches = nDensity;
 			if(tree.parent == undefined) twoBranches = false;  // force first seed to branch only left
 
-			var shortenby = Math.pow(0.4, tree.branchesR);
+			var shortenby = Math.pow(0.4, tree.rBranches);
 			// var newLength = tree.length.value * nPressure[DEPTH];
 			var newLength = matter * cos(PI * .5 * nPressure)  * shortenby;// * (3+tree.generation);
 			var newThickness = matter * sin(PI * .5 * nPressure) * shortenby;// * (tree.generation);
@@ -136,7 +138,7 @@ function growTree(tree, atmosphere){
 			// 	newLength = tree.thickness.value + 3;
 			// }
 
-			if(tree.branchesR < 1 && nPressure < 0){
+			if(tree.rBranches < 1 && nPressure < 0){
 				newLength = 0;
 				newThickness = tree.parent.thickness.value * 1.1;
 			}
@@ -148,6 +150,12 @@ function growTree(tree, atmosphere){
 				// ADD CHILDREN
 				// left
 				tree.addLeftChild({"length":newLength, "thickness":newThickness, "thinness":newThinness});
+				tree.left.direction = tree.direction;
+				tree.left.location = {
+					x:(tree.location.x + tree.left.length.value * HEX_ANGLE[tree.left.direction].x), 
+					y:(tree.location.y + tree.left.length.value * HEX_ANGLE[tree.left.direction].y)
+				};		
+
 				var leftIntersect = checkBoundaryCrossing(tree, tree.left);
 				if(leftIntersect != undefined)
 					makeNodeDead(tree.left, leftIntersect, newThickness );
@@ -155,6 +163,12 @@ function growTree(tree, atmosphere){
 				if(twoBranches){
 					console.log("two branches");
 					tree.addRightChild({"length":newLength * .7, "thickness":newThickness * .7, "thinness":newThinness});
+					tree.right.direction = mod6(tree.direction+1);
+					tree.right.location = {
+						x:(tree.location.x + tree.right.length.value * HEX_ANGLE[tree.right.direction].x), 
+						y:(tree.location.y + tree.right.length.value * HEX_ANGLE[tree.right.direction].y)
+					};
+		
 					var rightIntersect = checkBoundaryCrossing(tree, tree.right);
 					if(rightIntersect != undefined)
 						makeNodeDead(tree.right, rightIntersect, newThickness );
@@ -172,6 +186,7 @@ function growTree(tree, atmosphere){
 		}
 
 	}
+}
 
 // function growTree(tree, atmosphere){
 // 	var nPressure = atmosphere["pressure"];
@@ -188,13 +203,13 @@ function growTree(tree, atmosphere){
 // 			findLeaves(tree.right);
 
 // 	// GROW MORE CRYSTALS
-// 		if(tree.left == undefined && tree.right == undefined && !tree.dead && tree.branchesR < 3){
+// 		if(tree.left == undefined && tree.right == undefined && !tree.dead && tree.rBranches < 3){
 			
 // 			// var twoBranches = (random(10) < 8);
 // 			var twoBranches = nDensity;
 // 			if(tree.parent == undefined) twoBranches = false;  // force first seed to branch only left
 
-// 			var shortenby = Math.pow(0.4, tree.branchesR);
+// 			var shortenby = Math.pow(0.4, tree.rBranches);
 // 			// var newLength = tree.length.value * nPressure[DEPTH];
 // 			var newLength = matter * cos(PI * .5 * nPressure)  * shortenby;// * (3+tree.generation);
 // 			var newThickness = matter * sin(PI * .5 * nPressure) * shortenby;// * (tree.generation);
@@ -259,10 +274,10 @@ function growTree(tree, atmosphere){
 	// 		}
 	// 	}
 	// }	
-}
+//}
 
 function intersectionWasHit(location, node){
-	if(node.branchesR == 2){
+	if(node.rBranches == 2){
 		var distance = Math.sqrt( (location.x)*(location.x) + (location.y)*(location.y) );
 		distance *= 1.15470053837925;
 		mainArmRejoinPoints.push(distance);
@@ -367,80 +382,6 @@ function makeNodeDead(node, newLength, newThickness){
 	}
 }
 
-// data is expecting to contain {"length": ... , "thickness:" ... , }
-function binaryTree(parent, data){
-// nodes contain:  value (magnitude)
-				// childType (LEFT or RIGHT)
-				// dead (T/F: force node into leaf)
-				// generation (number child away from top)
-				// branchesR (number of cumulative right branches)
-				// location ({x,y} position in euclidean space)
-	// fix inputs
-	if(data.length == undefined)
-		data.length = 0;
-
-	this.parent = parent;
-	this.right = undefined;
-	this.left = undefined;
-	this.childType;
-	this.location;
-	this.dead; // set true, force node to be a leaf
-	this.branchesR;
-	this.age;    // how many generations old this node is  (maxGenerations - this.generation)
-	this.maxGeneration = 0;
-	// each node has a persisting set of random values that can be assigned to anything
-	this.randomValue = [ random(0,10), random(0,10), random(0,10), random(0,10), random(0,10), random(0,10) ]; 
-	// this.details = undefined;
-	this.details = {"phalanges":undefined, "thinner":data.thinness};
-	this.seedMoment = 1.0 // 0.0 to 1.0 sprout point, between 100% inside the parent crystal to the very tip.
-	                     // nothing should ever be 1.0, technically or it would break off 
-
-	// manage properties related to the data structure
-	if(parent){
-		this.generation = parent.generation+1;
-		// IMPORTANT: this jumps the growth by "parent.thickness", gives it a head start
-		this.length = new animatableValue(data.length, 0);//parent.thickness.value);
-		this.thickness = new animatableValue(data.thickness, 0);
-		// HERE: no head start
-		// this.length = new animatableValue(length, 0);
-	}else{
-		// this is the beginning node of the tree, set initial conditions
-		this.generation = 0;
-		this.direction = 0;
-		this.branchesR = 0;
-		this.age = 1;
-		this.length = new animatableValue(data.length, 0);
-		this.thickness = new animatableValue(data.thickness, 0);
-		this.location = {
-			x:(0.0 + this.length.value * HEX_ANGLE[this.direction].x), 
-			y:(0.0 + this.length.value * HEX_ANGLE[this.direction].y)
-		};
-	}
-	this.addChildren = function(leftData, rightData){
-		this.addLeftChild(leftData);
-		this.addRightChild(rightData);
-	}
-	this.addLeftChild = function(leftData){
-		this.left = new binaryTree(this, leftData);
-		this.left.childType = LEFT;
-		this.left.direction = this.direction;
-		this.left.branchesR = this.branchesR;
-		this.left.location = {
-			x:(this.location.x + this.left.length.value * HEX_ANGLE[this.left.direction].x), 
-			y:(this.location.y + this.left.length.value * HEX_ANGLE[this.left.direction].y)
-		};		
-	}
-	this.addRightChild = function(rightData){
-		this.right = new binaryTree(this, rightData);
-		this.right.childType = RIGHT;
-		this.right.direction = mod6(this.direction+1);
-		this.right.branchesR = this.branchesR + 1;
-		this.right.location = {
-			x:(this.location.x + this.right.length.value * HEX_ANGLE[this.right.direction].x), 
-			y:(this.location.y + this.right.length.value * HEX_ANGLE[this.right.direction].y)
-		};
-	}
-}
 /////////////////////////////////
 // GEOMETRY
 /////////////////////////////////
@@ -498,7 +439,7 @@ function logTree(node){
 			node.length.value + ") PARENT:(" + 
 			hasChildren + ") TYPE:(" + 
 			node.childType + ") RIGHT BRANCHES:(" + 
-			node.branchesR + ") (" + 
+			node.rBranches + ") (" + 
 			node.location.x + "," +
 			node.location.y + ")");
 		logTree(node.left);
