@@ -19,7 +19,7 @@ function setGlobalTreeVariables(tree){
 	}
 	function setGlobals(node){
 		node.maxGeneration = searchedMaxGeneration;
-		node.age = searchedMaxGeneration - node.generation + 1; 
+		node.age = searchedMaxGeneration - node.generation + 1;
 		if(node.left)
 			setGlobals(node.left);
 		if(node.right)
@@ -34,67 +34,58 @@ function mod6(input){
 	return i % 6;
 }
 
-// data is expecting to contain {"length": ... , "thickness:" ... , }
+// { 'location', 
+//   'direction', 
+//   'value' }
+
 var BinaryTree = function(parent, data){
-// nodes contain:  value (magnitude)
-				// childType (LEFT or RIGHT)
-				// dead (T/F: force node into leaf)
-				// generation (number child away from top)
-				// rBranches (number of cumulative right branches)
-				// location ({x,y} position in euclidean space)
-	// fix inputs
-	// if(data.length == undefined)
-	// 	data.length = 0;
 
 	this.parent = parent;
 	this.right = undefined;
 	this.left = undefined;
-	this.childType;  // gets set in the SETTER, not enough info to set now
-	this.dead; // set true, force node to be a leaf
-	this.rBranches;
-	this.lBranches;
-	this.age;    // how many generations old this node is  (maxGenerations - this.generation)
-	this.maxGeneration = 0;
+	this.generation = 0;  // (INT) number child away from top
 
-	this.location;
-	// each node has a persisting set of random values that can be assigned to anything
-	this.randomValue = [ random(0,10), random(0,10), random(0,10), random(0,10), random(0,10), random(0,10) ]; 
-	this.details = undefined;
-	// this.details = {"phalanges":undefined, "thinner":data.thinness};
-	this.seedMoment = 1.0 // 0.0 to 1.0 sprout point, between 100% inside the parent crystal to the very tip.
-	                     // nothing should ever be 1.0, technically or it would break off 
+	// these get set in the SETTER, not enough info to set now
+	this.childType;  // (LEFT or RIGHT)
+	this.rBranches;  // (INT) number of cumulative right branches before
+	this.lBranches;  // (INT) number of cumulative left branches before
 
-	// manage properties related to the data structure
+	// it's a stretch to include these... these can only be set by traversing the entire tree
+	this.age = undefined;    // how many generations old this node is  (maxGenerations - this.generation)
+	this.maxGeneration = undefined;
+
+	// optional
+	this.data = data;  // (whatever this tree represents, store these properties here)
+
+	// INITIALIZE
 	if(parent){
 		this.generation = parent.generation+1;
-		// IMPORTANT: this jumps the growth by "parent.thickness", gives it a head start
-		this.length = data.length;//new animatableValue(data.length, 0);//parent.thickness.value);
-		this.thickness = data.thickness;//new animatableValue(data.thickness, 0);
-		// HERE: no head start
-		// this.length = new animatableValue(length, 0);
 	}else{
 		// this is the beginning node of the tree, set initial conditions
 		this.generation = 0;
-		this.direction = 0;
 		this.rBranches = 0;
 		this.lBranches = 0;
 		this.age = 1;
 	}
+	// SETTERS  (it's important to use these instead of manually adding child nodes)
 	this.addChildren = function(leftData, rightData){
-		this.addLeftChild(leftData);
-		this.addRightChild(rightData);
+		var l = this.addLeftChild(leftData);
+		var r = this.addRightChild(rightData);
+		return {'left':l, 'right':r};
 	}
 	this.addLeftChild = function(leftData){
 		this.left = new BinaryTree(this, leftData);
 		this.left.childType = LEFT;
 		this.left.lBranches = this.lBranches + 1;
 		this.left.rBranches = this.rBranches;
+		return this.left;
 	}
 	this.addRightChild = function(rightData){
 		this.right = new BinaryTree(this, rightData);
 		this.right.childType = RIGHT;
 		this.right.lBranches = this.lBranches;
 		this.right.rBranches = this.rBranches + 1;
+		return this.right;
 	}
 }
 

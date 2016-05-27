@@ -8,15 +8,61 @@
 <body>
 	<script>
 
+var a;
+
+function buildTree(tree){
+	if(tree.generation > 8)
+		return;
+
+	if(random(0, 1) > 0.25){
+		var l = tree.addLeftChild();
+		buildTree(l);
+	}
+	if(random(0, 1) > 0.25){
+		var r = tree.addRightChild();
+		buildTree(r);
+	}
+}
+
 function setup() {
-	createCanvas(710, 400);
-	var b = new BinaryTree(undefined,  {"length":0, "thickness":12});
-	logTree(b);
+	createCanvas(800, 600);
+	fill(0);
+	a = new BinaryTree();
+	buildTree(a);
+	logTree(a);
+}
+
+function mousePressed() {
+	a = new BinaryTree();
+	buildTree(a);
+	logTree(a);
 }
 
 function draw() {
+	clear(255);
+	var pos = {'x':width*.5, 'y':10};
 
+	drawTree(a, pos);
+
+	function drawTree(tree, position){
+		fill(0);
+		if(tree.leaf)
+			fill(0, 255, 0);
+
+		ellipse(position.x, position.y, 6, 6);
+		if(tree.left != undefined){
+			var newPosition = {'x':position.x-380/Math.pow(2,tree.left.generation), 'y':position.y + 30};
+			line(position.x, position.y, newPosition.x, newPosition.y);
+			drawTree(tree.left, newPosition);
+		}
+		if(tree.right != undefined){
+			var newPosition = {'x':position.x+380/Math.pow(2,tree.right.generation), 'y':position.y + 30};
+			line(position.x, position.y, newPosition.x, newPosition.y);
+			drawTree(tree.right, newPosition);
+		}
+	}
 }
+
 	</script>
 </body>
 </html>

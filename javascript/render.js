@@ -171,12 +171,12 @@ function drawAtmosphere(origin){
 function drawTree(node, start, angleDepth){
 	if(node != undefined){
 		if(node.left != undefined){
-			drawTree(node.left, {x:start.x + node.length.value * HEX_30_ANGLE[angleDepth].x, y:start.y + node.length.value * HEX_30_ANGLE[angleDepth].y}, angleDepth);
+			drawTree(node.left, {x:start.x + node.length * HEX_30_ANGLE[angleDepth].x, y:start.y + node.length * HEX_30_ANGLE[angleDepth].y}, angleDepth);
 		}
 		if(node.right != undefined){
-			drawTree(node.right, {x:start.x + node.length.value * HEX_30_ANGLE[angleDepth].x, y:start.y + node.length.value * HEX_30_ANGLE[angleDepth].y}, mod6(angleDepth+1));
+			drawTree(node.right, {x:start.x + node.length * HEX_30_ANGLE[angleDepth].x, y:start.y + node.length * HEX_30_ANGLE[angleDepth].y}, mod6(angleDepth+1));
 		}
-		var length = node.length.get();
+		var length = node.length;
 		end = {x:(start.x + length * HEX_30_ANGLE[angleDepth].x),
 			   y:(start.y + length * HEX_30_ANGLE[angleDepth].y)};
 		line(start.x, start.y, end.x, end.y);
@@ -193,7 +193,7 @@ function drawSnowflake(node, location){
 	
 	for(var angle = 0; angle < 6; angle+=2){
 		// if(node.seedMoment != undefined && node.parent != undefined){
-		// 	var distance = node.seedMoment * node.parent.thickness.value;
+		// 	var distance = node.seedMoment * node.parent.thickness;
 		// 	var adjustedLocation = {x:(location.x + length * HEX_ANGLE[node.angle].x),
 		// 	                        y:(location.y + length * HEX_ANGLE[node.angle].y)};
 		// 	drawHexagonTreeWithReflections(node, adjustedLocation, angle);
@@ -204,7 +204,7 @@ function drawSnowflake(node, location){
 	}
 	for(var angle = 1; angle < 6; angle+=2){
 		// if(node.seedMoment != undefined && node.parent != undefined){
-		// 	var distance = node.seedMoment * node.parent.thickness.value;
+		// 	var distance = node.seedMoment * node.parent.thickness;
 		// 	var adjustedLocation = {x:(location.x + length * HEX_ANGLE[node.angle].x),
 		// 	                        y:(location.y + length * HEX_ANGLE[node.angle].y)};
 		// 	drawHexagonTreeWithReflections(node, adjustedLocation, angle);
@@ -228,15 +228,15 @@ function drawSnowflake(node, location){
 	function drawHexagonTreeWithReflections(node, start, angle){
 		if(node != undefined){
 			// LENGTH and THICKNESS
-			var length = node.length.get();
-			var thickness = node.thickness.get();
+			var length = node.length;
+			var thickness = node.thickness;
 			var pThickness;
-			if(node.parent) pThickness = node.parent.thickness.get();
+			if(node.parent) pThickness = node.parent.thickness;
 			else 			pThickness = 0;
 			// thickness grows HEXAGONALLY, not scaling proportionally
-			// thickness = node.length.get();
-			if(thickness > node.thickness.value)			
-				thickness = node.thickness.value;
+			// thickness = node.length;
+			if(thickness > node.thickness)			
+				thickness = node.thickness;
 			// START AND END
 			var end = {
 				x:(start.x + length * HEX_ANGLE[angle].x), 
@@ -326,7 +326,7 @@ function drawSnowflakeTree(tree, location){
 		drawTreeWithReflections(tree, location, i);
 	function drawTreeWithReflections(tree, location, angle){
 		if(tree != undefined){
-			var length = tree.length.get();
+			var length = tree.length;
 			var start = location;
 			var end = {
 				x:(location.x + length * HEX_ANGLE[angle].x), 

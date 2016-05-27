@@ -54,8 +54,8 @@ function initTree(){
 	tree.length = 0;//new animatableValue(0, 0);
 	tree.thickness = matter;//new animatableValue(matter, 0);
 	tree.location = {
-		x:(0.0 + tree.length.value * HEX_ANGLE[tree.direction].x), 
-		y:(0.0 + tree.length.value * HEX_ANGLE[tree.direction].y)
+		x:(0.0 + tree.length * HEX_ANGLE[tree.direction].x), 
+		y:(0.0 + tree.length * HEX_ANGLE[tree.direction].y)
 	};
 
 	mainArmRejoinPoints = [];
@@ -126,21 +126,21 @@ function growTree(tree, atmosphere){
 			if(tree.parent == undefined) twoBranches = false;  // force first seed to branch only left
 
 			var shortenby = Math.pow(0.4, tree.rBranches);
-			// var newLength = tree.length.value * nPressure[DEPTH];
+			// var newLength = tree.length * nPressure[DEPTH];
 			var newLength = matter * cos(PI * .5 * nPressure)  * shortenby;// * (3+tree.generation);
 			var newThickness = matter * sin(PI * .5 * nPressure) * shortenby;// * (tree.generation);
 			var newThinness = undefined;
 			if(nMoisture < .5) 
 				newThinness = random(.15)+.05;
 
-			// if(newLength < tree.thickness.value){
+			// if(newLength < tree.thickness){
 			// 	console.log("adjusting value, length is smaller than thickness");
-			// 	newLength = tree.thickness.value + 3;
+			// 	newLength = tree.thickness + 3;
 			// }
 
 			if(tree.rBranches < 1 && nPressure < 0){
 				newLength = 0;
-				newThickness = tree.parent.thickness.value * 1.1;
+				newThickness = tree.parent.thickness * 1.1;
 			}
 
 			if(1){//newLength > 5){
@@ -152,8 +152,8 @@ function growTree(tree, atmosphere){
 				tree.addLeftChild({"length":newLength, "thickness":newThickness, "thinness":newThinness});
 				tree.left.direction = tree.direction;
 				tree.left.location = {
-					x:(tree.location.x + tree.left.length.value * HEX_ANGLE[tree.left.direction].x), 
-					y:(tree.location.y + tree.left.length.value * HEX_ANGLE[tree.left.direction].y)
+					x:(tree.location.x + tree.left.length * HEX_ANGLE[tree.left.direction].x), 
+					y:(tree.location.y + tree.left.length * HEX_ANGLE[tree.left.direction].y)
 				};		
 
 				var leftIntersect = checkBoundaryCrossing(tree, tree.left);
@@ -165,8 +165,8 @@ function growTree(tree, atmosphere){
 					tree.addRightChild({"length":newLength * .7, "thickness":newThickness * .7, "thinness":newThinness});
 					tree.right.direction = mod6(tree.direction+1);
 					tree.right.location = {
-						x:(tree.location.x + tree.right.length.value * HEX_ANGLE[tree.right.direction].x), 
-						y:(tree.location.y + tree.right.length.value * HEX_ANGLE[tree.right.direction].y)
+						x:(tree.location.x + tree.right.length * HEX_ANGLE[tree.right.direction].x), 
+						y:(tree.location.y + tree.right.length * HEX_ANGLE[tree.right.direction].y)
 					};
 		
 					var rightIntersect = checkBoundaryCrossing(tree, tree.right);
@@ -178,11 +178,11 @@ function growTree(tree, atmosphere){
 		// grow thicker
 		if(tree.age < 3){
 			if(tree.maxGeneration - tree.generation == 0)
-				tree.thickness.set(tree.thickness.value*(1+(1/(tree.maxGeneration+2))) );
+				tree.thickness = (tree.thickness*(1+(1/(tree.maxGeneration+2))) );
 			else if(tree.maxGeneration - tree.generation == 1)
-				tree.thickness.set(tree.thickness.value*(1+(1/(tree.maxGeneration+3))) );
+				tree.thickness = (tree.thickness*(1+(1/(tree.maxGeneration+3))) );
 			else if(tree.maxGeneration - tree.generation == 2)
-				tree.thickness.set(tree.thickness.value*(1+(1/(tree.maxGeneration+4))) );
+				tree.thickness = (tree.thickness*(1+(1/(tree.maxGeneration+4))) );
 		}
 
 	}
@@ -210,16 +210,16 @@ function growTree(tree, atmosphere){
 // 			if(tree.parent == undefined) twoBranches = false;  // force first seed to branch only left
 
 // 			var shortenby = Math.pow(0.4, tree.rBranches);
-// 			// var newLength = tree.length.value * nPressure[DEPTH];
+// 			// var newLength = tree.length * nPressure[DEPTH];
 // 			var newLength = matter * cos(PI * .5 * nPressure)  * shortenby;// * (3+tree.generation);
 // 			var newThickness = matter * sin(PI * .5 * nPressure) * shortenby;// * (tree.generation);
 // 			var newThinness = undefined;
 // 			if(nMoisture < .5) 
 // 				newThinness = random(.15)+.05;
 
-// 			if(newLength < tree.thickness.value){
+// 			if(newLength < tree.thickness){
 // 				console.log("adjusting value, length is smaller than thickness");
-// 				newLength = tree.thickness.value + 3;
+// 				newLength = tree.thickness + 3;
 // 			}
 
 // 			if(1){//newLength > 5){
@@ -244,11 +244,11 @@ function growTree(tree, atmosphere){
 // 		// grow thicker
 // 		if(tree.age < 3){
 // 			if(tree.maxGeneration - tree.generation == 0)
-// 				tree.thickness.set(tree.thickness.value*(1+(1/(tree.maxGeneration+2))) );
+// 				tree.thickness = (tree.thickness*(1+(1/(tree.maxGeneration+2))) );
 // 			else if(tree.maxGeneration - tree.generation == 1)
-// 				tree.thickness.set(tree.thickness.value*(1+(1/(tree.maxGeneration+3))) );
+// 				tree.thickness = (tree.thickness*(1+(1/(tree.maxGeneration+3))) );
 // 			else if(tree.maxGeneration - tree.generation == 2)
-// 				tree.thickness.set(tree.thickness.value*(1+(1/(tree.maxGeneration+4))) );
+// 				tree.thickness = (tree.thickness*(1+(1/(tree.maxGeneration+4))) );
 // 		}
 
 // 	}
@@ -372,9 +372,9 @@ function animatableValue(input, zeroPointIn){
 function makeNodeDead(node, newLength, newThickness){
 	node.dead = true;
 	if(newThickness != undefined)
-		node.thickness.set(newThickness, 0);
+		node.thickness = (newThickness, 0);
 	if(newLength != undefined){
-		node.length.set(newLength, 0);
+		node.length = (newLength, 0);
 		node.location = {
 			x:(node.parent.x + newLength * HEX_ANGLE[node.direction].x), 
 			y:(node.parent.y + newLength * HEX_ANGLE[node.direction].y)
@@ -436,7 +436,7 @@ function logTree(node){
 		console.log("Node (" + 
 			node.generation + "/" + 
 			node.maxGeneration + ") LENGTH:(" + 
-			node.length.value + ") PARENT:(" + 
+			node.length + ") PARENT:(" + 
 			hasChildren + ") TYPE:(" + 
 			node.childType + ") RIGHT BRANCHES:(" + 
 			node.rBranches + ") (" + 
