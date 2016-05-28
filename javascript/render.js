@@ -13,8 +13,6 @@ var canvas;  // HTML canvas, for saving image
 var originSnowflake;  // screen coordinates
 var originTree;       // screen coordinates
 
-var tree;  // the snowflake data model
-
 ////////////////////////////////
 //  P5.JS
 //////////////////////////////
@@ -41,7 +39,6 @@ function setup() {
 		for(var i = 0; i < ITERATIONS; i++){
 			growTree(tree, {"pressure":atmos.pressure[i], "density":atmos.density[i], "moisture":atmos.moisture[i]});
 		}
-		reviewTree();
 		draw();
 	}
 }
@@ -56,7 +53,6 @@ function mousePressed() {
 	for(var i = 0; i < ITERATIONS; i++){
 		growTree(tree, {"pressure":atmos.pressure[i], "density":atmos.density[i], "moisture":atmos.moisture[i]});
 	}
-	reviewTree();
 	draw();
 }
 function draw() {
@@ -277,7 +273,7 @@ function drawSnowflake(node, location){
 				y:(end.y - thickness * HEX_ANGLE[mod6(angle-2)].y) };
 
 			// fill(255, 128 * sqrt(1.0/node.generation));
-			var fillValue = 5*node.age + 150 + (node.randomValue[angle%6]-5)*2;
+			var fillValue = 5*node.age + 150;// + (node.randomValue[angle%6]-5)*2;
 			fill(fillValue, 250);
 			beginShape();
 			vertex(startThick.x, startThick.y);
@@ -290,8 +286,8 @@ function drawSnowflake(node, location){
 
 			// HEXAGON ARTIFACTS
 			// edge thinning
-			if(node.details.thinner != undefined){
-				var thinness = (node.details.thinner) * thickness;
+			if(node.data.thinness != undefined){
+				var thinness = (node.data.thinness) * thickness;
 				var edges = [point1b, point2b, endThick, point2a, point1a];
 				for(var i = 0; i < 4; i++){
 					var fillChange = - (sin(-.05 + mod6(angle-(i - 1.5)))*2);  // dramatic lighting

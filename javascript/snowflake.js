@@ -35,7 +35,7 @@ var HEX_30_ANGLE = [
 	{x:.5,y:0.86602540378444} ];
 
 
-// var tree;  // the snowflake data model
+var tree;  // the snowflake data model
 // GENERATOR PARAMETERS 
 var matter = 24;
 var atmos;  // atmosphere conditions {pressure, moisture, density}
@@ -48,60 +48,50 @@ var mainArmRejoinPoints;  // when two arms grow wide enough that they touch
 //  P5.JS
 //////////////////////////////
 
+
+var SnowflakeData = function(location, length, direction, thickness, thinness, active){
+	this.location = {'x':undefined, 'y':undefined};
+	this.length = undefined;
+	this.direction = 0;
+	this.thickness = undefined;
+	this.thinness = undefined;
+	this.active = true;   // set to false to force node to be a leaf
+	if(location != undefined)
+		this.location = location;
+	if(length != undefined)
+		this.length = length;
+	if(direction != undefined)
+		this.direction = direction;
+	if(thickness != undefined)
+		this.thickness = thickness;
+	if(thinness != undefined)
+		this.thinness = thinness;
+	if(active != undefined)
+		this.active = active;
+};
+
 function initTree(){
 	resetAnimation();
-	tree = new BinaryTree(undefined, undefined);
-	tree.length = 0;//new animatableValue(0, 0);
-	tree.thickness = matter;//new animatableValue(matter, 0);
-	tree.location = {
-		x:(0.0 + tree.length * HEX_ANGLE[tree.direction].x), 
-		y:(0.0 + tree.length * HEX_ANGLE[tree.direction].y)
-	};
-
 	mainArmRejoinPoints = [];
+
+	// atmosphere initial conditions
 	atmos = new Atmosphere(ITERATIONS);
+
+	// snowflake initial conditions
+	var length = 0;//new animatableValue(0, 0);
+	var direction = 0;
+	var location = { x:(0.0 + length * HEX_ANGLE[direction].x), 
+	                 y:(0.0 + length * HEX_ANGLE[direction].y) };
+	var thickness = matter;//new animatableValue(matter, 0);
+	var data = new SnowflakeData(location, length, direction, thickness, 0, true);
+
+	tree = new BinaryTree(undefined, data);
 }
 
 
 ///////////////////////////////
 //  SNOWFLAKE GROWING
 ///////////////////////////////
-// animateGrowth taps into the "valueToBeGrown" and "valueAnimated" inside of each
-// node, and increments / decrements each according to CYCLE_PROGRESS, which
-// goes from 0.0 to 1.0, signaling end of growth cycle
-function animateGrowth(tree, progress){
-	findLeaves(tree, progress);
-	function findLeaves(tree, progress){  // progress is 0.0 to 1.0
-		// ANIMATIONS
-		tree.length.animate(progress);
-		tree.thickness.animate(progress);
-		if(tree.left){
-			findLeaves(tree.left, progress);
-		}
-		if(tree.right){
-			findLeaves(tree.right, progress);
-		}
-	}
-}
-function stopAllAnimations(tree){
-	findLeaves(tree);
-	function findLeaves(tree){  // progress is 0.0 to 1.0
-		// ANIMATIONS
-		tree.length.stopAnimation();
-		tree.thickness.stopAnimation();
-		if(tree.left){
-			findLeaves(tree.left);
-		}
-		if(tree.right){
-			findLeaves(tree.right);
-		}
-	}
-}
-
-
-function reviewTree(){
-
-}
 
 
 function growTree(tree, atmosphere){
@@ -112,6 +102,8 @@ function growTree(tree, atmosphere){
 	visitLeaves(tree);
 	setGlobalTreeVariables(tree);
 
+	logTree(tree);
+
 	function visitLeaves(tree){
 		if(tree.left)
 			visitLeaves(tree.left);		
@@ -119,7 +111,7 @@ function growTree(tree, atmosphere){
 			visitLeaves(tree.right);
 
 	// GROW MORE CRYSTALS
-		if(tree.left == undefined && tree.right == undefined && !tree.dead && tree.rBranches < 3){
+		if(tree.left == undefined && tree.right == undefined && tree.data.active && tree.rBranches < 3){
 			
 			// var twoBranches = (random(10) < 8);
 			var twoBranches = nDensity;
@@ -149,26 +141,31 @@ function growTree(tree, atmosphere){
 
 				// ADD CHILDREN
 				// left
-				tree.addLeftChild({"length":newLength, "thickness":newThickness, "thinness":newThinness});
-				tree.left.direction = tree.direction;
-				tree.left.location = {
-					x:(tree.location.x + tree.left.length * HEX_ANGLE[tree.left.direction].x), 
-					y:(tree.location.y + tree.left.length * HEX_ANGLE[tree.left.direction].y)
+				var leftDirection = tree.data.direction;
+				var leftLocation = {
+					x:(tree.data.location.x + newLength * HEX_ANGLE[leftDirection].x), 
+					y:(tree.data.location.y + newLength * HEX_ANGLE[leftDirection].y)
 				};		
+				var leftData = new SnowflakeData(leftLocation, newLength, leftDirection, newThickness, newThinness, true);
+
+				tree.addLeftChild( leftData );
 
 				var leftIntersect = checkBoundaryCrossing(tree, tree.left);
 				if(leftIntersect != undefined)
 					makeNodeDead(tree.left, leftIntersect, newThickness );
+
 				// right
 				if(twoBranches){
 					console.log("two branches");
-					tree.addRightChild({"length":newLength * .7, "thickness":newThickness * .7, "thinness":newThinness});
-					tree.right.direction = mod6(tree.direction+1);
-					tree.right.location = {
-						x:(tree.location.x + tree.right.length * HEX_ANGLE[tree.right.direction].x), 
-						y:(tree.location.y + tree.right.length * HEX_ANGLE[tree.right.direction].y)
+					var rightDirection = mod6(tree.data.direction+1);
+					var rightLocation = {
+						x:(tree.data.location.x + newLength*.7 * HEX_ANGLE[rightDirection].x), 
+						y:(tree.data.location.y + newLength*.7 * HEX_ANGLE[rightDirection].y)
 					};
-		
+					var rightData = new SnowflakeData(rightLocation, newLength * .7, rightDirection, newThickness * .7, newThinness, true);
+
+					tree.addRightChild( rightData );
+
 					var rightIntersect = checkBoundaryCrossing(tree, tree.right);
 					if(rightIntersect != undefined)
 						makeNodeDead(tree.right, rightIntersect, newThickness );
@@ -178,11 +175,11 @@ function growTree(tree, atmosphere){
 		// grow thicker
 		if(tree.age < 3){
 			if(tree.maxGeneration - tree.generation == 0)
-				tree.thickness = (tree.thickness*(1+(1/(tree.maxGeneration+2))) );
+				tree.data.thickness = (tree.data.thickness*(1+(1/(tree.maxGeneration+2))) );
 			else if(tree.maxGeneration - tree.generation == 1)
-				tree.thickness = (tree.thickness*(1+(1/(tree.maxGeneration+3))) );
+				tree.data.thickness = (tree.data.thickness*(1+(1/(tree.maxGeneration+3))) );
 			else if(tree.maxGeneration - tree.generation == 2)
-				tree.thickness = (tree.thickness*(1+(1/(tree.maxGeneration+4))) );
+				tree.data.thickness = (tree.data.thickness*(1+(1/(tree.maxGeneration+4))) );
 		}
 
 	}
@@ -287,98 +284,26 @@ function intersectionWasHit(location, node){
 /////////////////////////////
 //  DATA STRUCTURES
 ////////////////////////////////
-function setGlobalTreeVariables(tree){
-	// it's unclear how useful the second step is
-	// there may not be any reason to store the same variable
-	//   inside every node
-	var searchedMaxGeneration = 0;
-	findGlobals(tree);
-	setGlobals(tree);
-
-	function findGlobals(node){
-		if(node.generation > searchedMaxGeneration)
-			searchedMaxGeneration = node.generation;
-		if(node.left)
-			findGlobals(node.left);
-		if(node.right)
-			findGlobals(node.right);
-	}
-	function setGlobals(node){
-		node.maxGeneration = searchedMaxGeneration;
-		node.age = searchedMaxGeneration - node.generation + 1; 
-		if(node.left)
-			setGlobals(node.left);
-		if(node.right)
-			setGlobals(node.right);
-	}
-}
 
 function mod6(input){
-	// throw in any value, negatives included, returns 0-5
+	// returns 0-5.  accepts any int, negatives included
 	var i = input;
 	while (i < 0) i += 6;
 	return i % 6;
 }
 
-// zeroPoint is lower bounds of growth
-function animatableValue(input, zeroPointIn){
-	this.set = function(input, zeroPointIn){
-		if(zeroPointIn == undefined){
-			if(this.value != undefined)
-				zeroPointIn = this.value;
-			else
-				zeroPointIn = 0;
-		}
-		this.zeroPoint = zeroPointIn;
-		this.value = input;
-		if(ANIMATIONS){
-			this.valueToBeGrown = input - this.zeroPoint;
-			this.valueAnimated = this.zeroPoint;
-		}
-		else{
-			this.valueToBeGrown = undefined;
-			this.valueAnimated = undefined;
-		}
-	}
-	this.animate = function(progress){
-		if(progress == 1.0){
-			// THIS NEVER HAPPENS
-			this.valueAnimated = this.value;
-			this.valueToBeGrown = undefined;
-		}
-		else if (this.valueToBeGrown != undefined && progress >= 0.0 && progress < 1.0){
-			this.valueAnimated = this.value - (this.valueToBeGrown) * (1.0 - progress);
-		}
-	}
-	this.stopAnimation = function(){
-		this.valueToBeGrown = undefined;
-		this.animatableValue = this.value;
-	}
-	this.get = function(){
-		if(ANIMATIONS) 
-			return this.valueAnimated;
-		else
-			return this.value;
-	}
-
-	this.value;
-	this.valueAnimated;
-	this.zeroPoint = zeroPointIn;
-	this.valueToBeGrown;
-	
-	this.set(input, zeroPointIn);
-}
 
 function makeNodeDead(node, newLength, newThickness){
-	node.dead = true;
+	node.data.dead = true;
 	if(newThickness != undefined)
-		node.thickness = (newThickness, 0);
+		node.data.thickness = newThickness;//(newThickness, 0);
 	if(newLength != undefined){
-		node.length = (newLength, 0);
-		node.location = {
-			x:(node.parent.x + newLength * HEX_ANGLE[node.direction].x), 
-			y:(node.parent.y + newLength * HEX_ANGLE[node.direction].y)
-		};
+		node.data.length = newLength; // (newLength, 0);
+// TODO: reintroduce below
+		// node.data.location = {
+		// 	x:(node.parent.data.location.x + newLength * HEX_ANGLE[node.direction].x), 
+		// 	y:(node.parent.data.location.y + newLength * HEX_ANGLE[node.direction].y)
+		// };
 	}
 }
 
@@ -389,8 +314,8 @@ function makeNodeDead(node, newLength, newThickness){
 // and returns true if boundary was crossed and adjustments made
 function checkBoundaryCrossing(startNode, endNode){
 	// extract euclidean locations from parent and child
-	var start = startNode.location;
-	var end = endNode.location;
+	var start = startNode.data.location;
+	var end = endNode.data.location;
 	// perform boundary check against 30 deg line
 	var result = RayLineIntersect(
 			{x:0, y:0}, 
@@ -436,12 +361,12 @@ function logTree(node){
 		console.log("Node (" + 
 			node.generation + "/" + 
 			node.maxGeneration + ") LENGTH:(" + 
-			node.length + ") PARENT:(" + 
+			node.data.length + ") PARENT:(" + 
 			hasChildren + ") TYPE:(" + 
 			node.childType + ") RIGHT BRANCHES:(" + 
 			node.rBranches + ") (" + 
-			node.location.x + "," +
-			node.location.y + ")");
+			node.data.location.x + "," +
+			node.data.location.y + ")");
 		logTree(node.left);
 		logTree(node.right);
 	}
