@@ -8,8 +8,10 @@
 <body>
 	<script>
 
+// our tree
 var a;
 
+// this demonstrates a simple recursive tree building function based on random with a cap at 8th generation
 function buildTree(tree){
 	if(tree.generation > 8)
 		return;
@@ -40,30 +42,16 @@ function mousePressed() {
 
 function draw() {
 	clear(255);
-	var pos = {'x':windowWidth*.5, 'y':10};
 
-	drawTree(a, pos);
+	var treePosition = {'x':windowWidth*.5, 'y':10};
+	drawBinaryTree(a, treePosition);
 
-	function drawTree(tree, position){
-		fill(0);
-		if(tree.leaf){
-			stroke(0, 200, 0)
-			fill(50, 255, 50);
-		}
-		ellipse(position.x, position.y, 6, 6);
+	fill(0);
+	stroke(0);
 
-		stroke(0);
-		if(tree.left != undefined){
-			var newPosition = {'x':position.x-(windowWidth*.45)/Math.pow(2,tree.left.generation), 'y':position.y + 30};
-			line(position.x, position.y, newPosition.x, newPosition.y);
-			drawTree(tree.left, newPosition);
-		}
-		if(tree.right != undefined){
-			var newPosition = {'x':position.x+(windowWidth*.45)/Math.pow(2,tree.right.generation), 'y':position.y + 30};
-			line(position.x, position.y, newPosition.x, newPosition.y);
-			drawTree(tree.right, newPosition);
-		}
-	}
+	var rBranchTreePosition = {'x':windowWidth*.5, 'y':windowHeight*.75};
+	drawRightBranchingBinaryTree(a, rBranchTreePosition)
+
 }
 
 	</script>

@@ -106,3 +106,50 @@ function setGlobalTreeVariables(tree){
 			setGlobals(node.right);
 	}
 }
+
+
+function drawBinaryTree(tree, position){
+	fill(0);
+	if(tree.leaf){
+		stroke(0, 200, 0)
+		fill(50, 255, 50);
+	}
+	ellipse(position.x, position.y, 6, 6);
+
+	stroke(0);
+	if(tree.left != undefined){
+		var newPosition = {'x':position.x-(windowWidth*.45)/Math.pow(2,tree.left.generation), 'y':position.y + 30};
+		line(position.x, position.y, newPosition.x, newPosition.y);
+		drawBinaryTree(tree.left, newPosition);
+	}
+	if(tree.right != undefined){
+		var newPosition = {'x':position.x+(windowWidth*.45)/Math.pow(2,tree.right.generation), 'y':position.y + 30};
+		line(position.x, position.y, newPosition.x, newPosition.y);
+		drawBinaryTree(tree.right, newPosition);
+	}
+}
+
+function drawRightBranchingBinaryTree(node, position){
+	var HEX_30_ANGLE = [ {x:1, y:0}, {x:.5,y:-0.866}, {x:-.5,y:-0.866}, {x:-1, y:0}, {x:-.5,y:0.866}, {x:.5,y:0.866} ];
+	var LENGTH = 10;
+
+	if(node == undefined)
+		return;
+
+	end = {x:(position.x + LENGTH * HEX_30_ANGLE[int(node.rBranches)%6].x),
+		   y:(position.y + LENGTH * HEX_30_ANGLE[int(node.rBranches)%6].y)};
+
+	if(node.left != undefined){
+		drawRightBranchingBinaryTree(node.left, end);
+	}
+	if(node.right != undefined){
+		drawRightBranchingBinaryTree(node.right, end);
+	}
+	end = {x:(position.x + LENGTH * HEX_30_ANGLE[int(node.rBranches)%6].x),
+		   y:(position.y + LENGTH * HEX_30_ANGLE[int(node.rBranches)%6].y)};
+	line(position.x, position.y, end.x, end.y);
+	ellipse(end.x, end.y, 5, 5);
+
+
+}
+
