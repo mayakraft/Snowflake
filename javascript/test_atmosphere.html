@@ -11,13 +11,19 @@
 var atmosphere;
 
 function setup() {
-	createCanvas(710, 400);
-	atmosphere = new Atmosphere(10);
+	createCanvas(windowWidth, windowHeight);
+	atmosphere = new Atmosphere( random(10, 50) );
 	console.log(atmosphere);
 }
 
 function draw() {  
+	background(255);
 	atmosphere.drawGraph( {'x':windowWidth*.33, 'y':windowHeight*.33, 'width':windowWidth*.33, 'height':windowHeight*.33} );
+}
+
+function mousePressed() {
+	atmosphere = new Atmosphere( random(10, 50) );
+	console.log(atmosphere);
 }
 
 	</script>
