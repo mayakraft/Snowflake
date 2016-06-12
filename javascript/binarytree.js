@@ -111,10 +111,10 @@ function setGlobalTreeVariables(tree){
 
 
 function drawBinaryTree(tree, position){
-	if(tree.leaf)
-		fill(50, 255, 50);		
-	else
-		fill( 255 * (int(tree.generation)%2) );
+	// if(tree.leaf)
+	// 	fill(50, 255, 50);		
+	// else
+	// 	fill( 255 * (int(tree.generation)%2) );
 	
 	ellipse(position.x, position.y, 6, 6);
 
@@ -133,10 +133,10 @@ function drawBinaryTree(tree, position){
 function drawRightBranchingBinaryTree(tree, position){
 	var HEX_BRANCH = [ {x:1, y:0}, {x:.5,y:-0.866}, {x:-.5,y:-0.866}, {x:-1, y:0}, {x:-.5,y:0.866}, {x:.5,y:0.866} ];
 
-	if(tree.leaf)
-		fill(50, 255, 50);		
-	else
-		fill( 255 * (int(tree.generation)%2) );
+	// if(tree.leaf)
+	// 	fill(50, 255, 50);		
+	// else
+	// 	fill( 255 * (int(tree.generation)%2) );
 
 	ellipse(position.x, position.y, 6, 6);
 

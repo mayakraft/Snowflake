@@ -8,15 +8,18 @@
 <body>
 	<script>
 
+var atmosphere;
+
 function setup() {
 	createCanvas(710, 400);
-	var a = new Atmosphere(10);
-	console.log(a);
+	atmosphere = new Atmosphere(10);
+	console.log(atmosphere);
 }
 
-function draw() {
-
+function draw() {  
+	atmosphere.drawGraph( {'x':windowWidth*.33, 'y':windowHeight*.33, 'width':windowWidth*.33, 'height':windowHeight*.33} );
 }
+
 	</script>
 </body>
 </html>

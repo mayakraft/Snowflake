@@ -39,4 +39,28 @@ var Atmosphere = function(length){
 	// 	var index = int(random(this.length));
 	// 	this.pressure[index] = random(0.0, 0.1);
 	// }
+
+	this.drawGraph = function(rect){
+	// rect is expecting {'x':_, 'y':_, 'width':_, 'height':_, }
+		noStroke();
+		fill(40,255);
+		beginShape();
+		vertex(rect.x, rect.y);
+		vertex(rect.x, rect.y + rect.height);
+		vertex(rect.x + rect.width, rect.y + rect.height);
+		vertex(rect.x + rect.width, rect.y);
+		endShape(CLOSE);
+
+		for(var i = 0; i < this.length - 1; i++){
+			stroke(255,0,0);
+			line(rect.x + (i)*(rect.width/this.length), rect.y + this.pressure[i] * rect.height, 
+				rect.x + (i+1)*(rect.width/this.length), rect.y + this.pressure[i+1] * rect.height);
+			stroke(0,255,0);
+			line(rect.x + (i)*(rect.width/this.length), rect.y + this.moisture[i] * rect.height, 
+				rect.x + (i+1)*(rect.width/this.length), rect.y + this.moisture[i+1] * rect.height);
+			stroke(70,70,255);
+			line(rect.x + (i)*(rect.width/this.length), rect.y + this.density[i] * rect.height, 
+				rect.x + (i+1)*(rect.width/this.length), rect.y + this.density[i+1] * rect.height);
+		}
+	}
 };

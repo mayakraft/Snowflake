@@ -1,3 +1,11 @@
+// Algorithmic Snowflake
+//
+//  TREE: the snowflake is a binary tree, "var tree" is the head
+
+var matter = 24;
+
+var DEBUG = 1;
+
 
 //TODO 
 //lines that go through the center
@@ -5,39 +13,29 @@
 //    - both in 60 deg and also 30 deg angles
 //    - do the latter if the length v thickness equivocates to about a regular hexagon
 //
-
-
-// #DEFS
-var RIGHT = 1;
-var LEFT = 0;
-// clockwise starting from 3:00
-var HEX_ANGLE = [
-	{x:0.866025403784439, y:0.5},
-	{x:0, y:1},
-	{x:-0.866025403784439, y:0.5},
-	{x:-0.866025403784439, y:-0.5},
-	{x:0, y:-1},
-	{x:0.866025403784439, y:-0.5} ];
-var HEX_30_ANGLE = [
-	{x:1, y:0},
-	{x:.5,y:-0.86602540378444},
-	{x:-.5,y:-0.86602540378444},
-	{x:-1, y:0},
-	{x:-.5,y:0.86602540378444},
-	{x:.5,y:0.86602540378444} ];
-
-var matter = 24;
-
-// Algorithmic Snowflake
-//
-//  TREE: the snowflake is a binary tree, "var tree" is the head
-//  CYCLE: one growth cycle
-//  FRAME: a CYCLE contain many FRAMES
-
-
 var Snowflake = function(){
+	// #DEFS
+	var RIGHT = 1;
+	var LEFT = 0;
+	// clockwise starting from 3:00
+	var HEX_ANGLE = [
+		{x:0.866025403784439, y:0.5},
+		{x:0, y:1},
+		{x:-0.866025403784439, y:0.5},
+		{x:-0.866025403784439, y:-0.5},
+		{x:0, y:-1},
+		{x:0.866025403784439, y:-0.5} ];
+	var HEX_30_ANGLE = [
+		{x:1, y:0},
+		{x:.5,y:-0.86602540378444},
+		{x:-.5,y:-0.86602540378444},
+		{x:-1, y:0},
+		{x:-.5,y:0.86602540378444},
+		{x:.5,y:0.86602540378444} ];
+
 
 	this.init = function(){
+		if(DEBUG) console.log('Snowflake.init()');
 		// var location = { x:(0.0 + length * HEX_ANGLE[direction].x), 
 		//                  y:(0.0 + length * HEX_ANGLE[direction].y) };
 		var thickness = 24;
@@ -49,14 +47,141 @@ var Snowflake = function(){
 
 	this.tree;  // the parent node of the binary tree
 	this.init();
-	this.mainArmRejoinPoints;  // when two arms grow wide enough that they touch
+	this.mainArmRejoinPoints = [];  // when two arms grow wide enough that they touch
+
+
+
 
 	this.grow = function(atmosphere){
+		if(DEBUG) console.log('Snowflake.grow()');
+
+		var intersectionWasHit = function(location, node){
+			if(DEBUG) console.log('Snowflake.intersectionWasHit()');
+			if(node.rBranches == 2){
+				var distance = Math.sqrt( (location.x)*(location.x) + (location.y)*(location.y) );
+				distance *= 1.15470053837925;
+				// if(this.mainArmRejoinPoints != undefined)
+				// this.mainArmRejoinPoints.push(distance);
+			}
+		}
+		var checkBoundaryCrossing = function(startNode, endNode){
+			if(DEBUG) console.log('Snowflake.checkBoundaryCrossing()');
+			// extract euclidean locations from parent and child
+			var start = startNode.data.location;
+			var end = endNode.data.location;
+			// perform boundary check against 30 deg line
+			var result = RayLineIntersect(
+					{x:0, y:0}, 
+					{x:(cos(60/180*Math.PI)), y:(sin(60/180*Math.PI))}, 
+					// {x:(cos(30/180*Math.PI)), y:(sin(30/180*Math.PI))}, 
+					{x:start.x, y:abs(start.y)}, 
+					{x:end.x, y:abs(end.y)}
+				);
+			if(result != undefined){   // if yes, the boundary was crossed, result is new intersection
+				intersectionWasHit(result, endNode);
+				// return distance from start to new intersection
+				return Math.sqrt( (result.x-start.x)*(result.x-start.x) + (result.y-abs(start.y))*(result.y-abs(start.y)) );
+			}
+			return undefined;
+		}
+		
+		var growTree = function(tree, atmosphere){
+			var nPressure = atmosphere["pressure"];
+			var nDensity = atmosphere["density"];
+			var nMoisture = atmosphere["moisture"];
+
+			visitLeaves(tree);
+			setGlobalTreeVariables(tree);
+
+			function visitLeaves(tree){
+				if(tree.left)
+					visitLeaves(tree.left);		
+				if(tree.right)
+					visitLeaves(tree.right);
+
+			// GROW MORE CRYSTALS
+				// if(tree.left == undefined && tree.right == undefined && tree.data != undefined && tree.data.active && tree.rBranches < 3){
+				if(tree.left == undefined && tree.right == undefined){
+					
+					// var twoBranches = (random(10) < 8);
+					var twoBranches = nDensity;
+					if(tree.parent == undefined) twoBranches = false;  // force first seed to branch only left
+
+					var shortenby = Math.pow(0.4, tree.rBranches);
+					// var newLength = tree.length * nPressure[DEPTH];
+					var newLength = matter * cos(PI * .5 * nPressure)  * shortenby;// * (3+tree.generation);
+					var newThickness = matter * sin(PI * .5 * nPressure) * shortenby;// * (tree.generation);
+					var newThinness = undefined;
+					if(nMoisture < .5) 
+						newThinness = random(.15)+.05;
+
+					// if(newLength < tree.thickness){
+					// 	console.log("adjusting value, length is smaller than thickness");
+					// 	newLength = tree.thickness + 3;
+					// }
+
+					if(tree.rBranches < 1 && nPressure < 0){
+						newLength = 0;
+						newThickness = tree.parent.thickness * 1.1;
+					}
+
+					if(1){//newLength > 5){
+						// if(newLength < 30)
+						// 	newLength = 30;
+
+						// ADD CHILDREN
+						// left
+						var leftDirection = tree.data.direction;
+						var leftLocation = {
+							x:(tree.data.location.x + newLength * HEX_ANGLE[leftDirection].x), 
+							y:(tree.data.location.y + newLength * HEX_ANGLE[leftDirection].y)
+						};		
+						var leftData = new SnowflakeNode(leftLocation, newLength, leftDirection, newThickness, newThinness, true);
+
+						tree.addLeftChild( leftData );
+
+						var leftIntersect = checkBoundaryCrossing(tree, tree.left);
+						if(leftIntersect != undefined)
+							makeNodeDead(tree.left, leftIntersect, newThickness );
+
+						// right
+						if(twoBranches){
+							console.log("two branches");
+							var rightDirection = mod6(tree.data.direction+1);
+							var rightLocation = {
+								x:(tree.data.location.x + newLength*.7 * HEX_ANGLE[rightDirection].x), 
+								y:(tree.data.location.y + newLength*.7 * HEX_ANGLE[rightDirection].y)
+							};
+							var rightData = new SnowflakeNode(rightLocation, newLength * .7, rightDirection, newThickness * .7, newThinness, true);
+
+							tree.addRightChild( rightData );
+
+							var rightIntersect = checkBoundaryCrossing(tree, tree.right);
+							if(rightIntersect != undefined)
+								makeNodeDead(tree.right, rightIntersect, newThickness );
+						}
+					}
+				}
+				// grow thicker
+				// if(tree.age < 3){
+				// 	if(tree.maxGeneration - tree.generation == 0)
+				// 		tree.data.thickness = (tree.data.thickness*(1+(1/(tree.maxGeneration+2))) );
+				// 	else if(tree.maxGeneration - tree.generation == 1)
+				// 		tree.data.thickness = (tree.data.thickness*(1+(1/(tree.maxGeneration+3))) );
+				// 	else if(tree.maxGeneration - tree.generation == 2)
+				// 		tree.data.thickness = (tree.data.thickness*(1+(1/(tree.maxGeneration+4))) );
+				// }
+
+			}
+		}		
+
 		for(var i = 0; i < atmosphere.length; i++)
 			growTree(this.tree, {"pressure":atmosphere.pressure[i], "density":atmosphere.density[i], "moisture":atmosphere.moisture[i]});
+
 	}
 
 	this.draw = function(position){
+		if(DEBUG) console.log('Snowflake.draw()');
 
 		for(var angle = 0; angle < 6; angle+=2)
 			drawHexagonTreeWithReflections(this.tree, position, angle);
@@ -158,9 +283,11 @@ var Snowflake = function(){
 			}
 		}
 	}
+
 };
 
 var SnowflakeNode = function(location, length, direction, thickness, thinness, active){
+	if(DEBUG) console.log('new SnowflakeNode()');
 	this.location = {'x':undefined, 'y':undefined};
 	this.length = undefined;
 	this.direction = 0;
@@ -181,100 +308,6 @@ var SnowflakeNode = function(location, length, direction, thickness, thinness, a
 		this.active = active;
 };
 
-
-///////////////////////////////
-//  SNOWFLAKE GROWING
-///////////////////////////////
-
-function growTree(tree, atmosphere){
-	var nPressure = atmosphere["pressure"];
-	var nDensity = atmosphere["density"];
-	var nMoisture = atmosphere["moisture"];
-
-	visitLeaves(tree);
-	setGlobalTreeVariables(tree);
-
-	function visitLeaves(tree){
-		if(tree.left)
-			visitLeaves(tree.left);		
-		if(tree.right)
-			visitLeaves(tree.right);
-
-	// GROW MORE CRYSTALS
-		// if(tree.left == undefined && tree.right == undefined && tree.data != undefined && tree.data.active && tree.rBranches < 3){
-		if(tree.left == undefined && tree.right == undefined){
-			
-			// var twoBranches = (random(10) < 8);
-			var twoBranches = nDensity;
-			if(tree.parent == undefined) twoBranches = false;  // force first seed to branch only left
-
-			var shortenby = Math.pow(0.4, tree.rBranches);
-			// var newLength = tree.length * nPressure[DEPTH];
-			var newLength = matter * cos(PI * .5 * nPressure)  * shortenby;// * (3+tree.generation);
-			var newThickness = matter * sin(PI * .5 * nPressure) * shortenby;// * (tree.generation);
-			var newThinness = undefined;
-			if(nMoisture < .5) 
-				newThinness = random(.15)+.05;
-
-			// if(newLength < tree.thickness){
-			// 	console.log("adjusting value, length is smaller than thickness");
-			// 	newLength = tree.thickness + 3;
-			// }
-
-			if(tree.rBranches < 1 && nPressure < 0){
-				newLength = 0;
-				newThickness = tree.parent.thickness * 1.1;
-			}
-
-			if(1){//newLength > 5){
-				// if(newLength < 30)
-				// 	newLength = 30;
-
-				// ADD CHILDREN
-				// left
-				var leftDirection = tree.data.direction;
-				var leftLocation = {
-					x:(tree.data.location.x + newLength * HEX_ANGLE[leftDirection].x), 
-					y:(tree.data.location.y + newLength * HEX_ANGLE[leftDirection].y)
-				};		
-				var leftData = new SnowflakeNode(leftLocation, newLength, leftDirection, newThickness, newThinness, true);
-
-				tree.addLeftChild( leftData );
-
-				var leftIntersect = checkBoundaryCrossing(tree, tree.left);
-				if(leftIntersect != undefined)
-					makeNodeDead(tree.left, leftIntersect, newThickness );
-
-				// right
-				if(twoBranches){
-					console.log("two branches");
-					var rightDirection = mod6(tree.data.direction+1);
-					var rightLocation = {
-						x:(tree.data.location.x + newLength*.7 * HEX_ANGLE[rightDirection].x), 
-						y:(tree.data.location.y + newLength*.7 * HEX_ANGLE[rightDirection].y)
-					};
-					var rightData = new SnowflakeNode(rightLocation, newLength * .7, rightDirection, newThickness * .7, newThinness, true);
-
-					tree.addRightChild( rightData );
-
-					var rightIntersect = checkBoundaryCrossing(tree, tree.right);
-					if(rightIntersect != undefined)
-						makeNodeDead(tree.right, rightIntersect, newThickness );
-				}
-			}
-		}
-		// grow thicker
-		// if(tree.age < 3){
-		// 	if(tree.maxGeneration - tree.generation == 0)
-		// 		tree.data.thickness = (tree.data.thickness*(1+(1/(tree.maxGeneration+2))) );
-		// 	else if(tree.maxGeneration - tree.generation == 1)
-		// 		tree.data.thickness = (tree.data.thickness*(1+(1/(tree.maxGeneration+3))) );
-		// 	else if(tree.maxGeneration - tree.generation == 2)
-		// 		tree.data.thickness = (tree.data.thickness*(1+(1/(tree.maxGeneration+4))) );
-		// }
-
-	}
-}
 
 // function growTree(tree, atmosphere){
 // 	var nPressure = atmosphere["pressure"];
@@ -364,14 +397,6 @@ function growTree(tree, atmosphere){
 	// }	
 //}
 
-function intersectionWasHit(location, node){
-	if(node.rBranches == 2){
-		var distance = Math.sqrt( (location.x)*(location.x) + (location.y)*(location.y) );
-		distance *= 1.15470053837925;
-		mainArmRejoinPoints.push(distance);
-	}
-}
-
 /////////////////////////////
 //  DATA STRUCTURES
 ////////////////////////////////
@@ -385,6 +410,7 @@ function mod6(input){
 
 
 function makeNodeDead(node, newLength, newThickness){
+	if(DEBUG) console.log('makeNodeDead()');
 	node.data.dead = true;
 	if(newThickness != undefined)
 		node.data.thickness = newThickness;//(newThickness, 0);
@@ -404,25 +430,7 @@ function makeNodeDead(node, newLength, newThickness){
 // performs the necessary fixes to this specific problem
 // and returns true if boundary was crossed and adjustments made
 
-function checkBoundaryCrossing(startNode, endNode){
-	// extract euclidean locations from parent and child
-	var start = startNode.data.location;
-	var end = endNode.data.location;
-	// perform boundary check against 30 deg line
-	var result = RayLineIntersect(
-			{x:0, y:0}, 
-			{x:(cos(60/180*Math.PI)), y:(sin(60/180*Math.PI))}, 
-			// {x:(cos(30/180*Math.PI)), y:(sin(30/180*Math.PI))}, 
-			{x:start.x, y:abs(start.y)}, 
-			{x:end.x, y:abs(end.y)}
-		);
-	if(result != undefined){   // if yes, the boundary was crossed, result is new intersection
-		intersectionWasHit(result, endNode);
-		// return distance from start to new intersection
-		return Math.sqrt( (result.x-start.x)*(result.x-start.x) + (result.y-abs(start.y))*(result.y-abs(start.y)) );
-	}
-	return undefined;
-}
+
 
 function RayLineIntersect(origin, dV, pA, pB){
 	// if intersection, returns point of intersection

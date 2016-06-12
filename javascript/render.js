@@ -13,6 +13,8 @@ function setup() {
 	snowflake = new Snowflake();
 	snowflake.grow(atmos);
 	logTree(snowflake.tree);
+
+	// noLoop();
 }
 
 function mousePressed() {
@@ -21,11 +23,12 @@ function mousePressed() {
 
 function draw() {
 	background(128);
-	noStroke();
+	stroke(0);
 	fill(255, 80);
-		var treePosition = {'x':windowWidth*.5, 'y':40};
-	drawBinaryTree(snowflake.tree, treePosition);
-	// snowflake.draw(snowflakePosition);
+	var treePosition = {'x':windowWidth*.5, 'y':windowHeight*.5};
+	drawRightBranchingBinaryTree(snowflake.tree, treePosition);
+	noStroke();
+	snowflake.draw(snowflakePosition);
 }
 
 function resizeOrigins(){
