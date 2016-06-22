@@ -1,11 +1,9 @@
 // Algorithmic Snowflake
-//
-//  TREE: the snowflake is a binary tree, "var tree" is the head
-
-var matter = 24;
 
 var DEBUG = 1;
 
+
+var matter = 24;
 
 //TODO 
 //lines that go through the center
@@ -42,19 +40,15 @@ var Snowflake = function(){
 		var data = new SnowflakeNode({x:(0.0),y:(0.0)}, 0, 0, thickness, 0, true);
 		this.tree = new BinaryTree(undefined, data);		
 
-		this.mainArmRejoinPoints = [];
+		this.mainArmRejoinPoints = [];  // when two arms grow wide enough that they touch
 	}
 
 	this.tree;  // the parent node of the binary tree
+	this.mainArmRejoinPoints; 
+
 	this.init();
-	this.mainArmRejoinPoints = [];  // when two arms grow wide enough that they touch
-
-
-
 
 	this.grow = function(atmosphere){
-		if(DEBUG) console.log('Snowflake.grow()');
-
 		var intersectionWasHit = function(location, node){
 			if(DEBUG) console.log('Snowflake.intersectionWasHit()');
 			if(node.rBranches == 2){
@@ -86,9 +80,9 @@ var Snowflake = function(){
 		}
 		
 		var growTree = function(tree, atmosphere){
-			var nPressure = atmosphere["pressure"];
-			var nDensity = atmosphere["density"];
-			var nMoisture = atmosphere["moisture"];
+			var nMass = atmosphere['mass'];
+			var nBranchHere = atmosphere['branch'];
+			var nThinHere = atmosphere['thin'];
 
 			visitLeaves(tree);
 			setGlobalTreeVariables(tree);
@@ -104,15 +98,15 @@ var Snowflake = function(){
 				if(tree.left == undefined && tree.right == undefined){
 					
 					// var twoBranches = (random(10) < 8);
-					var twoBranches = nDensity;
+					var twoBranches = nBranchHere;
 					if(tree.parent == undefined) twoBranches = false;  // force first seed to branch only left
 
 					var shortenby = Math.pow(0.4, tree.rBranches);
-					// var newLength = tree.length * nPressure[DEPTH];
-					var newLength = matter * cos(PI * .5 * nPressure)  * shortenby;// * (3+tree.generation);
-					var newThickness = matter * sin(PI * .5 * nPressure) * shortenby;// * (tree.generation);
+					// var newLength = tree.length * nMass[DEPTH];
+					var newLength = matter * cos(PI * .5 * nMass)  * shortenby;// * (3+tree.generation);
+					var newThickness = matter * sin(PI * .5 * nMass) * shortenby;// * (tree.generation);
 					var newThinness = undefined;
-					if(nMoisture < .5) 
+					if(nThinHere < .5) 
 						newThinness = random(.15)+.05;
 
 					// if(newLength < tree.thickness){
@@ -120,7 +114,7 @@ var Snowflake = function(){
 					// 	newLength = tree.thickness + 3;
 					// }
 
-					if(tree.rBranches < 1 && nPressure < 0){
+					if(tree.rBranches < 1 && nMass < 0){
 						newLength = 0;
 						newThickness = tree.parent.thickness * 1.1;
 					}
@@ -175,8 +169,10 @@ var Snowflake = function(){
 			}
 		}		
 
+		if(DEBUG) console.log('Snowflake.grow()');
+
 		for(var i = 0; i < atmosphere.length; i++)
-			growTree(this.tree, {"pressure":atmosphere.pressure[i], "density":atmosphere.density[i], "moisture":atmosphere.moisture[i]});
+			growTree(this.tree, {"mass":atmosphere.mass[i], "branch":atmosphere.branch[i], "thin":atmosphere.thin[i]});
 
 	}
 
@@ -310,9 +306,9 @@ var SnowflakeNode = function(location, length, direction, thickness, thinness, a
 
 
 // function growTree(tree, atmosphere){
-// 	var nPressure = atmosphere["pressure"];
-// 	var nDensity = atmosphere["density"];
-// 	var nMoisture = atmosphere["moisture"];
+// 	var nMass = atmosphere["mass"];
+// 	var nBranchHere = atmosphere["branch"];
+// 	var nThinHere = atmosphere["thin"];
 
 // 	findLeaves(tree);
 // 	setGlobalTreeVariables(tree);
@@ -327,15 +323,15 @@ var SnowflakeNode = function(location, length, direction, thickness, thinness, a
 // 		if(tree.left == undefined && tree.right == undefined && !tree.dead && tree.rBranches < 3){
 			
 // 			// var twoBranches = (random(10) < 8);
-// 			var twoBranches = nDensity;
+// 			var twoBranches = nBranchHere;
 // 			if(tree.parent == undefined) twoBranches = false;  // force first seed to branch only left
 
 // 			var shortenby = Math.pow(0.4, tree.rBranches);
-// 			// var newLength = tree.length * nPressure[DEPTH];
-// 			var newLength = matter * cos(PI * .5 * nPressure)  * shortenby;// * (3+tree.generation);
-// 			var newThickness = matter * sin(PI * .5 * nPressure) * shortenby;// * (tree.generation);
+// 			// var newLength = tree.length * nMass[DEPTH];
+// 			var newLength = matter * cos(PI * .5 * nMass)  * shortenby;// * (3+tree.generation);
+// 			var newThickness = matter * sin(PI * .5 * nMass) * shortenby;// * (tree.generation);
 // 			var newThinness = undefined;
-// 			if(nMoisture < .5) 
+// 			if(nThinHere < .5) 
 // 				newThinness = random(.15)+.05;
 
 // 			if(newLength < tree.thickness){

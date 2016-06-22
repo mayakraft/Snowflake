@@ -14,6 +14,7 @@ function setup() {
 	createCanvas(windowWidth, windowHeight);
 	atmosphere = new Atmosphere( random(10, 50) );
 	console.log(atmosphere);
+	noLoop();
 }
 
 function draw() {  
@@ -24,6 +25,7 @@ function draw() {
 function mousePressed() {
 	atmosphere = new Atmosphere( random(10, 50) );
 	console.log(atmosphere);
+	draw();
 }
 
 	</script>

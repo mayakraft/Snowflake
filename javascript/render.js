@@ -14,11 +14,15 @@ function setup() {
 	snowflake.grow(atmos);
 	logTree(snowflake.tree);
 
-	// noLoop();
+	noLoop();
 }
 
 function mousePressed() {
-
+	var atmos = new Atmosphere(8);
+	console.log(atmos);
+	snowflake = new Snowflake();
+	snowflake.grow(atmos);
+	draw();
 }
 
 function draw() {
