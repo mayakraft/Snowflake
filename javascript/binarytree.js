@@ -22,6 +22,9 @@ var BinaryTree = function(parent, data){
 	// optional
 	this.data = data;  // (whatever this tree is meant to represent, store properties here)
 
+	// member functions
+	this.draw = drawBinaryTree;
+
 	// INITIALIZE
 	if(parent){
 		this.generation = parent.generation+1;
@@ -106,53 +109,6 @@ function setGlobalTreeVariables(tree){
 			setGlobals(node.left);
 		if(node.right)
 			setGlobals(node.right);
-	}
-}
-
-
-function drawBinaryTree(tree, position){
-	// if(tree.leaf)
-	// 	fill(50, 255, 50);		
-	// else
-	// 	fill( 255 * (int(tree.generation)%2) );
-	
-	ellipse(position.x, position.y, 6, 6);
-
-	if(tree.left != undefined){
-		var newPosition = {'x':position.x-(windowWidth*.45)/Math.pow(2,tree.left.generation), 'y':position.y + 30};
-		line(position.x, position.y, newPosition.x, newPosition.y);
-		drawBinaryTree(tree.left, newPosition);
-	}
-	if(tree.right != undefined){
-		var newPosition = {'x':position.x+(windowWidth*.45)/Math.pow(2,tree.right.generation), 'y':position.y + 30};
-		line(position.x, position.y, newPosition.x, newPosition.y);
-		drawBinaryTree(tree.right, newPosition);
-	}
-}
-
-function drawRightBranchingBinaryTree(tree, position){
-	var HEX_BRANCH = [ {x:1, y:0}, {x:.5,y:-0.866}, {x:-.5,y:-0.866}, {x:-1, y:0}, {x:-.5,y:0.866}, {x:.5,y:0.866} ];
-
-	// if(tree.leaf)
-	// 	fill(50, 255, 50);		
-	// else
-	// 	fill( 255 * (int(tree.generation)%2) );
-
-	ellipse(position.x, position.y, 6, 6);
-
-	var LENGTH = 100/Math.pow(tree.generation+1, .9);
-
-	if(tree.left != undefined){
-		var end = {x:(position.x + LENGTH * HEX_BRANCH[int(tree.left.rBranches)%6].x),
-		           y:(position.y + LENGTH * HEX_BRANCH[int(tree.left.rBranches)%6].y)};
-		line(position.x, position.y, end.x, end.y);
-		drawRightBranchingBinaryTree(tree.left, end);
-	}
-	if(tree.right != undefined){
-		var end = {x:(position.x + LENGTH * HEX_BRANCH[int(tree.right.rBranches)%6].x),
-		           y:(position.y + LENGTH * HEX_BRANCH[int(tree.right.rBranches)%6].y)};
-		line(position.x, position.y, end.x, end.y);
-		drawRightBranchingBinaryTree(tree.right, end);
 	}
 }
 
