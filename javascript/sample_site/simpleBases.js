@@ -9,10 +9,8 @@ var scale = 300; // radius of segment's long side
 var hexScale = scale * .5;
 
 // ORIGIN in real pixel space
-var o = new Point();
-o.x = 100;
-o.y = 250;
-var hexCenter = new Point();
+var o = {x:100, y:250};
+var hexCenter = {x:undefined, y:undefined};
 hexCenter.x = hexCanvas.width * .5;
 hexCenter.y = hexCanvas.width * .5;
 
@@ -20,9 +18,9 @@ hexCenter.y = hexCanvas.width * .5;
 // p1 origin
 // p2 arm edge
 // p3 top (hexagon side mid-point)
-var p1 = new Point();
-var p2 = new Point();
-var p3 = new Point();
+var p1 = {x:undefined, y:undefined};
+var p2 = {x:undefined, y:undefined};
+var p3 = {x:undefined, y:undefined};
 
 p1.x = 0;
 p1.y = 0;
@@ -35,9 +33,9 @@ p3.y = p1.y-1*.5*sin60;
 // b bottom (large radius)
 // s outside side
 // i inside, (small radius)
-var dB = new Point();  // begin from origin
-var dS = new Point();  // from small radius to large
-var dI = new Point();  // begin from origin
+var dB = {x:undefined, y:undefined};  // begin from origin
+var dS = {x:undefined, y:undefined};  // from small radius to large
+var dI = {x:undefined, y:undefined};  // begin from origin
 var bLength = Math.sqrt( (p2.x-p1.x)*(p2.x-p1.x) + (p2.y-p1.y)*(p2.y-p1.y) );
 var sLength = Math.sqrt( (p2.x-p3.x)*(p2.x-p3.x) + (p2.y-p3.y)*(p2.y-p3.y) );
 var iLength = Math.sqrt( (p3.x-p1.x)*(p3.x-p1.x) + (p3.y-p1.y)*(p3.y-p1.y) );
@@ -141,7 +139,7 @@ function outsideEdgeFromSimpleBaseCut(point){
 }
 
 $("#simpleBases").mousemove(function(event){
-	var mouse = new Point();  // in the computational space.  origin is the origin of the triangle
+	var mouse = {x:undefined, y:undefined};  // in the computational space.  origin is the origin of the triangle
     // get the scale based on actual width;
 	var sx = canvas.width / canvas.offsetWidth;
     var sy = canvas.height / canvas.offsetHeight;

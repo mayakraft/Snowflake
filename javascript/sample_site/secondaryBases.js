@@ -9,10 +9,8 @@ var scale2 = 300; // radius of segment's long side
 var hexScale2 = scale2 * .5;
 
 // ORIGIN in real pixel space
-var o = new Point();
-o.x = 100;
-o.y = 250;
-var hexCenter2 = new Point();
+var o = {x:100, y:250};
+var hexCenter2 = {x:undefined, y:undefined};
 hexCenter2.x = hexCanvas2.width * .5;
 hexCenter2.y = hexCanvas2.width * .5;
 
@@ -21,10 +19,10 @@ hexCenter2.y = hexCanvas2.width * .5;
 // s2 arm edge
 // s3 top (hexagon side mid-point)
 // s4 inner (inner most point of cut toward hexagon center)
-var s1 = new Point();
-var s2 = new Point();
-var s3 = new Point();
-var s4 = new Point();
+var s1 = {x:undefined, y:undefined};
+var s2 = {x:undefined, y:undefined};
+var s3 = {x:undefined, y:undefined};
+var s4 = {x:undefined, y:undefined};
 
 s1.x = 0;
 s1.y = 0;
@@ -44,10 +42,10 @@ s4.y = -0.2881241565452092
 // s outside side
 // t top, (top horizontal)
 // i inside (diagonal from top to center)
-var dB2 = new Point();  // begin from origin
-var dS2 = new Point();  // from small radius to large
-var dT2 = new Point();  // begin from origin
-var dI2 = new Point();  // begin from origin
+var dB2 = {x:undefined, y:undefined};  // begin from origin
+var dS2 = {x:undefined, y:undefined};  // from small radius to large
+var dT2 = {x:undefined, y:undefined};  // begin from origin
+var dI2 = {x:undefined, y:undefined};  // begin from origin
 var bLength2 = Math.sqrt( (s2.x-s1.x)*(s2.x-s1.x) + (s2.y-s1.y)*(s2.y-s1.y) );
 var sLength2 = Math.sqrt( (s2.x-s3.x)*(s2.x-s3.x) + (s2.y-s3.y)*(s2.y-s3.y) );
 var tLength2 = Math.sqrt( (s4.x-s3.x)*(s4.x-s3.x) + (s4.y-s3.y)*(s4.y-s3.y) );
@@ -219,7 +217,7 @@ function secondaryBaseCut(point){
 }
 
 $("#secondaryBases").mousemove(function(event){
-	var mouse = new Point();  // in the computational space.  origin is the origin of the triangle
+	var mouse = {x:undefined, y:undefined};  // in the computational space.  origin is the origin of the triangle
     // get the scale based on actual width;
 	var sx = canvas2.width / canvas2.offsetWidth;
     var sy = canvas2.height / canvas2.offsetHeight;

@@ -33,7 +33,7 @@ var Snowflake = function(){
 
 
 	this.init = function(){
-		if(DEBUG) console.log('Snowflake.init()');
+		if(DEBUG){ console.log('Snowflake.init()'); }
 		// var location = { x:(0.0 + length * HEX_ANGLE[direction].x), 
 		//                  y:(0.0 + length * HEX_ANGLE[direction].y) };
 		var thickness = 24;
@@ -50,7 +50,7 @@ var Snowflake = function(){
 
 	this.grow = function(atmosphere){
 		var intersectionWasHit = function(location, node){
-			if(DEBUG) console.log('Snowflake.intersectionWasHit()');
+			if(DEBUG){ console.log('Snowflake.intersectionWasHit()'); }
 			if(node.rBranches == 2){
 				var distance = Math.sqrt( (location.x)*(location.x) + (location.y)*(location.y) );
 				distance *= 1.15470053837925;
@@ -59,7 +59,7 @@ var Snowflake = function(){
 			}
 		}
 		var checkBoundaryCrossing = function(startNode, endNode){
-			if(DEBUG) console.log('Snowflake.checkBoundaryCrossing()');
+			if(DEBUG){ console.log('Snowflake.checkBoundaryCrossing()'); }
 			// extract euclidean locations from parent and child
 			var start = startNode.data.location;
 			var end = endNode.data.location;
@@ -169,7 +169,7 @@ var Snowflake = function(){
 			}
 		}		
 
-		if(DEBUG) console.log('Snowflake.grow()');
+		if(DEBUG){ console.log('Snowflake.grow()'); }
 
 		for(var i = 0; i < atmosphere.length; i++)
 			growTree(this.tree, {"mass":atmosphere.mass[i], "branch":atmosphere.branch[i], "thin":atmosphere.thin[i]});
@@ -177,7 +177,7 @@ var Snowflake = function(){
 	}
 
 	this.draw = function(position){
-		if(DEBUG) console.log('Snowflake.draw()');
+		if(DEBUG){ console.log('Snowflake.draw()'); }
 
 		for(var angle = 0; angle < 6; angle+=2)
 			drawHexagonTreeWithReflections(this.tree, position, angle);
@@ -283,7 +283,7 @@ var Snowflake = function(){
 };
 
 var SnowflakeNode = function(location, length, direction, thickness, thinness, active){
-	if(DEBUG) console.log('new SnowflakeNode()');
+	if(DEBUG){ console.log('new SnowflakeNode()'); }
 	this.location = {'x':undefined, 'y':undefined};
 	this.length = undefined;
 	this.direction = 0;
@@ -406,7 +406,7 @@ function mod6(input){
 
 
 function makeNodeDead(node, newLength, newThickness){
-	if(DEBUG) console.log('makeNodeDead()');
+	if(DEBUG){ console.log('makeNodeDead()'); }
 	node.data.dead = true;
 	if(newThickness != undefined)
 		node.data.thickness = newThickness;//(newThickness, 0);

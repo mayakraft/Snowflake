@@ -1,4 +1,4 @@
-// Atmosphere is an array of fake atmospheric conditions, actually its conditions for growing one moment of a snowflake
+// Atmosphere is an array of fake atmospheric conditions, actually it's conditions for growing one moment of a snowflake
 // currently using P5.js for convenience functions like 'random()'
 //
 // contains:  {'mass',
