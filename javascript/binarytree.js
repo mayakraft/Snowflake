@@ -2,22 +2,20 @@
 var LEFT = 0;
 var RIGHT = 1;
 
-var BinaryTree = function(parent, data){
+var BinaryNode = function(parent, data){
 
+// DATA STRUCTURE
 	this.parent = parent;
 	this.right = undefined;
 	this.left = undefined;
-	this.generation;  // (INT) number child away from top
-	this.leaf = true;
 
+// HELPER DATA
+	this.leaf = true;
+	this.generation;  // (INT) number child away from top
 	// these get set in the SETTER, not enough info to set now
 	this.childType;  // (LEFT or RIGHT)
 	this.rBranches;  // (INT) number of cumulative right branches before
 	this.lBranches;  // (INT) number of cumulative left branches before
-
-	// it's a stretch to include these... these can only be set by traversing the entire tree
-	this.age = undefined;    // how many generations old this node is  (maxGenerations - this.generation)
-	this.maxGeneration = undefined;
 
 	// optional
 	this.data = data;  // (whatever this tree is meant to represent, store properties here)
@@ -43,7 +41,7 @@ var BinaryTree = function(parent, data){
 	}
 	this.addLeftChild = function(leftData){
 		this.leaf = false;
-		this.left = new BinaryTree(this, leftData);
+		this.left = new BinaryNode(this, leftData);
 		this.left.generation = this.generation + 1;
 		this.left.childType = LEFT;
 		this.left.lBranches = this.lBranches + 1;
@@ -52,12 +50,49 @@ var BinaryTree = function(parent, data){
 	}
 	this.addRightChild = function(rightData){
 		this.leaf = false;
-		this.right = new BinaryTree(this, rightData);
+		this.right = new BinaryNode(this, rightData);
 		this.right.generation = this.generation + 1;
 		this.right.childType = RIGHT;
 		this.right.lBranches = this.lBranches;
 		this.right.rBranches = this.rBranches + 1;
 		return this.right;
+	}
+}
+
+
+//   this BinaryTree class contains the top node of the tree, 
+//   and some properties only available if you're able to traverse the entire tree
+var BinaryTree = function(){
+
+	this.node = new BinaryNode()
+
+	this.maxGeneration = undefined;  // how deep does the tree go
+	this.age = undefined;    // how many generations old this node is  (maxGenerations - this.generation)	
+
+	function setGlobalTreeVariables(tree){
+		// it's unclear how useful the second step is
+		// there may not be any reason to store the same variable
+		//   inside every node
+		var searchedMaxGeneration = 0;
+		findGlobals(tree);
+		setGlobals(tree);
+
+		function findGlobals(node){
+			if(node.generation > searchedMaxGeneration)
+				searchedMaxGeneration = node.generation;
+			if(node.left)
+				findGlobals(node.left);
+			if(node.right)
+				findGlobals(node.right);
+		}
+		function setGlobals(node){
+			node.maxGeneration = searchedMaxGeneration;
+			node.age = searchedMaxGeneration - node.generation + 1;
+			if(node.left)
+				setGlobals(node.left);
+			if(node.right)
+				setGlobals(node.right);
+		}
 	}
 }
 
@@ -82,33 +117,6 @@ function logTree(node){
 			")");
 		logTree(node.left);
 		logTree(node.right);
-	}
-}
-
-
-function setGlobalTreeVariables(tree){
-	// it's unclear how useful the second step is
-	// there may not be any reason to store the same variable
-	//   inside every node
-	var searchedMaxGeneration = 0;
-	findGlobals(tree);
-	setGlobals(tree);
-
-	function findGlobals(node){
-		if(node.generation > searchedMaxGeneration)
-			searchedMaxGeneration = node.generation;
-		if(node.left)
-			findGlobals(node.left);
-		if(node.right)
-			findGlobals(node.right);
-	}
-	function setGlobals(node){
-		node.maxGeneration = searchedMaxGeneration;
-		node.age = searchedMaxGeneration - node.generation + 1;
-		if(node.left)
-			setGlobals(node.left);
-		if(node.right)
-			setGlobals(node.right);
 	}
 }
 

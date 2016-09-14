@@ -38,7 +38,7 @@ var Snowflake = function(){
 		//                  y:(0.0 + length * HEX_ANGLE[direction].y) };
 		var thickness = 24;
 		var data = new SnowflakeNode({x:(0.0),y:(0.0)}, 0, 0, thickness, 0, true);
-		this.tree = new BinaryTree(undefined, data);		
+		this.tree = new BinaryNode(undefined, data);		
 
 		this.mainArmRejoinPoints = [];  // when two arms grow wide enough that they touch
 	}
@@ -47,6 +47,8 @@ var Snowflake = function(){
 	this.mainArmRejoinPoints; 
 
 	this.init();
+
+	this.draw = drawSnowflakeSkeleton;
 
 	this.grow = function(atmosphere){
 		var intersectionWasHit = function(location, node){
@@ -85,7 +87,7 @@ var Snowflake = function(){
 			var nThinHere = atmosphere['thin'];
 
 			visitLeaves(tree);
-			setGlobalTreeVariables(tree);
+			// setGlobalTreeVariables(tree);
 
 			function visitLeaves(tree){
 				if(tree.left)

@@ -1,49 +1,54 @@
 // todo, replace windowWidth with a frame
-function drawBinaryTree(tree, position){
-	// if(tree.leaf)
+function drawBinaryTree(node, position){
+	// if(node.leaf)
 	// 	fill(50, 255, 50);		
 	// else
-	// 	fill( 255 * (int(tree.generation)%2) );
-	
+	// 	fill( 255 * (int(node.generation)%2) );
+
 	ellipse(position.x, position.y, 6, 6);
 
-	if(tree.left != undefined){
-		var newPosition = {'x':position.x-(windowWidth*.45)/Math.pow(2,tree.left.generation), 'y':position.y + 30};
+	if(node.left != undefined){
+		var newPosition = {'x':position.x-(windowWidth*.45)/Math.pow(2,node.left.generation), 'y':position.y + 30};
 		line(position.x, position.y, newPosition.x, newPosition.y);
-		drawBinaryTree(tree.left, newPosition);
+		drawBinaryTree(node.left, newPosition);
 	}
-	if(tree.right != undefined){
-		var newPosition = {'x':position.x+(windowWidth*.45)/Math.pow(2,tree.right.generation), 'y':position.y + 30};
+	if(node.right != undefined){
+		var newPosition = {'x':position.x+(windowWidth*.45)/Math.pow(2,node.right.generation), 'y':position.y + 30};
 		line(position.x, position.y, newPosition.x, newPosition.y);
-		drawBinaryTree(tree.right, newPosition);
+		drawBinaryTree(node.right, newPosition);
 	}
 }
 
-function drawRightBranchingBinaryTree(tree, position){
+
+
+
+function drawRightBranchingBinaryTree(node, position){
 	var HEX_BRANCH = [ {x:1, y:0}, {x:.5,y:-0.866}, {x:-.5,y:-0.866}, {x:-1, y:0}, {x:-.5,y:0.866}, {x:.5,y:0.866} ];
 
-	// if(tree.leaf)
+	// if(node.leaf)
 	// 	fill(50, 255, 50);		
 	// else
-	// 	fill( 255 * (int(tree.generation)%2) );
+	// 	fill( 255 * (int(node.generation)%2) );
 
 	ellipse(position.x, position.y, 6, 6);
 
-	var LENGTH = 100/Math.pow(tree.generation+1, .9);
+	var LENGTH = 100/Math.pow(node.generation+1, .9);
 
-	if(tree.left != undefined){
-		var end = {x:(position.x + LENGTH * HEX_BRANCH[int(tree.left.rBranches)%6].x),
-		           y:(position.y + LENGTH * HEX_BRANCH[int(tree.left.rBranches)%6].y)};
+	if(node.left != undefined){
+		var end = {x:(position.x + LENGTH * HEX_BRANCH[int(node.left.rBranches)%6].x),
+		           y:(position.y + LENGTH * HEX_BRANCH[int(node.left.rBranches)%6].y)};
 		line(position.x, position.y, end.x, end.y);
-		drawRightBranchingBinaryTree(tree.left, end);
+		drawRightBranchingBinaryTree(node.left, end);
 	}
-	if(tree.right != undefined){
-		var end = {x:(position.x + LENGTH * HEX_BRANCH[int(tree.right.rBranches)%6].x),
-		           y:(position.y + LENGTH * HEX_BRANCH[int(tree.right.rBranches)%6].y)};
+	if(node.right != undefined){
+		var end = {x:(position.x + LENGTH * HEX_BRANCH[int(node.right.rBranches)%6].x),
+		           y:(position.y + LENGTH * HEX_BRANCH[int(node.right.rBranches)%6].y)};
 		line(position.x, position.y, end.x, end.y);
-		drawRightBranchingBinaryTree(tree.right, end);
+		drawRightBranchingBinaryTree(node.right, end);
 	}
 }
+
+
 
 function drawAtmosphereGraph(rect){
 	// rect is expecting {'x':_, 'y':_, 'width':_, 'height':_, }
@@ -77,8 +82,46 @@ function drawAtmosphereGraph(rect){
 	}
 }
 
+
+
+function drawSnowflakeSkeleton(position){
+	var HEX_BRANCH = [ {x:1, y:0}, {x:.5,y:-0.866}, {x:-.5,y:-0.866}, {x:-1, y:0}, {x:-.5,y:0.866}, {x:.5,y:0.866} ];
+
+	recursiveDrawLoop(this.tree, position);
+
+	function recursiveDrawLoop(node, position){
+
+		// if(node.leaf)
+		// 	fill(50, 255, 50);		
+		// else
+		// 	fill( 255 * (int(node.generation)%2) );
+
+		ellipse(position.x, position.y, 6, 6);
+
+		var LENGTH = 100/Math.pow(node.generation+1, .9);
+
+		if(node.left != undefined){
+			var end = {x:(position.x + LENGTH * HEX_BRANCH[int(node.left.rBranches)%6].x),
+			           y:(position.y + LENGTH * HEX_BRANCH[int(node.left.rBranches)%6].y)};
+			line(position.x, position.y, end.x, end.y);
+			recursiveDrawLoop(node.left, end);
+		}
+		if(node.right != undefined){
+			var end = {x:(position.x + LENGTH * HEX_BRANCH[int(node.right.rBranches)%6].x),
+			           y:(position.y + LENGTH * HEX_BRANCH[int(node.right.rBranches)%6].y)};
+			line(position.x, position.y, end.x, end.y);
+			recursiveDrawLoop(node.right, end);
+		}		
+	}
+}
+
+
+
+
 function drawStylizedSnowflake(position){
 	if(DEBUG){ console.log('drawStylizedSnowflake()'); }
+
+	var HEX_BRANCH = [ {x:1, y:0}, {x:.5,y:-0.866}, {x:-.5,y:-0.866}, {x:-1, y:0}, {x:-.5,y:0.866}, {x:.5,y:0.866} ];
 
 	for(var angle = 0; angle < 6; angle+=2)
 		drawHexagonTreeWithReflections(this.tree, position, angle);
@@ -93,23 +136,23 @@ function drawStylizedSnowflake(position){
 			var thickness = node.thickness;
 			var pThickness;
 			if(node.parent) pThickness = node.parent.thickness;
-			else 			pThickness = 0;
+			else            pThickness = 0;
 			// thickness grows HEXAGONALLY, not scaling proportionally
 			// thickness = node.length;
 			if(thickness > node.thickness)			
 				thickness = node.thickness;
 			// START AND END
 			var end = {
-				x:(start.x + length * HEX_ANGLE[angle].x), 
-				y:(start.y + length * HEX_ANGLE[angle].y)
+				x:(start.x + length * HEX_BRANCH[angle].x), 
+				y:(start.y + length * HEX_BRANCH[angle].y)
 			};
 			var endThick = {
-				x:(start.x + (length+thickness) * HEX_ANGLE[angle].x), 
-				y:(start.y + (length+thickness) * HEX_ANGLE[angle].y)
+				x:(start.x + (length+thickness) * HEX_BRANCH[angle].x), 
+				y:(start.y + (length+thickness) * HEX_BRANCH[angle].y)
 			};
 			var startThick = {
-				x:(start.x + pThickness * HEX_ANGLE[angle].x), 
-				y:(start.y + pThickness * HEX_ANGLE[angle].y)
+				x:(start.x + pThickness * HEX_BRANCH[angle].x), 
+				y:(start.y + pThickness * HEX_BRANCH[angle].y)
 			};
 			var thckAng = 2;
 			if(thickness > pThickness){
@@ -125,17 +168,17 @@ function drawStylizedSnowflake(position){
 				drawHexagonTreeWithReflections(node.left, end, angle);
 			
 			var point1a = {
-				x:(startThick.x + thickness * HEX_ANGLE[mod6(angle-thckAng)].x),
-				y:(startThick.y + thickness * HEX_ANGLE[mod6(angle-thckAng)].y) };
+				x:(startThick.x + thickness * HEX_BRANCH[mod6(angle-thckAng)].x),
+				y:(startThick.y + thickness * HEX_BRANCH[mod6(angle-thckAng)].y) };
 			var point1b = {
-				x:(startThick.x + thickness * HEX_ANGLE[mod6(angle+thckAng)].x),
-				y:(startThick.y + thickness * HEX_ANGLE[mod6(angle+thckAng)].y) };
+				x:(startThick.x + thickness * HEX_BRANCH[mod6(angle+thckAng)].x),
+				y:(startThick.y + thickness * HEX_BRANCH[mod6(angle+thckAng)].y) };
 			var point2a = {
-				x:(end.x - thickness * HEX_ANGLE[mod6(angle+2)].x),
-				y:(end.y - thickness * HEX_ANGLE[mod6(angle+2)].y) };
+				x:(end.x - thickness * HEX_BRANCH[mod6(angle+2)].x),
+				y:(end.y - thickness * HEX_BRANCH[mod6(angle+2)].y) };
 			var point2b = {
-				x:(end.x - thickness * HEX_ANGLE[mod6(angle-2)].x),
-				y:(end.y - thickness * HEX_ANGLE[mod6(angle-2)].y) };
+				x:(end.x - thickness * HEX_BRANCH[mod6(angle-2)].x),
+				y:(end.y - thickness * HEX_BRANCH[mod6(angle-2)].y) };
 
 			// fill(255, 128 * sqrt(1.0/node.generation));
 			var fillValue = 5*node.age + 150;// + (node.randomValue[angle%6]-5)*2;
@@ -158,17 +201,17 @@ function drawStylizedSnowflake(position){
 			// 		var fillChange = - (sin(-.05 + mod6(angle-(i - 1.5)))*2);  // dramatic lighting
 			// 		fill(fillValue + fillChange*10, 250);
 			// 		var edgeNear = {
-			// 			x:(edges[i].x + thinness * HEX_ANGLE[mod6(angle-i)].x),
-			// 			y:(edges[i].y + thinness * HEX_ANGLE[mod6(angle-i)].y) };
+			// 			x:(edges[i].x + thinness * HEX_BRANCH[mod6(angle-i)].x),
+			// 			y:(edges[i].y + thinness * HEX_BRANCH[mod6(angle-i)].y) };
 			// 		var edgeFar = {
-			// 			x:(edges[i+1].x + thinness * HEX_ANGLE[mod6(angle-i + 3)].x),
-			// 			y:(edges[i+1].y + thinness * HEX_ANGLE[mod6(angle-i + 3)].y) };
+			// 			x:(edges[i+1].x + thinness * HEX_BRANCH[mod6(angle-i + 3)].x),
+			// 			y:(edges[i+1].y + thinness * HEX_BRANCH[mod6(angle-i + 3)].y) };
 			// 		var innerNear = {
-			// 			x:(edgeNear.x + thinness * HEX_ANGLE[mod6(angle-i+2 + 3)].x),
-			// 			y:(edgeNear.y + thinness * HEX_ANGLE[mod6(angle-i+2 + 3)].y) };
+			// 			x:(edgeNear.x + thinness * HEX_BRANCH[mod6(angle-i+2 + 3)].x),
+			// 			y:(edgeNear.y + thinness * HEX_BRANCH[mod6(angle-i+2 + 3)].y) };
 			// 		var innerFar = {
-			// 			x:(edgeFar.x + thinness * HEX_ANGLE[mod6(angle-i+4)].x),
-			// 			y:(edgeFar.y + thinness * HEX_ANGLE[mod6(angle-i+4)].y) };
+			// 			x:(edgeFar.x + thinness * HEX_BRANCH[mod6(angle-i+4)].x),
+			// 			y:(edgeFar.y + thinness * HEX_BRANCH[mod6(angle-i+4)].y) };
 			// 		beginShape();
 			// 		vertex(edgeNear.x, edgeNear.y);
 			// 		vertex(edgeFar.x, edgeFar.y);

@@ -1,0 +1,17 @@
+{
+  "name": "twitterbot",
+  "version": "1.0.0",
+  "description": "a twitterbot",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "robby",
+  "license": "ISC",
+  "dependencies": {
+    "cmu-pronouncing-dictionary": "^1.0.3",
+    "p5": "^0.4.20",
+    "twit": "^2.1.1"
+  }
+}
