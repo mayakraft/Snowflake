@@ -1,7 +1,7 @@
 <html>
 <head>
 	<meta charset="UTF-8">
-	<script language="javascript" type="text/javascript" src="../bin/p5.min.js"></script>
+	<script language="javascript" type="text/javascript" src="../lib/p5.min.js"></script>
 	<script language="javascript" type="text/javascript" src="../binarytree.js"></script>
 	<script language="javascript" type="text/javascript" src="../render.js"></script>
 	<style> body {padding: 0; margin: 0;} </style>
@@ -30,14 +30,14 @@ function buildTree(tree){
 function setup() {
 	createCanvas(windowWidth, windowHeight);
 	fill(0);
-	a = new BinaryTree();
+	a = new TreeNode();
 	buildTree(a);
 	logTree(a);
 	noLoop();
 }
 
 function mousePressed() {
-	a = new BinaryTree();
+	a = new TreeNode();
 	buildTree(a);
 	logTree(a);
 	draw();

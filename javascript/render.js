@@ -1,12 +1,23 @@
 // todo, replace windowWidth with a frame
 function drawBinaryTree(node, position){
-	// if(node.leaf)
-	// 	fill(50, 255, 50);		
-	// else
-	// 	fill( 255 * (int(node.generation)%2) );
-
-	ellipse(position.x, position.y, 6, 6);
-
+	var r = 10;
+	// leaf nodes are white with black border
+	if(node.leaf){
+		fill(255);
+	} else{
+		fill(0);		
+	}
+	// child nodes are arrows pointing LEFT or RIGHT, parent is a circle
+	if(node.childType == undefined){
+		ellipse(position.x, position.y, r, r);
+	} else{
+		var a = 0;
+		if(node.childType == LEFT)  a = PI;
+		triangle(position.x+r*0.5*Math.cos(a), position.y+r*0.5*Math.sin(a), 
+		         position.x+r*0.5*Math.cos(a+PI*2/3), position.y+r*0.5*Math.sin(a+PI*2/3), 
+		         position.x+r*0.5*Math.cos(a+PI*4/3), position.y+r*0.5*Math.sin(a+PI*4/3));
+	}
+	// recursion:
 	if(node.left != undefined){
 		var newPosition = {'x':position.x-(windowWidth*.45)/Math.pow(2,node.left.generation), 'y':position.y + 30};
 		line(position.x, position.y, newPosition.x, newPosition.y);
@@ -25,12 +36,24 @@ function drawBinaryTree(node, position){
 function drawRightBranchingBinaryTree(node, position){
 	var HEX_BRANCH = [ {x:1, y:0}, {x:.5,y:-0.866}, {x:-.5,y:-0.866}, {x:-1, y:0}, {x:-.5,y:0.866}, {x:.5,y:0.866} ];
 
-	// if(node.leaf)
-	// 	fill(50, 255, 50);		
-	// else
-	// 	fill( 255 * (int(node.generation)%2) );
+	var r = 10;
+	// leaf nodes are white with black border
+	if(node.leaf){
+		fill(255);
+	} else{
+		fill(0);		
+	}
+	// child nodes are arrows pointing LEFT or RIGHT, parent is a circle
+	if(node.childType == undefined){
+		ellipse(position.x, position.y, r, r);
+	} else{
+		var a = 0;
+		if(node.childType == LEFT)  a = PI;
+		triangle(position.x+r*0.5*Math.cos(a), position.y+r*0.5*Math.sin(a), 
+		         position.x+r*0.5*Math.cos(a+PI*2/3), position.y+r*0.5*Math.sin(a+PI*2/3), 
+		         position.x+r*0.5*Math.cos(a+PI*4/3), position.y+r*0.5*Math.sin(a+PI*4/3));
+	}
 
-	ellipse(position.x, position.y, 6, 6);
 
 	var LENGTH = 100/Math.pow(node.generation+1, .9);
 

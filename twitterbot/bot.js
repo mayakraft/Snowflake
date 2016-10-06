@@ -30,7 +30,7 @@ var imagemakerFolder = 'application.linux64/';
 
 // console.log("Starting Twitter Bot..");
 tweetImage();
-setInterval(tweetImage, 1000 * 60 * 60);
+setInterval(tweetImage, 1000 * 60 * 60 * 2);
 
 function tweetImage(tweetTextContent, tweetReplyID){
 	if(tweetTextContent == undefined)

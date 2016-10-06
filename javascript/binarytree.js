@@ -2,7 +2,7 @@
 var LEFT = 0;
 var RIGHT = 1;
 
-var BinaryNode = function(parent, data){
+var TreeNode = function(parent, data){
 
 // DATA STRUCTURE
 	this.parent = parent;
@@ -41,7 +41,7 @@ var BinaryNode = function(parent, data){
 	}
 	this.addLeftChild = function(leftData){
 		this.leaf = false;
-		this.left = new BinaryNode(this, leftData);
+		this.left = new TreeNode(this, leftData);
 		this.left.generation = this.generation + 1;
 		this.left.childType = LEFT;
 		this.left.lBranches = this.lBranches + 1;
@@ -50,7 +50,7 @@ var BinaryNode = function(parent, data){
 	}
 	this.addRightChild = function(rightData){
 		this.leaf = false;
-		this.right = new BinaryNode(this, rightData);
+		this.right = new TreeNode(this, rightData);
 		this.right.generation = this.generation + 1;
 		this.right.childType = RIGHT;
 		this.right.lBranches = this.lBranches;
@@ -64,7 +64,7 @@ var BinaryNode = function(parent, data){
 //   and some properties only available if you're able to traverse the entire tree
 var BinaryTree = function(){
 
-	this.node = new BinaryNode()
+	this.node = new TreeNode()
 
 	this.maxGeneration = undefined;  // how deep does the tree go
 	this.age = undefined;    // how many generations old this node is  (maxGenerations - this.generation)	

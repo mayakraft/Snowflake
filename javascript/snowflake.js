@@ -38,7 +38,7 @@ var Snowflake = function(){
 		//                  y:(0.0 + length * HEX_ANGLE[direction].y) };
 		var thickness = 24;
 		var data = new SnowflakeNode({x:(0.0),y:(0.0)}, 0, 0, thickness, 0, true);
-		this.tree = new BinaryNode(undefined, data);		
+		this.tree = new TreeNode(undefined, data);		
 
 		this.mainArmRejoinPoints = [];  // when two arms grow wide enough that they touch
 	}
