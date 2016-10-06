@@ -2,11 +2,11 @@
 <head>
 	<meta charset="UTF-8">
 	<script language="javascript" type="text/javascript" src="../lib/p5.min.js"></script>
-	<script language="javascript" type="text/javascript" src="../algorithms.js"></script>
+	<script language="javascript" type="text/javascript" src="../math/algorithms.js"></script>
+	<script language="javascript" type="text/javascript" src="../math/binarytree.js"></script>
+	<script language="javascript" type="text/javascript" src="../graphics/render.js"></script>
 	<script language="javascript" type="text/javascript" src="../atmosphere.js"></script>
-	<script language="javascript" type="text/javascript" src="../binarytree.js"></script>
 	<script language="javascript" type="text/javascript" src="../snowflake.js"></script>
-	<script language="javascript" type="text/javascript" src="../render.js"></script>
 	<style> body {padding: 0; margin: 0;} </style>
 </head>
 <body>
@@ -42,10 +42,10 @@ function mousePressed() {
 function draw() {
 	background(128);
 	stroke(0);
-	fill(255, 80);
-	var treePosition = {'x':windowWidth*.5, 'y':windowHeight*.5};
-	drawRightBranchingBinaryTree(snowflake.tree, treePosition);
-	noStroke();
+	fill(255);
+	// var treePosition = {'x':windowWidth*.5, 'y':windowHeight*.5};
+	// drawRightBranchingBinaryTree(snowflake.tree, treePosition);
+	// noStroke();
 	snowflake.draw(snowflakePosition);
 }
 

@@ -1,7 +1,11 @@
 // Algorithmic Snowflake
+//
+// REQUIRES: binarytree.js
+//           render.js (with p5.js) for drawing
+
+// TODO: for deployment- fill all HEX_ANGLES with high-precision double values
 
 var DEBUG = 1;
-
 
 var matter = 24;
 
@@ -48,7 +52,7 @@ var Snowflake = function(){
 
 	this.init();
 
-	this.draw = drawSnowflakeSkeleton;
+	this.draw = drawSnowflakeOneArm;
 
 	this.grow = function(atmosphere){
 		var intersectionWasHit = function(location, node){
@@ -105,7 +109,7 @@ var Snowflake = function(){
 
 					var shortenby = Math.pow(0.4, tree.rBranches);
 					// var newLength = tree.length * nMass[DEPTH];
-					var newLength = matter * cos(PI * .5 * nMass)  * shortenby;// * (3+tree.generation);
+					var newLength = matter * cos(PI * .5 * nMass) * shortenby;// * (3+tree.generation);
 					var newThickness = matter * sin(PI * .5 * nMass) * shortenby;// * (tree.generation);
 					var newThinness = undefined;
 					if(nThinHere < .5) 
@@ -175,9 +179,7 @@ var Snowflake = function(){
 
 		for(var i = 0; i < atmosphere.length; i++)
 			growTree(this.tree, {"mass":atmosphere.mass[i], "branch":atmosphere.branch[i], "thin":atmosphere.thin[i]});
-
 	}
-
 };
 
 var SnowflakeNode = function(location, length, direction, thickness, thinness, active){
