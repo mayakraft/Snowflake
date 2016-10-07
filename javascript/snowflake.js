@@ -52,7 +52,7 @@ var Snowflake = function(){
 
 	this.init();
 
-	this.draw = drawSnowflakeOneArm;
+	this.draw = drawSnowflake6Sides;
 
 	this.grow = function(atmosphere){
 		var intersectionWasHit = function(location, node){
