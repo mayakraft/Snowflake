@@ -21,6 +21,12 @@ function drawSnowflake6Sides(position){
 		recursiveWithReflections(this.tree, position, angle);
 }
 
+function drawFilledSnowflake6Sides(position){
+	for(var angle = 0; angle < 6; angle += 2)
+		recursiveWithReflectionsAndThickness(this.tree, position, angle);
+	for(var angle = 1; angle < 6; angle += 2)
+		recursiveWithReflectionsAndThickness(this.tree, position, angle);
+}
 
 // this actually does the drawing
 // this function gets called at every iteration of the recusive crawl
@@ -28,7 +34,6 @@ function drawBetweenNodes(start, end, angle, thickness){
 	line(start.x, start.y, end.x, end.y);
 	ellipse(end.x, end.y, 6, 6);
 }
-
 
 
 var HEX_BRANCH = [ {x:1, y:0}, {x:0.5,y:-0.866025403784439}, {x:-0.5,y:-0.866025403784439}, {x:-1, y:0}, {x:-0.5,y:0.866025403784439}, {x:0.5,y:0.866025403784439} ];
@@ -72,16 +77,26 @@ function recursiveWithReflections(node, position, angle){
 }
 
 function recursiveWithReflectionsAndThickness(node, start, angle){
+	var length, thickness, pLength, pThickness;
 	// LENGTH and THICKNESS
-	var length = node.length;
-	var thickness = node.thickness;
-	var pThickness;
-	if(node.parent) pThickness = node.parent.thickness;
-	else            pThickness = 0;
+	var data = node.data
+	if(data != undefined){
+		length = data.length;
+		thickness = data.thickness;
+	}
+	if(node.parent != undefined){
+		var pData = node.parent.data;
+		if(pData != undefined){
+			pLength = pData.length;
+			pThickness = pData.thickness;
+		}
+	} else{
+		pLength = 0; pThickness = 0;
+	}
 	// thickness grows HEXAGONALLY, not scaling proportionally
 	// thickness = node.length;
-	if(thickness > node.thickness)			
-		thickness = node.thickness;
+	// if(thickness > node.thickness)
+	// 	thickness = node.thickness;
 	// START AND END
 	var end = {
 		x:(start.x + length * HEX_BRANCH[angle].x), 
@@ -123,7 +138,7 @@ function recursiveWithReflectionsAndThickness(node, start, angle){
 
 	// fill(255, 128 * sqrt(1.0/node.generation));
 	var fillValue = 5*node.age + 150;// + (node.randomValue[angle%6]-5)*2;
-	fill(fillValue, 250);
+	// fill(fillValue, 250);
 	beginShape();
 	vertex(startThick.x, startThick.y);
 	vertex(point1a.x, point1a.y);
