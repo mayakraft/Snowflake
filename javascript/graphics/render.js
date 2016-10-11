@@ -1,33 +1,34 @@
+var HEX_BRANCH = [ {x:1, y:0}, {x:0.5,y:-0.866025403784439}, {x:-0.5,y:-0.866025403784439}, {x:-1, y:0}, {x:-0.5,y:0.866025403784439}, {x:0.5,y:0.866025403784439} ];
 
 /////////////////////////////////////////////////////////////
 //////////////////      SNOWFLAKE         ///////////////////
 /////////////////////////////////////////////////////////////
 
-// draw functions:
-function drawSnowflakeBinaryTree(position){
-	if(DEBUG){ console.log('drawSnowflakeOneArm()'); }
-	recursiveSimple(this.tree, position);
+// initialize the draw:
+function drawBinaryTree(position){
+	recurseSimple(this.tree, position);
 }
 
 function drawSnowflakeOneArm(position){
-	if(DEBUG){ console.log('drawSnowflakeOneArm()'); }
-	recursiveWithReflections(this.tree, position, 0);
+	recurseReflect(this.tree, position, 0);
 }
 
 function drawSnowflake6Sides(position){
 	for(var angle = 0; angle < 6; angle += 2)
-		recursiveWithReflections(this.tree, position, angle);
+		recurseReflect(this.tree, position, angle);
 	for(var angle = 1; angle < 6; angle += 2)
-		recursiveWithReflections(this.tree, position, angle);
+		recurseReflect(this.tree, position, angle);
 }
 
 function drawFilledSnowflake6Sides(position){
 	for(var angle = 0; angle < 6; angle += 2)
-		recursiveWithReflectionsAndThickness(this.tree, position, angle);
+		recurseReflectFilled(this.tree, position, angle);
 	for(var angle = 1; angle < 6; angle += 2)
-		recursiveWithReflectionsAndThickness(this.tree, position, angle);
+		recurseReflectFilled(this.tree, position, angle);
 }
 
+/////////// DRAWING
+///////////
 // this actually does the drawing
 // this function gets called at every iteration of the recusive crawl
 function drawBetweenNodes(start, end, angle, thickness){
@@ -35,48 +36,53 @@ function drawBetweenNodes(start, end, angle, thickness){
 	ellipse(end.x, end.y, 6, 6);
 }
 
+///////////  LENGTH
+///////////
+function getLength(node){
+	return 100/Math.pow(node.generation+1, .9);
+}
 
-var HEX_BRANCH = [ {x:1, y:0}, {x:0.5,y:-0.866025403784439}, {x:-0.5,y:-0.866025403784439}, {x:-1, y:0}, {x:-0.5,y:0.866025403784439}, {x:0.5,y:0.866025403784439} ];
-
+///////////  RECURSION
+///////////
 // these functions do the recursive crawling
 // variations: with snowflake property of adding reflections on the right arm
-function recursiveSimple(node, position){
-	var LENGTH = 100/Math.pow(node.generation+1, .9);
+function recurseSimple(node, position){
+	var length = getLength(node);
 	if(node.left != undefined){
-		var end = {x:(position.x + LENGTH * HEX_BRANCH[int(node.left.rBranches)%6].x),
-		           y:(position.y + LENGTH * HEX_BRANCH[int(node.left.rBranches)%6].y)};
-		recursiveSimple(node.left, end);
+		var end = {x:(position.x + length * HEX_BRANCH[int(node.left.rBranches)%6].x),
+		           y:(position.y + length * HEX_BRANCH[int(node.left.rBranches)%6].y)};
+		recurseSimple(node.left, end);
 		drawBetweenNodes(position, end);
 	}
 	if(node.right != undefined){
-		var end = {x:(position.x + LENGTH * HEX_BRANCH[int(node.right.rBranches)%6].x),
-		           y:(position.y + LENGTH * HEX_BRANCH[int(node.right.rBranches)%6].y)};
-		recursiveSimple(node.right, end);
+		var end = {x:(position.x + length * HEX_BRANCH[int(node.right.rBranches)%6].x),
+		           y:(position.y + length * HEX_BRANCH[int(node.right.rBranches)%6].y)};
+		recurseSimple(node.right, end);
 		drawBetweenNodes(position, end);
 	}
 }
 
-function recursiveWithReflections(node, position, angle){
-	var LENGTH = 100/Math.pow(node.generation+1, .9);
+function recurseReflect(node, position, angle){
+	var length = getLength(node);
 	if(node.right != undefined){
-		var childPos1 = {x:(position.x + LENGTH * HEX_BRANCH[mod6(angle+1)].x),
-		                 y:(position.y + LENGTH * HEX_BRANCH[mod6(angle+1)].y)};
-		var childPos2 = {x:(position.x + LENGTH * HEX_BRANCH[mod6(angle-1)].x),
-		                 y:(position.y + LENGTH * HEX_BRANCH[mod6(angle-1)].y)};
-		recursiveWithReflections(node.right, childPos1, mod6(angle+1) );
-		recursiveWithReflections(node.right, childPos2, mod6(angle-1) );
+		var childPos1 = {x:(position.x + length * HEX_BRANCH[mod6(angle+1)].x),
+		                 y:(position.y + length * HEX_BRANCH[mod6(angle+1)].y)};
+		var childPos2 = {x:(position.x + length * HEX_BRANCH[mod6(angle-1)].x),
+		                 y:(position.y + length * HEX_BRANCH[mod6(angle-1)].y)};
+		recurseReflect(node.right, childPos1, mod6(angle+1) );
+		recurseReflect(node.right, childPos2, mod6(angle-1) );
 		drawBetweenNodes(position, childPos1);
 		drawBetweenNodes(position, childPos2);
 	}
 	if(node.left != undefined){
-		var childPos = {x:(position.x + LENGTH * HEX_BRANCH[mod6(angle)].x),
-		                y:(position.y + LENGTH * HEX_BRANCH[mod6(angle)].y)};
-		recursiveWithReflections(node.left, childPos, angle);
+		var childPos = {x:(position.x + length * HEX_BRANCH[mod6(angle)].x),
+		                y:(position.y + length * HEX_BRANCH[mod6(angle)].y)};
+		recurseReflect(node.left, childPos, angle);
 		drawBetweenNodes(position, childPos);
 	}
 }
 
-function recursiveWithReflectionsAndThickness(node, start, angle){
+function recurseReflectFilled(node, start, angle){
 	var length, thickness, pLength, pThickness;
 	// LENGTH and THICKNESS
 	var data = node.data
@@ -116,12 +122,12 @@ function recursiveWithReflectionsAndThickness(node, start, angle){
 		thckAng = 1;
 	}
 	if(node.right != undefined){
-		recursiveWithReflectionsAndThickness(node.right, end, mod6(angle+1) );
-		recursiveWithReflectionsAndThickness(node.right, end, mod6(angle-1) );
+		recurseReflectFilled(node.right, end, mod6(angle+1) );
+		recurseReflectFilled(node.right, end, mod6(angle-1) );
 	}
 	//first go to the bottom of tree, following the main stem
 	if(node.left != undefined)
-		recursiveWithReflectionsAndThickness(node.left, end, angle);
+		recurseReflectFilled(node.left, end, angle);
 	
 	var point1a = {
 		x:(startThick.x + thickness * HEX_BRANCH[mod6(angle-thckAng)].x),

@@ -21,19 +21,19 @@ var Snowflake = function(){
 	var LEFT = 0;
 	// clockwise starting from 3:00
 	var HEX_ANGLE = [
-		{x:0.866025403784439, y:0.5},
+		{x:0.8660254037844, y:0.5},
 		{x:0, y:1},
-		{x:-0.866025403784439, y:0.5},
-		{x:-0.866025403784439, y:-0.5},
+		{x:-0.8660254037844, y:0.5},
+		{x:-0.8660254037844, y:-0.5},
 		{x:0, y:-1},
-		{x:0.866025403784439, y:-0.5} ];
+		{x:0.8660254037844, y:-0.5} ];
 	var HEX_30_ANGLE = [
 		{x:1, y:0},
-		{x:.5,y:-0.86602540378444},
-		{x:-.5,y:-0.86602540378444},
+		{x:.5,y:-0.8660254037844},
+		{x:-.5,y:-0.8660254037844},
 		{x:-1, y:0},
-		{x:-.5,y:0.86602540378444},
-		{x:.5,y:0.86602540378444} ];
+		{x:-.5,y:0.8660254037844},
+		{x:.5,y:0.8660254037844} ];
 
 
 	this.init = function(){
@@ -52,7 +52,7 @@ var Snowflake = function(){
 
 	this.init();
 
-	this.draw = drawFilledSnowflake6Sides;
+	this.draw = drawSnowflake6Sides;
 
 	this.grow = function(atmosphere){
 		var intersectionWasHit = function(location, node){
