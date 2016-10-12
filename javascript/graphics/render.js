@@ -4,22 +4,15 @@ var HEX_BRANCH = [ {x:1, y:0}, {x:0.5,y:-0.866025403784439}, {x:-0.5,y:-0.866025
 //////////////////      SNOWFLAKE         ///////////////////
 /////////////////////////////////////////////////////////////
 
-// initialize the draw:
-function drawBinaryTree(position){
-	recurseSimple(this.tree, position);
-}
-
-function drawSnowflakeOneArm(position){
-	recurseReflect(this.tree, position, 0);
-}
-
+// call these to draw:
+function drawBinaryTree(position){      recurseSimple(this.tree, position);   }
+function drawSnowflakeOneArm(position){ recurseReflect(this.tree, position, 0); }
 function drawSnowflake6Sides(position){
 	for(var angle = 0; angle < 6; angle += 2)
 		recurseReflect(this.tree, position, angle);
 	for(var angle = 1; angle < 6; angle += 2)
 		recurseReflect(this.tree, position, angle);
 }
-
 function drawFilledSnowflake6Sides(position){
 	for(var angle = 0; angle < 6; angle += 2)
 		recurseReflectFilled(this.tree, position, angle);
@@ -31,9 +24,59 @@ function drawFilledSnowflake6Sides(position){
 ///////////
 // this actually does the drawing
 // this function gets called at every iteration of the recusive crawl
+// function drawBetweenNodes(start, end, angle, thickness){
+// 	line(start.x, start.y, end.x, end.y);
+// 	ellipse(end.x, end.y, 6, 6);
+// }
+
+// function drawBetweenNodes(start, end, angle, thickness){
+// 	var length = Math.sqrt( Math.pow(end.y-start.y,2) + Math.pow(end.x-start.x,2) );
+// 	line(start.x, start.y, 
+// 		 start.x + 0.5*length*HEX_BRANCH[mod6(angle+1)].x, 
+// 		 start.y + 0.5*length*HEX_BRANCH[mod6(angle+1)].y);
+// 	line(start.x, start.y, 
+// 		 start.x + 0.5*length*HEX_BRANCH[mod6(angle-1)].x, 
+// 		 start.y + 0.5*length*HEX_BRANCH[mod6(angle-1)].y);
+// 	line(end.x, end.y, 
+// 		 end.x + 0.5*length*HEX_BRANCH[mod6(angle+2)].x, 
+// 		 end.y + 0.5*length*HEX_BRANCH[mod6(angle+2)].y);
+// 	line(end.x, end.y, 
+// 		 end.x + 0.5*length*HEX_BRANCH[mod6(angle-2)].x, 
+// 		 end.y + 0.5*length*HEX_BRANCH[mod6(angle-2)].y);
+// 	line(start.x + 0.5*length*HEX_BRANCH[mod6(angle-1)].x, 
+// 		 start.y + 0.5*length*HEX_BRANCH[mod6(angle-1)].y,
+// 		 end.x + 0.5*length*HEX_BRANCH[mod6(angle-2)].x, 
+// 		 end.y + 0.5*length*HEX_BRANCH[mod6(angle-2)].y);
+// 	line(start.x + 0.5*length*HEX_BRANCH[mod6(angle+1)].x, 
+// 		 start.y + 0.5*length*HEX_BRANCH[mod6(angle+1)].y,
+// 		 end.x + 0.5*length*HEX_BRANCH[mod6(angle+2)].x, 
+// 		 end.y + 0.5*length*HEX_BRANCH[mod6(angle+2)].y);
+// 	// line(start.x, start.y, end.x, end.y);
+// 	// ellipse(end.x, end.y, 6, 6);
+// }
+
 function drawBetweenNodes(start, end, angle, thickness){
-	line(start.x, start.y, end.x, end.y);
-	ellipse(end.x, end.y, 6, 6);
+	var a = Math.atan2(end.y - start.y, end.x - start.x);
+	var length = Math.sqrt( Math.pow(end.y-start.y,2) + Math.pow(end.x-start.x,2) );
+	var width = length * 0.33;
+	line(start.x - width*Math.cos(a+PI*0.5),
+		 start.y - width*Math.sin(a+PI*0.5),
+		 start.x + width*Math.cos(a+PI*0.5),
+		 start.y + width*Math.sin(a+PI*0.5) );
+	line(end.x - width*Math.cos(a+PI*0.5),
+		 end.y - width*Math.sin(a+PI*0.5),
+		 end.x + width*Math.cos(a+PI*0.5),
+		 end.y + width*Math.sin(a+PI*0.5) );
+	line(start.x - width*Math.cos(a+PI*0.5),
+		 start.y - width*Math.sin(a+PI*0.5),
+		 end.x - width*Math.cos(a+PI*0.5),
+		 end.y - width*Math.sin(a+PI*0.5) );
+	line(start.x + width*Math.cos(a+PI*0.5),
+		 start.y + width*Math.sin(a+PI*0.5),
+		 end.x + width*Math.cos(a+PI*0.5),
+		 end.y + width*Math.sin(a+PI*0.5) );
+	// line(start.x, start.y, end.x, end.y);
+	// ellipse(end.x, end.y, 6, 6);
 }
 
 ///////////  LENGTH
@@ -42,23 +85,27 @@ function getLength(node){
 	return 100/Math.pow(node.generation+1, .9);
 }
 
+function getWidth(node){
+	return 20/Math.pow(node.generation+1, .9);
+}
+
 ///////////  RECURSION
 ///////////
 // these functions do the recursive crawling
 // variations: with snowflake property of adding reflections on the right arm
 function recurseSimple(node, position){
 	var length = getLength(node);
-	if(node.left != undefined){
-		var end = {x:(position.x + length * HEX_BRANCH[int(node.left.rBranches)%6].x),
-		           y:(position.y + length * HEX_BRANCH[int(node.left.rBranches)%6].y)};
-		recurseSimple(node.left, end);
-		drawBetweenNodes(position, end);
-	}
 	if(node.right != undefined){
-		var end = {x:(position.x + length * HEX_BRANCH[int(node.right.rBranches)%6].x),
-		           y:(position.y + length * HEX_BRANCH[int(node.right.rBranches)%6].y)};
+		var end = {x:(position.x + length * HEX_BRANCH[mod6(node.right.rBranches)].x),
+		           y:(position.y + length * HEX_BRANCH[mod6(node.right.rBranches)].y)};
 		recurseSimple(node.right, end);
-		drawBetweenNodes(position, end);
+		drawBetweenNodes(position, end, mod6(node.left.rBranches));
+	}
+	if(node.left != undefined){
+		var end = {x:(position.x + length * HEX_BRANCH[mod6(node.left.rBranches)].x),
+		           y:(position.y + length * HEX_BRANCH[mod6(node.left.rBranches)].y)};
+		recurseSimple(node.left, end);
+		drawBetweenNodes(position, end, mod6(node.left.rBranches));
 	}
 }
 
@@ -71,14 +118,14 @@ function recurseReflect(node, position, angle){
 		                 y:(position.y + length * HEX_BRANCH[mod6(angle-1)].y)};
 		recurseReflect(node.right, childPos1, mod6(angle+1) );
 		recurseReflect(node.right, childPos2, mod6(angle-1) );
-		drawBetweenNodes(position, childPos1);
-		drawBetweenNodes(position, childPos2);
+		drawBetweenNodes(position, childPos1, mod6(angle+1) );
+		drawBetweenNodes(position, childPos2, mod6(angle-1) );
 	}
 	if(node.left != undefined){
 		var childPos = {x:(position.x + length * HEX_BRANCH[mod6(angle)].x),
 		                y:(position.y + length * HEX_BRANCH[mod6(angle)].y)};
 		recurseReflect(node.left, childPos, angle);
-		drawBetweenNodes(position, childPos);
+		drawBetweenNodes(position, childPos, mod6(angle));
 	}
 }
 
