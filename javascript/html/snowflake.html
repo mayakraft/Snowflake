@@ -2,21 +2,62 @@
 <head>
 	<meta charset="UTF-8">
 	<script language="javascript" type="text/javascript" src="../lib/p5.min.js"></script>
+	<script language="javascript" type="text/javascript" src="../lib/p5.dom.min.js"></script>
 	<script language="javascript" type="text/javascript" src="../math/algorithms.js"></script>
 	<script language="javascript" type="text/javascript" src="../math/binarytree.js"></script>
 	<script language="javascript" type="text/javascript" src="../graphics/render.js"></script>
 	<script language="javascript" type="text/javascript" src="../atmosphere.js"></script>
 	<script language="javascript" type="text/javascript" src="../snowflake.js"></script>
-	<style> body {padding: 0; margin: 0;} </style>
+	<script language="javascript" type="text/javascript" src="../lib/jquery-3.1.1.min.js"></script>
+	<style> 
+	body {
+		padding: 0; 
+		margin: 0;
+	}
+	.floating{
+		background-color: white;
+		width: 140px;
+		height: 200px;
+		z-index: 2;
+		padding: 10px;
+		text-align: center;
+	}
+	.slider-width75{
+		width: 75;
+	}
+	</style>
 </head>
-<body>
+<body>	
+	<div  class="floating">
+		<form>
+			<br>
+			<input type="button" value="New Snowflake" onclick="newSnowflake()"><br>
+			<div style="text-align:left;">
+				<input type="radio" name="nodeshape" value="0" onchange="radioHandler()">binary tree<br>
+				<input type="radio" name="nodeshape" value="1" checked onchange="radioHandler()">wireframe<br>
+				<input type="radio" name="nodeshape" value="2" onchange="radioHandler()">filled<br>
+			</div>
+			<input type="range" class="slider-width75" onchange="sliderHandler(this.value)"><br>
+		</form>
+	</div>
 	<script>
+
 
 var snowflake;
 
 var snowflakePosition;
 
+var drawStyle = 1;
+
 function setup() {
+	var divs = selectAll('.floating');
+	console.log('Number: ' + divs.length);
+	for (var i=0; i<divs.length; i++) {
+		var div = divs[i];
+		div.position(50, 50);
+	}
+	// console.log(myDiv);
+
 	canvas = createCanvas(windowWidth, windowHeight);
 	resizeOrigins();
 	frameRate(10);
@@ -31,12 +72,31 @@ function setup() {
 	noLoop();
 }
 
-function mousePressed() {
+function radioHandler(){
+	drawStyle = $('input[name="nodeshape"]:checked').val();
+	snowflake.setDrawStyle(drawStyle);
+	draw();
+}
+
+function sliderHandler(input){
+	console.log(input);
+}
+
+function newSnowflake(){
 	var atmos = new Atmosphere(8);
 	console.log(atmos);
 	snowflake = new Snowflake();
 	snowflake.grow(atmos);
-	draw();
+	snowflake.setDrawStyle(drawStyle);
+	draw();	
+}
+
+function mousePressed() {
+	// var atmos = new Atmosphere(8);
+	// console.log(atmos);
+	// snowflake = new Snowflake();
+	// snowflake.grow(atmos);
+	// draw();
 }
 
 function draw() {

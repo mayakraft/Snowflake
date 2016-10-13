@@ -343,6 +343,7 @@ function drawStylizedSnowflakeFIRST(position){
 /////////////////////////////////////////////////////////////
 
 // todo, replace windowWidth with a frame
+/*
 function drawBinaryTree(node, position){
 	var r = 10;
 	// leaf nodes are white with black border
@@ -373,7 +374,7 @@ function drawBinaryTree(node, position){
 		drawBinaryTree(node.right, newPosition);
 	}
 }
-
+*/
 function drawRightBranchingBinaryTree(node, position){
 
 	var r = 10;

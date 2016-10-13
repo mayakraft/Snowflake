@@ -5,7 +5,7 @@
 
 // TODO: for deployment- fill all HEX_ANGLES with high-precision double values
 
-var DEBUG = 1;
+var DEBUG = 0;
 
 var matter = 24;
 
@@ -53,6 +53,16 @@ var Snowflake = function(){
 	this.init();
 
 	this.draw = drawSnowflake6Sides;
+
+	this.setDrawStyle = function(input){
+		if(input == 0){
+			this.draw = drawBinaryTree;
+		} else if(input == 1){
+			this.draw = drawSnowflake6Sides;
+		} else if (input == 2){
+			this.draw = drawFilledSnowflake6Sides;
+		}
+	}
 
 	this.grow = function(atmosphere){
 		var intersectionWasHit = function(location, node){
@@ -146,7 +156,7 @@ var Snowflake = function(){
 
 						// right
 						if(twoBranches){
-							console.log("two branches");
+							// console.log("two branches");
 							var rightDirection = mod6(tree.data.direction+1);
 							var rightLocation = {
 								x:(tree.data.location.x + newLength*.7 * HEX_ANGLE[rightDirection].x), 
