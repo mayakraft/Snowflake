@@ -64,6 +64,16 @@ var Snowflake = function(){
 		}
 	}
 
+	this.setNodeStyle = function(input){
+		if(input == 0){
+			drawBetweenNodes = drawBetweenNodesLineWithDots;
+		} else if(input == 1){
+			drawBetweenNodes = drawBetweenNodesRect;
+		} else if (input == 2){
+			drawBetweenNodes = drawBetweenNodesHex;
+		}
+	}
+
 	this.grow = function(atmosphere){
 		var intersectionWasHit = function(location, node){
 			if(DEBUG){ console.log('Snowflake.intersectionWasHit()'); }

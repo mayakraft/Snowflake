@@ -4,6 +4,21 @@ var HEX_BRANCH = [ {x:1, y:0}, {x:0.5,y:-0.866025403784439}, {x:-0.5,y:-0.866025
 //////////////////      SNOWFLAKE         ///////////////////
 /////////////////////////////////////////////////////////////
 
+
+var drawBetweenNodes = drawBetweenNodesHex;
+
+var useWeather = false;
+
+function setUseWeather(input){
+	useWeather = input;
+	if(useWeather == true){
+		getLength = nodeLengthFromNode;
+	} else {
+		getLength = nodeLengthCascading;
+	}
+}
+
+
 // call these to draw:
 function drawBinaryTree(position){      recurseSimple(this.tree, position);   }
 function drawSnowflakeOneArm(position){ recurseReflect(this.tree, position, 0); }
@@ -24,38 +39,38 @@ function drawFilledSnowflake6Sides(position){
 ///////////
 // this actually does the drawing
 // this function gets called at every iteration of the recusive crawl
-// function drawBetweenNodes(start, end, angle, thickness){
-// 	line(start.x, start.y, end.x, end.y);
-// 	ellipse(end.x, end.y, 6, 6);
-// }
+function drawBetweenNodesLineWithDots(start, end, angle, thickness){
+	line(start.x, start.y, end.x, end.y);
+	ellipse(end.x, end.y, 6, 6);
+}
 
-// function drawBetweenNodes(start, end, angle, thickness){
-// 	var length = Math.sqrt( Math.pow(end.y-start.y,2) + Math.pow(end.x-start.x,2) );
-// 	line(start.x, start.y, 
-// 		 start.x + 0.5*length*HEX_BRANCH[mod6(angle+1)].x, 
-// 		 start.y + 0.5*length*HEX_BRANCH[mod6(angle+1)].y);
-// 	line(start.x, start.y, 
-// 		 start.x + 0.5*length*HEX_BRANCH[mod6(angle-1)].x, 
-// 		 start.y + 0.5*length*HEX_BRANCH[mod6(angle-1)].y);
-// 	line(end.x, end.y, 
-// 		 end.x + 0.5*length*HEX_BRANCH[mod6(angle+2)].x, 
-// 		 end.y + 0.5*length*HEX_BRANCH[mod6(angle+2)].y);
-// 	line(end.x, end.y, 
-// 		 end.x + 0.5*length*HEX_BRANCH[mod6(angle-2)].x, 
-// 		 end.y + 0.5*length*HEX_BRANCH[mod6(angle-2)].y);
-// 	line(start.x + 0.5*length*HEX_BRANCH[mod6(angle-1)].x, 
-// 		 start.y + 0.5*length*HEX_BRANCH[mod6(angle-1)].y,
-// 		 end.x + 0.5*length*HEX_BRANCH[mod6(angle-2)].x, 
-// 		 end.y + 0.5*length*HEX_BRANCH[mod6(angle-2)].y);
-// 	line(start.x + 0.5*length*HEX_BRANCH[mod6(angle+1)].x, 
-// 		 start.y + 0.5*length*HEX_BRANCH[mod6(angle+1)].y,
-// 		 end.x + 0.5*length*HEX_BRANCH[mod6(angle+2)].x, 
-// 		 end.y + 0.5*length*HEX_BRANCH[mod6(angle+2)].y);
-// 	// line(start.x, start.y, end.x, end.y);
-// 	// ellipse(end.x, end.y, 6, 6);
-// }
+function drawBetweenNodesHex(start, end, angle, thickness){
+	var length = Math.sqrt( Math.pow(end.y-start.y,2) + Math.pow(end.x-start.x,2) );
+	line(start.x, start.y, 
+		 start.x + 0.5*length*HEX_BRANCH[mod6(angle+1)].x, 
+		 start.y + 0.5*length*HEX_BRANCH[mod6(angle+1)].y);
+	line(start.x, start.y, 
+		 start.x + 0.5*length*HEX_BRANCH[mod6(angle-1)].x, 
+		 start.y + 0.5*length*HEX_BRANCH[mod6(angle-1)].y);
+	line(end.x, end.y, 
+		 end.x + 0.5*length*HEX_BRANCH[mod6(angle+2)].x, 
+		 end.y + 0.5*length*HEX_BRANCH[mod6(angle+2)].y);
+	line(end.x, end.y, 
+		 end.x + 0.5*length*HEX_BRANCH[mod6(angle-2)].x, 
+		 end.y + 0.5*length*HEX_BRANCH[mod6(angle-2)].y);
+	line(start.x + 0.5*length*HEX_BRANCH[mod6(angle-1)].x, 
+		 start.y + 0.5*length*HEX_BRANCH[mod6(angle-1)].y,
+		 end.x + 0.5*length*HEX_BRANCH[mod6(angle-2)].x, 
+		 end.y + 0.5*length*HEX_BRANCH[mod6(angle-2)].y);
+	line(start.x + 0.5*length*HEX_BRANCH[mod6(angle+1)].x, 
+		 start.y + 0.5*length*HEX_BRANCH[mod6(angle+1)].y,
+		 end.x + 0.5*length*HEX_BRANCH[mod6(angle+2)].x, 
+		 end.y + 0.5*length*HEX_BRANCH[mod6(angle+2)].y);
+	// line(start.x, start.y, end.x, end.y);
+	// ellipse(end.x, end.y, 6, 6);
+}
 
-function drawBetweenNodes(start, end, angle, thickness){
+function drawBetweenNodesRect(start, end, angle, thickness){
 	var a = Math.atan2(end.y - start.y, end.x - start.x);
 	var length = Math.sqrt( Math.pow(end.y-start.y,2) + Math.pow(end.x-start.x,2) );
 	var width = length * 0.33;
@@ -81,9 +96,17 @@ function drawBetweenNodes(start, end, angle, thickness){
 
 ///////////  LENGTH
 ///////////
-function getLength(node){
+
+function nodeLengthCascading(node){
 	return 100/Math.pow(node.generation+1, .9);
 }
+function nodeLengthFromNode(node){
+	return node.data.length;
+}
+
+
+var getLength = nodeLengthCascading;
+
 
 function getWidth(node){
 	return 20/Math.pow(node.generation+1, .9);

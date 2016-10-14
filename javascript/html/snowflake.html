@@ -17,7 +17,7 @@
 	.floating{
 		background-color: white;
 		width: 140px;
-		height: 200px;
+		height: 360px;
 		z-index: 2;
 		padding: 10px;
 		text-align: center;
@@ -32,11 +32,21 @@
 		<form>
 			<br>
 			<input type="button" value="New Snowflake" onclick="newSnowflake()"><br>
+			<br>
 			<div style="text-align:left;">
-				<input type="radio" name="nodeshape" value="0" onchange="radioHandler()">binary tree<br>
-				<input type="radio" name="nodeshape" value="1" checked onchange="radioHandler()">wireframe<br>
-				<input type="radio" name="nodeshape" value="2" onchange="radioHandler()">filled<br>
+				<h4>snowflake:</h4>
+				<input type="radio" name="flakeshape" value="0" onchange="radioHandler()">binary tree<br>
+				<input type="radio" name="flakeshape" value="1" checked onchange="radioHandler()">wireframe<br>
+				<input type="radio" name="flakeshape" value="2" onchange="radioHandler()">filled<br>
 			</div>
+			<div style="text-align:left;">
+				<h4>shape:</h4>
+				<input type="radio" name="nodeshape" value="0" onchange="radioHandler()">lines<br>
+				<input type="radio" name="nodeshape" value="1" checked onchange="radioHandler()">rect<br>
+				<input type="radio" name="nodeshape" value="2" onchange="radioHandler()">hex<br>
+			</div>
+			<br>
+			<input type="checkbox" name="useWeatherCheckbox" value="yesuse" onclick="checkHandler(this)"> use weather<br>
 			<input type="range" class="slider-width75" onchange="sliderHandler(this.value)"><br>
 		</form>
 	</div>
@@ -48,6 +58,7 @@ var snowflake;
 var snowflakePosition;
 
 var drawStyle = 1;
+var nodeStyle = 0;
 
 function setup() {
 	var divs = selectAll('.floating');
@@ -73,8 +84,15 @@ function setup() {
 }
 
 function radioHandler(){
-	drawStyle = $('input[name="nodeshape"]:checked').val();
+	drawStyle = $('input[name="flakeshape"]:checked').val();
 	snowflake.setDrawStyle(drawStyle);
+	nodeStyle = $('input[name="nodeshape"]:checked').val();
+	snowflake.setNodeStyle(nodeStyle);
+	draw();
+}
+
+function checkHandler(input){
+	setUseWeather(input.checked);
 	draw();
 }
 
