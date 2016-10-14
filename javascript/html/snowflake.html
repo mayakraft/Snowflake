@@ -14,10 +14,14 @@
 		padding: 0; 
 		margin: 0;
 	}
+	h1, h2, h3, h4{
+		margin:5px;
+		padding:0px;
+	}
 	.floating{
 		background-color: white;
 		width: 140px;
-		height: 360px;
+		height: 400px;
 		z-index: 2;
 		padding: 10px;
 		text-align: center;
@@ -28,25 +32,31 @@
 	</style>
 </head>
 <body>	
-	<div  class="floating">
+	<div class="floating">
 		<form>
-			<br>
-			<input type="button" value="New Snowflake" onclick="newSnowflake()"><br>
-			<br>
+			<div style="padding:15px;">
+				<input type="button" value="New Snowflake" onclick="newSnowflake()"><br>
+			</div>
 			<div style="text-align:left;">
-				<h4>snowflake:</h4>
+				<h3>snowflake:</h3>
 				<input type="radio" name="flakeshape" value="0" onchange="radioHandler()">binary tree<br>
-				<input type="radio" name="flakeshape" value="1" checked onchange="radioHandler()">wireframe<br>
-				<input type="radio" name="flakeshape" value="2" onchange="radioHandler()">filled<br>
+				<input type="radio" name="flakeshape" value="1" onchange="radioHandler()">one arm<br>
+				<input type="radio" name="flakeshape" value="2" checked onchange="radioHandler()">snowflake<br>
 			</div>
 			<div style="text-align:left;">
-				<h4>shape:</h4>
+				<h3>shape:</h3>
 				<input type="radio" name="nodeshape" value="0" onchange="radioHandler()">lines<br>
-				<input type="radio" name="nodeshape" value="1" checked onchange="radioHandler()">rect<br>
-				<input type="radio" name="nodeshape" value="2" onchange="radioHandler()">hex<br>
+				<input type="radio" name="nodeshape" value="1" onchange="radioHandler()">rect<br>
+				<input type="radio" name="nodeshape" value="2" checked onchange="radioHandler()">hex<br>
 			</div>
 			<br>
-			<input type="checkbox" name="useWeatherCheckbox" value="yesuse" onclick="checkHandler(this)"> use weather<br>
+			<div style="text-align:left;">
+				<h3>growth:</h3>
+				<input type="radio" name="growthshape" value="0" onchange="radioHandler()">linear<br>
+				<input type="radio" name="growthshape" value="1" onchange="radioHandler()">logarithmic<br>
+				<input type="radio" name="growthshape" value="2" checked onchange="radioHandler()">realistic<br>
+			</div>
+			<input type="checkbox" name="wireframeCheckbox" value="yesuse" onclick="checkHandler(this)"> wireframe<br>
 			<input type="range" class="slider-width75" onchange="sliderHandler(this.value)"><br>
 		</form>
 	</div>
@@ -57,8 +67,9 @@ var snowflake;
 
 var snowflakePosition;
 
-var drawStyle = 1;
-var nodeStyle = 0;
+var drawStyle = 2;
+var nodeStyle = 2;
+var growStyle = 2;
 
 function setup() {
 	var divs = selectAll('.floating');
@@ -88,11 +99,12 @@ function radioHandler(){
 	snowflake.setDrawStyle(drawStyle);
 	nodeStyle = $('input[name="nodeshape"]:checked').val();
 	snowflake.setNodeStyle(nodeStyle);
+	growStyle = $('input[name="growthshape"]:checked').val();
+	setGrowStyle(growStyle);
 	draw();
 }
 
 function checkHandler(input){
-	setUseWeather(input.checked);
 	draw();
 }
 

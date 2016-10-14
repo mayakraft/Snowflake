@@ -58,9 +58,9 @@ var Snowflake = function(){
 		if(input == 0){
 			this.draw = drawBinaryTree;
 		} else if(input == 1){
-			this.draw = drawSnowflake6Sides;
+			this.draw = drawSnowflakeOneArm;
 		} else if (input == 2){
-			this.draw = drawFilledSnowflake6Sides;
+			this.draw = drawSnowflake6Sides;
 		}
 	}
 

@@ -7,14 +7,18 @@ var HEX_BRANCH = [ {x:1, y:0}, {x:0.5,y:-0.866025403784439}, {x:-0.5,y:-0.866025
 
 var drawBetweenNodes = drawBetweenNodesHex;
 
-var useWeather = false;
-
-function setUseWeather(input){
-	useWeather = input;
-	if(useWeather == true){
-		getLength = nodeLengthFromNode;
-	} else {
+function setGrowStyle(input){
+	// declared in snowflake.html
+	growStyle = input;
+	if(growStyle == 0){
+		getLength = nodeLengthLinear;
+		getThickness = nodeThicknessLinear;
+	} else if(growStyle == 1){
 		getLength = nodeLengthCascading;
+		getThickness = nodeThicknessCascading;
+	} else if(growStyle == 2){
+		getLength = nodeLengthFromNode;
+		getThickness = nodeThicknessFromNode;
 	}
 }
 
@@ -100,13 +104,36 @@ function drawBetweenNodesRect(start, end, angle, thickness){
 function nodeLengthCascading(node){
 	return 100/Math.pow(node.generation+1, .9);
 }
+function nodeLengthLinear(node){
+	return 33;
+}
 function nodeLengthFromNode(node){
-	return node.data.length;
+	if(node.data != undefined){
+		return node.data.length;
+	} else{
+		console.log("ERROR [nodeLengthFromNode()]: attempting to get data from node with no data");
+		return 1;
+	}
+}
+function nodeThicknessLinear(node){
+	return 33*0.866;
+}
+function nodeThicknessCascading(node){
+	var l = 100/Math.pow(node.generation+1, .9);
+	return l*0.866;
+}
+function nodeThicknessFromNode(node){
+	if(node.data != undefined){
+		return node.data.thickness;
+	} else{
+		console.log("ERROR [nodeThicknessFromNode()]: attempting to get data from node with no data");
+		return 1;
+	}
 }
 
 
-var getLength = nodeLengthCascading;
-
+var getLength = nodeLengthFromNode;
+var getThickness = nodeThicknessFromNode;
 
 function getWidth(node){
 	return 20/Math.pow(node.generation+1, .9);
@@ -122,7 +149,7 @@ function recurseSimple(node, position){
 		var end = {x:(position.x + length * HEX_BRANCH[mod6(node.right.rBranches)].x),
 		           y:(position.y + length * HEX_BRANCH[mod6(node.right.rBranches)].y)};
 		recurseSimple(node.right, end);
-		drawBetweenNodes(position, end, mod6(node.left.rBranches));
+		drawBetweenNodes(position, end, mod6(node.right.rBranches));
 	}
 	if(node.left != undefined){
 		var end = {x:(position.x + length * HEX_BRANCH[mod6(node.left.rBranches)].x),
@@ -153,19 +180,15 @@ function recurseReflect(node, position, angle){
 }
 
 function recurseReflectFilled(node, start, angle){
-	var length, thickness, pLength, pThickness;
 	// LENGTH and THICKNESS
-	var data = node.data
-	if(data != undefined){
-		length = data.length;
-		thickness = data.thickness;
-	}
+	var length = getLength(node);	
+	var thickness = getThickness(node);
+
+	// PARENT NODE LENGTH and THICKNESS
+	var pLength, pThickness;
 	if(node.parent != undefined){
-		var pData = node.parent.data;
-		if(pData != undefined){
-			pLength = pData.length;
-			pThickness = pData.thickness;
-		}
+		pLength = getLength(node.parent);
+		pThickness = getThickness(node.parent);
 	} else{
 		pLength = 0; pThickness = 0;
 	}
