@@ -51,3 +51,20 @@ function RayLineIntersect(origin, dV, pA, pB){
 	}
 	return undefined;
 }
+
+var check30DegIntersection = function(start, end){
+	if(DEBUG){ console.log('Snowflake.check30DegIntersection()'); }
+	// perform boundary check against 30 deg line
+	var result = RayLineIntersect(
+			{x:0, y:0}, 
+			{x:(cos(60/180*Math.PI)), y:(sin(60/180*Math.PI))}, 
+			// {x:(cos(30/180*Math.PI)), y:(sin(30/180*Math.PI))}, 
+			{x:start.x, y:Math.abs(start.y)}, 
+			{x:end.x, y:Math.abs(end.y)}
+		);
+	if(result != undefined){
+		// the boundary was crossed, result is distance from start to new intersection
+		return Math.sqrt( (result.x-start.x)*(result.x-start.x) + (result.y-Math.abs(start.y))*(result.y-Math.abs(start.y)) );
+	}
+	return undefined;
+}

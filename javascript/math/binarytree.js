@@ -18,7 +18,7 @@ var TreeNode = function(parent, data){
 	this.lBranches;  // (INT) number of cumulative left branches before
 
 	// optional
-	this.data = data;  // (whatever this tree is meant to represent, store properties here)
+	this.data = data;  // unique optional data for every node
 
 	// member functions
 	this.draw = drawBinaryTree;

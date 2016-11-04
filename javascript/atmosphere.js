@@ -29,4 +29,9 @@ var Atmosphere = function(length){
 		if(cos(phase3+freq3*i) > 0)  this.branch[i] = true;
 		else                         this.branch[i] = false;
 	}
+
+	if(length > 0)
+		this.branch[0] = false;
+	if(length > 1)
+		this.branch[1] = false;
 };
