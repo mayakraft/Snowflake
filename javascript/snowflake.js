@@ -3,7 +3,6 @@
 // REQUIRES: binarytree.js
 //           render.js (with p5.js) for drawing
 
-// TODO: for deployment- fill all HEX_ANGLES with high-precision double values
 
 var DEBUG = 0;
 
@@ -18,11 +17,11 @@ var matter = 48;
 
 var SnowflakeData = function(location, length, direction, thickness, thinness, active){
 	if(DEBUG){ console.log('new SnowflakeData()'); }
-	this.location = {'x':undefined, 'y':undefined};
-	this.length = undefined;
+	this.location = {'x':0, 'y':0};
+	this.length = 0;
 	this.direction = 0;
-	this.thickness = undefined;
-	this.thinness = undefined;
+	this.thickness = 0;
+	this.thinness = 0;
 	this.active = true;   // set to false to force node to be a leaf
 	if(location != undefined)
 		this.location = location;
@@ -49,7 +48,7 @@ var Snowflake = function(){
 		// var location = { x:(0.0 + length * HEX_ANGLE[direction].x), 
 		//                  y:(0.0 + length * HEX_ANGLE[direction].y) };
 		var thickness = 24;
-		var data = new SnowflakeData({x:(0.0),y:(0.0)}, 20, 0, thickness, 0, true);
+		var data = new SnowflakeData({x:(0.0),y:(0.0)}, 0, 0, 0, 0, true);
 		this.tree = new TreeNode(undefined, data);		
 
 		this.mainArmRejoinPoints = [];  // when two arms grow wide enough that they touch
@@ -75,7 +74,7 @@ Snowflake.prototype.grow = function(atmosphere){
 		{x:-1, y:0}, {x:-.5,y:0.8660254037844},  {x:.5, y:0.8660254037844} ];
 
 	for(var i = 0; i < atmosphere.length; i++){
-		console.log('growing ' + i + ': ' + this.tree.data.active);
+		// console.log('growing ' + i + ': ' + this.tree.data.active);
 		// setGlobalTreeVariables(tree);
 		visitLeaves(this.tree, {"mass":atmosphere.mass[i], "branch":atmosphere.branch[i], "thin":atmosphere.thin[i]});
 	}
@@ -95,64 +94,37 @@ Snowflake.prototype.grow = function(atmosphere){
 			var twoBranches = atmosphere['branch'];
 			var nThinHere = atmosphere['thin'];
 
-			// OPTIONAL: add mass to segment
+			// OPTIONAL: add mass to branches that are not leaves
 
 			
-			// SPROUT NEW BRANCH
+			// SPROUT NEW LEAF / LEAVES
 			if(tree.leaf == true){  // operations only on leaves
-				console.log("found a leaf");
+				// GROW THIS LEAF
 
-				var shortenby = Math.pow(0.4, tree.rBranches);
-				var newLength = matter * cos(PI * .5 * nMass) * shortenby;// * (3+tree.generation);
-				var newThickness = matter * sin(PI * .5 * nMass) * shortenby;// * (tree.generation);
-				var newThinness = undefined;
-				if(nThinHere < .5) 
-					newThinness = random(.15)+.05;
+				var length = matter * nMass;
+				var thickness = matter * nMass * Math.random();
 
-				// if(newLength < tree.thickness){
-				// 	console.log("adjusting value, length is smaller than thickness");
-				// 	newLength = tree.thickness + 3;
-				// }
+				tree.data.length += length;
+				tree.data.thickness += thickness;
 
-				if(tree.rBranches < 1 && nMass < 0){
-					newLength = 0;
-					newThickness = tree.parent.thickness * 1.1;
+				var endLocation = {'x':tree.data.location.x + tree.data.length * HEX_ANGLE[tree.data.direction].x,
+				                   'y':tree.data.location.y + tree.data.length * HEX_ANGLE[tree.data.direction].y};
+
+				// check intersections
+				var intersection = check30DegIntersection(tree.data.location, endLocation);
+				if(intersection != undefined){
+					tree.data.active = false;
+					tree.data.length = intersection;
+					return;
 				}
 
-
-				var leftDirection = tree.data.direction;
 				// ADD CHILDREN
-				// left
-				var leftLocation = {
-					x:(tree.data.location.x + newLength * HEX_ANGLE[leftDirection].x), 
-					y:(tree.data.location.y + newLength * HEX_ANGLE[leftDirection].y)
-				};		
-				var leftData = new SnowflakeData(leftLocation, newLength, leftDirection, newThickness, newThinness, true);
+				var leftData = new SnowflakeData(endLocation, 0, tree.data.direction, 0, 0, true);
 				tree.addLeftChild( leftData );
-
-				var leftIntersect = check30DegIntersection(tree.data.location, tree.left.data.location);
-				if(leftIntersect != undefined){
-					tree.left.data.active = false;
-					// makeNodeDead(tree.left, leftIntersect, newThickness );
-				}
-
-				// right
-				if(twoBranches){
-					// console.log("two branches");
-					var rightDirection = mod6(tree.data.direction+1);
-					var rightLocation = {
-						x:(tree.data.location.x + newLength*.7 * HEX_ANGLE[rightDirection].x), 
-						y:(tree.data.location.y + newLength*.7 * HEX_ANGLE[rightDirection].y)
-					};
-					var rightData = new SnowflakeData(rightLocation, newLength * .7, rightDirection, newThickness * .7, newThinness, true);
-
+				
+				if(twoBranches){  // right
+					var rightData = new SnowflakeData(endLocation, 0, mod6(tree.data.direction+1), 0, 0, true);
 					tree.addRightChild( rightData );
-					
-					var rightIntersect = check30DegIntersection(tree.data.location, tree.right.data.location);
-					if(rightIntersect != undefined){
-						tree.right.data.active = false;
-						// makeNodeDead(tree.right, rightIntersect, newThickness );
-					}
 				}
 			}
 		}
