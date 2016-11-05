@@ -411,112 +411,38 @@ function drawStylizedSnowflakeFIRST(position){
 	}
 }
 
-
-/////////////////////////////////////////////////////////////
-/////////////////      BINARY TREE         //////////////////
-/////////////////////////////////////////////////////////////
-
-// todo, replace windowWidth with a frame
-/*
-function drawBinaryTree(node, position){
-	var r = 10;
-	// leaf nodes are white with black border
-	if(node.leaf){
-		fill(255);
-	} else{
-		fill(0);		
-	}
-	// child nodes are arrows pointing LEFT or RIGHT, parent is a circle
-	if(node.childType == undefined){
-		ellipse(position.x, position.y, r, r);
-	} else{
-		var a = 0;
-		if(node.childType == LEFT)  a = PI;
-		triangle(position.x+r*0.5*Math.cos(a), position.y+r*0.5*Math.sin(a), 
-		         position.x+r*0.5*Math.cos(a+PI*2/3), position.y+r*0.5*Math.sin(a+PI*2/3), 
-		         position.x+r*0.5*Math.cos(a+PI*4/3), position.y+r*0.5*Math.sin(a+PI*4/3));
-	}
-	// recursion:
-	if(node.left != undefined){
-		var newPosition = {'x':position.x-(windowWidth*.45)/Math.pow(2,node.left.generation), 'y':position.y + 30};
-		line(position.x, position.y, newPosition.x, newPosition.y);
-		drawBinaryTree(node.left, newPosition);
-	}
-	if(node.right != undefined){
-		var newPosition = {'x':position.x+(windowWidth*.45)/Math.pow(2,node.right.generation), 'y':position.y + 30};
-		line(position.x, position.y, newPosition.x, newPosition.y);
-		drawBinaryTree(node.right, newPosition);
-	}
-}
-*/
-function drawRightBranchingBinaryTree(node, position){
-
-	var r = 10;
-	// leaf nodes are white with black border
-	if(node.leaf){
-		fill(255);
-	} else{
-		fill(0);		
-	}
-	// child nodes are arrows pointing LEFT or RIGHT, parent is a circle
-	if(node.childType == undefined){
-		ellipse(position.x, position.y, r, r);
-	} else{
-		var a = 0;
-		if(node.childType == LEFT)  a = PI;
-		triangle(position.x+r*0.5*Math.cos(a), position.y+r*0.5*Math.sin(a), 
-		         position.x+r*0.5*Math.cos(a+PI*2/3), position.y+r*0.5*Math.sin(a+PI*2/3), 
-		         position.x+r*0.5*Math.cos(a+PI*4/3), position.y+r*0.5*Math.sin(a+PI*4/3));
-	}
-
-	// logarithmically shrinking edge lengths
-	var LENGTH = 100/Math.pow(node.generation+1, .9);
-
-	if(node.left != undefined){
-		var end = {x:(position.x + LENGTH * HEX_BRANCH[int(node.left.rBranches)%6].x),
-		           y:(position.y + LENGTH * HEX_BRANCH[int(node.left.rBranches)%6].y)};
-		line(position.x, position.y, end.x, end.y);
-		drawRightBranchingBinaryTree(node.left, end);
-	}
-	if(node.right != undefined){
-		var end = {x:(position.x + LENGTH * HEX_BRANCH[int(node.right.rBranches)%6].x),
-		           y:(position.y + LENGTH * HEX_BRANCH[int(node.right.rBranches)%6].y)};
-		line(position.x, position.y, end.x, end.y);
-		drawRightBranchingBinaryTree(node.right, end);
-	}
-}
-
 /////////////////////////////////////////////////////////////
 //////////////////      ATMOSPHERE         //////////////////
 /////////////////////////////////////////////////////////////
 
-function drawAtmosphereGraph(rect){
+Atmosphere.prototype.drawAtmosphereGraph = function(rect){
 	// rect is expecting {'x':_, 'y':_, 'width':_, 'height':_, }
 	var MARGIN = 10;
 
 	// bounding box
-	stroke(220);
-	fill(240);
-	beginShape();
-	vertex(rect.x-MARGIN, rect.y-MARGIN);
-	vertex(rect.x-MARGIN, rect.y+MARGIN + rect.height);
-	vertex(rect.x+MARGIN + rect.width, rect.y+MARGIN + rect.height);
-	vertex(rect.x+MARGIN + rect.width, rect.y-MARGIN);
-	endShape(CLOSE);
+	stroke(0);
+	// fill(240);
+	// noFill();
+	// beginShape();
+	// vertex(rect.x-MARGIN, rect.y-MARGIN);
+	// vertex(rect.x-MARGIN, rect.y+MARGIN + rect.height);
+	// vertex(rect.x+MARGIN + rect.width, rect.y+MARGIN + rect.height);
+	// vertex(rect.x+MARGIN + rect.width, rect.y-MARGIN);
+	// endShape(CLOSE);
 
 	// x=0 origin line
-	stroke(220);
+	stroke(0);
 	line(rect.x-MARGIN, rect.y + .5 * rect.height, rect.x+MARGIN + rect.width, rect.y + .5 * rect.height);
 
 	// mass, branch, thin
 	for(var i = 0; i < (this.length-1); i++){
-		stroke(255, 128, 128);
+		stroke(255, 255, 255);
 		line(rect.x + (i)/(this.length-1) * rect.width, rect.y + this.mass[i] * rect.height, 
 		     rect.x + (i+1)/(this.length-1) * rect.width, rect.y + this.mass[i+1] * rect.height);
-		stroke(128, 255, 128);
+		stroke(200, 200, 200);
 		line(rect.x + (i)/(this.length-1) * rect.width, rect.y + this.thin[i] * rect.height, 
 		     rect.x + (i+1)/(this.length-1) * rect.width, rect.y + this.thin[i+1] * rect.height);
-		stroke(128, 128, 255);
+		stroke(150, 150, 150);
 		line(rect.x + (i)/(this.length-1) * rect.width, rect.y + this.branch[i] * rect.height, 
 		     rect.x + (i+1)/(this.length-1) * rect.width, rect.y + this.branch[i+1] * rect.height);
 	}

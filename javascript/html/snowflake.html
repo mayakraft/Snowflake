@@ -8,6 +8,7 @@
 	<script language="javascript" type="text/javascript" src="../atmosphere.js"></script>
 	<script language="javascript" type="text/javascript" src="../snowflake.js"></script>
 	<script language="javascript" type="text/javascript" src="../graphics/render.js"></script>
+	<script language="javascript" type="text/javascript" src="../graphics/renderTree.js"></script>
 	<script language="javascript" type="text/javascript" src="../lib/jquery-3.1.1.min.js"></script>
 	<style> 
 	body {
@@ -78,6 +79,10 @@ var drawStyle = 2;
 var nodeStyle = 2;
 var growStyle = 2;
 
+var atmos;
+
+var atmosphere_iterations = 5;
+
 function setup() {
 	var divs = selectAll('.floating');
 	console.log('Number: ' + divs.length);
@@ -91,7 +96,7 @@ function setup() {
 	resizeOrigins();
 	frameRate(10);
 	// make atmosphere
-	var atmos = new Atmosphere(8);
+	atmos = new Atmosphere( atmosphere_iterations );
 	console.log(atmos);
 
 	snowflake = new Snowflake();
@@ -120,7 +125,7 @@ function sliderHandler(input){
 }
 
 function newSnowflake(){
-	var atmos = new Atmosphere(8);
+	atmos = new Atmosphere( atmosphere_iterations );
 	console.log(atmos);
 	snowflake = new Snowflake();
 	snowflake.grow(atmos);
@@ -144,13 +149,15 @@ function draw() {
 	// drawRightBranchingBinaryTree(snowflake.tree, treePosition);
 	// noStroke();
 	snowflake.draw(snowflakePosition);
+	drawRightBranchingBinaryTree(snowflake.tree, {'x':windowWidth*0.5 + 100 - 100, 'y':windowHeight-20});
+	atmos.drawAtmosphereGraph({'x':windowWidth*0.5 + 100 - 100, 'y':10, 'width':200, 'height':40});
 }
 
 function resizeOrigins(){
-	if(windowWidth > windowHeight)
-		snowflakePosition = {x:windowWidth*.5, y:windowHeight*.5};
-	else
-		snowflakePosition = {x:windowWidth*.5, y:windowHeight*.5};
+	// if(windowWidth > windowHeight)
+	// 	snowflakePosition = {x:windowWidth*.5, y:windowHeight*.5};
+	// else
+		snowflakePosition = {x:windowWidth*.5 + 100, y:windowHeight*.5};
 }
 
 function windowResized() {

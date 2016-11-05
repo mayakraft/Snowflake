@@ -11,7 +11,6 @@ var Atmosphere = function(length){
 	this.thin = [];
 	this.branch = [];
 	// member functions
-	this.draw = drawAtmosphereGraph;
 
 	if(length <= 0){return;}
 

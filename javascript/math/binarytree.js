@@ -20,9 +20,6 @@ var TreeNode = function(parent, data){
 	// optional
 	this.data = data;  // unique optional data for every node
 
-	// member functions
-	this.draw = drawBinaryTree;
-
 	// INITIALIZE
 	if(parent){
 		this.generation = parent.generation+1;
@@ -105,13 +102,17 @@ function logTree(node){
 		var thisChildType;
 		if(node.childType == LEFT) thisChildType = "left";
 		if(node.childType == RIGHT) thisChildType = "right";
+
+		var hasParent = true;
+		if(node.parent == undefined) hasParent = false;
+
 		console.log("Node (" + 
-			node.generation + "/" + 
-			node.maxGeneration + ") LENGTH:(" + 
-			node.length + ") PARENT:(" + 
-			hasChildren + ") TYPE:(" + 
-			node.childType + ") RIGHT BRANCHES:(" + 
-			node.rBranches + ") (" + 
+			node.generation + ") TYPE:(" + 
+			node.childType + ") HAS PARENT:" + 
+			hasParent + " HAS CHILDREN:(" + 
+			!node.leaf +  ") RIGHT BRANCHES:(" + 
+			node.rBranches + ") LEFT BRANCHES:(" + 
+			node.lBranches +
 			// node.location.x + "," +
 			// node.location.y + 
 			")");
