@@ -49,7 +49,7 @@ var Snowflake = function(){
 		// var location = { x:(0.0 + length * HEX_ANGLE[direction].x), 
 		//                  y:(0.0 + length * HEX_ANGLE[direction].y) };
 		var thickness = 24;
-		var data = new SnowflakeData({x:(0.0),y:(0.0)}, 0, 0, thickness, 0, true);
+		var data = new SnowflakeData({x:(0.0),y:(0.0)}, 20, 0, thickness, 0, true);
 		this.tree = new TreeNode(undefined, data);		
 
 		this.mainArmRejoinPoints = [];  // when two arms grow wide enough that they touch
@@ -75,7 +75,7 @@ Snowflake.prototype.grow = function(atmosphere){
 		{x:-1, y:0}, {x:-.5,y:0.8660254037844},  {x:.5, y:0.8660254037844} ];
 
 	for(var i = 0; i < atmosphere.length; i++){
-		console.log('growing: ' + this.tree.data.active);
+		console.log('growing ' + i + ': ' + this.tree.data.active);
 		// setGlobalTreeVariables(tree);
 		visitLeaves(this.tree, {"mass":atmosphere.mass[i], "branch":atmosphere.branch[i], "thin":atmosphere.thin[i]});
 	}
@@ -100,6 +100,7 @@ Snowflake.prototype.grow = function(atmosphere){
 			
 			// SPROUT NEW BRANCH
 			if(tree.leaf == true){  // operations only on leaves
+				console.log("found a leaf");
 
 				var shortenby = Math.pow(0.4, tree.rBranches);
 				var newLength = matter * cos(PI * .5 * nMass) * shortenby;// * (3+tree.generation);

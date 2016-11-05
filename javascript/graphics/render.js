@@ -439,11 +439,12 @@ Atmosphere.prototype.drawAtmosphereGraph = function(rect){
 		stroke(255, 255, 255);
 		line(rect.x + (i)/(this.length-1) * rect.width, rect.y + this.mass[i] * rect.height, 
 		     rect.x + (i+1)/(this.length-1) * rect.width, rect.y + this.mass[i+1] * rect.height);
-		stroke(200, 200, 200);
+		stroke(170, 170, 170);
 		line(rect.x + (i)/(this.length-1) * rect.width, rect.y + this.thin[i] * rect.height, 
 		     rect.x + (i+1)/(this.length-1) * rect.width, rect.y + this.thin[i+1] * rect.height);
-		stroke(150, 150, 150);
-		line(rect.x + (i)/(this.length-1) * rect.width, rect.y + this.branch[i] * rect.height, 
-		     rect.x + (i+1)/(this.length-1) * rect.width, rect.y + this.branch[i+1] * rect.height);
+		stroke(255, 255, 255);
+		ellipse(rect.x + (i)/(this.length-1) * rect.width, rect.y + rect.height - this.branch[i] * rect.height, 5, 5);
 	}
+	var i = this.length-1;
+	ellipse(rect.x + (i)/(this.length-1) * rect.width, rect.y + rect.height - this.branch[i] * rect.height, 5, 5);
 }

@@ -112,10 +112,13 @@ function logTree(node){
 			hasParent + " HAS CHILDREN:(" + 
 			!node.leaf +  ") RIGHT BRANCHES:(" + 
 			node.rBranches + ") LEFT BRANCHES:(" + 
-			node.lBranches +
-			// node.location.x + "," +
-			// node.location.y + 
-			")");
+			node.lBranches + ")");
+		if(node.data != undefined){
+			console.log("++++ Length:" + node.data.length + " X:" + node.data.location.x + " Y:" + node.data.location.y);
+		} else{
+			console.log("++++ NO DATA");
+		}
+		console.log("----------");
 		logTree(node.left);
 		logTree(node.right);
 	}
