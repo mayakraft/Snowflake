@@ -40,32 +40,24 @@
 			<div style="padding:15px;">
 				<input type="button" value="New Snowflake" onclick="newSnowflake()"><br>
 			</div>
-			<h2>rendering</h2>
 			<div style="text-align:left;">
-				<h3>snowflake:</h3>
-				<input type="radio" name="flakeshape" value="0" onchange="radioHandler()">binary tree<br>
-				<input type="radio" name="flakeshape" value="1" onchange="radioHandler()">one arm<br>
+				<h3>render:</h3>
+				<input type="range" class="slider-width75" onchange="sliderHandler(this.value)"><br>
+				<input type="checkbox" name="wireframeCheckbox" value="yes" disabled onclick="wireframeHandler(this)"> wireframe<br>
+				<input type="radio" name="nodeshape" value="0" onchange="radioHandler()">lines
+				<input type="radio" name="nodeshape" value="1" checked onchange="radioHandler()">hex<br>
+				<h3>show:</h3>
 				<input type="radio" name="flakeshape" value="2" checked onchange="radioHandler()">snowflake<br>
+				<input type="radio" name="flakeshape" value="1" onchange="radioHandler()">one arm<br>
+				<input type="radio" name="flakeshape" value="0" onchange="radioHandler()">binary tree<br>
 			</div>
 			<br>
 			<div style="text-align:left;">
-				<h3>distribution:</h3>
-				<input type="radio" name="growthshape" value="0" onchange="radioHandler()">linear<br>
-				<input type="radio" name="growthshape" value="1" onchange="radioHandler()">logarithmic<br>
-				<input type="radio" name="growthshape" value="2" checked onchange="radioHandler()">realistic<br>
+				<h3>hack:</h3>
+				<input type="checkbox" name="uselength" value="yes" checked onclick="lengthsHandler(this)"> lengths<br>
+				<input type="checkbox" name="usethickness" value="yes" checked onclick="thicknessHandler(this)"> thickness<br>
+				<input type="range" class="slider-width75" onchange="slider2Handler(this.value)"><br>
 			</div>
-			<br>
-			<div style="text-align:left;">
-				<h3>shape:</h3>
-				<input type="radio" name="nodeshape" value="0" onchange="radioHandler()">lines<br>
-				<input type="radio" name="nodeshape" value="1" onchange="radioHandler()">rect<br>
-				<input type="radio" name="nodeshape" value="2" checked onchange="radioHandler()">hex1
-				<input type="radio" name="nodeshape" value="3" checked onchange="radioHandler()">hex2<br>
-			</div>
-			<br>
-			<h2>growth</h2>
-			<input type="checkbox" name="wireframeCheckbox" value="yesuse" onclick="checkHandler(this)"> wireframe<br>
-			<input type="range" class="slider-width75" onchange="sliderHandler(this.value)"><br>
 		</form>
 	</div>
 	<script>
@@ -77,7 +69,6 @@ var snowflakePosition;
 
 var drawStyle = 2;
 var nodeStyle = 2;
-var growStyle = 2;
 
 var atmos;
 
@@ -111,17 +102,37 @@ function radioHandler(){
 	snowflake.setDrawStyle(drawStyle);
 	nodeStyle = $('input[name="nodeshape"]:checked').val();
 	snowflake.setNodeStyle(nodeStyle);
-	growStyle = $('input[name="growthshape"]:checked').val();
-	setGrowStyle(growStyle);
 	draw();
+}
+
+function wireframeHandler(input){
+	if(input == true){
+
+	} else{
+
+	}
 }
 
 function checkHandler(input){
 	draw();
 }
 
+function thicknessHandler(input){
+	snowflake.setUseThickness(input.checked);
+	// snowflake.useThickness = false;
+	draw();
+}
+
+function lengthsHandler(input){
+	snowflake.setUseLength(input.checked);
+	// snowflake.useLength = false;
+	draw();
+}
+
 function sliderHandler(input){
 	console.log(input);
+	matter = input;
+	draw();
 }
 
 function newSnowflake(){

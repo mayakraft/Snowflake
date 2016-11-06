@@ -68,3 +68,10 @@ var check30DegIntersection = function(start, end){
 	}
 	return undefined;
 }
+
+function mod6(input){
+	// returns 0-5.  accepts any int, negatives included
+	var i = input;
+	while (i < 0) i += 6;
+	return i % 6;
+}

@@ -5,68 +5,145 @@ var HEX_BRANCH = [ {x:1, y:0}, {x:0.5,y:-0.866025403784439}, {x:-0.5,y:-0.866025
 /////////////////////////////////////////////////////////////
 
 
-var drawBetweenNodes = drawBetweenNodesHex;
+//TODO 
+//lines that go through the center
+// lines that also go inside, but pointing toward the far edges
+//    - both in 60 deg and also 30 deg angles
+//    - do the latter if the length v thickness equivocates to about a regular hexagon
+//
 
-function setGrowStyle(input){
-	// declared in snowflake.html
-	growStyle = input;
-	if(growStyle == 0){
-		getLength = nodeLengthLinear;
-		getThickness = nodeThicknessLinear;
-	} else if(growStyle == 1){
-		getLength = nodeLengthCascading;
-		getThickness = nodeThicknessCascading;
-	} else if(growStyle == 2){
+Snowflake.prototype.setUseLength = function(input){
+	this.useLength = input;
+	console.log('set use length ' + input);
+	if(this.useLength){
 		getLength = nodeLengthFromNode;
-		getThickness = nodeThicknessFromNode;
+	} else{
+		getLength = nodeLengthCascading;		
 	}
+	// if(input == 0){
+	// 	getLength = nodeLengthLinear;
+	// } else if(input == 1){
+	// 	getLength = nodeLengthCascading;
+	// } else if(input == 2){
+	// 	getThickness = nodeLengthFromNode;
+	// }
+}
+
+Snowflake.prototype.setUseThickness = function(input){
+	this.useThickness = input;
+	console.log('set use thickness ' + input);
+	if(this.useThickness){
+		getThickness = nodeThicknessFromNode;
+	} else{
+		getThickness = nodeThicknessCascading;		
+	}
+	// if(input == 0){
+	// 	getThickness = nodeThicknessLinear;
+	// } else if(input == 1){
+	// 	getThickness = nodeThicknessCascading;
+	// } else if(input == 2){
+	// 	getThickness = nodeThicknessFromNode;
+	// }
 }
 
 Snowflake.prototype.setDrawStyle = function(input){
 	if(input == 0){
-		this.draw = drawBinaryTree;
+		this.draw = this.drawBinaryTree;
 	} else if(input == 1){
-		this.draw = drawSnowflakeOneArm;
+		this.draw = this.drawSnowflakeOneArm;
 	} else if (input == 2){
-		this.draw = drawSnowflake6Sides;
+		this.draw = this.drawSnowflake6Sides;
 	}
 }
 
-
 Snowflake.prototype.setNodeStyle = function(input){
+	this.drawBetweenNodes = drawBetweenNodesHex;
+	
 	if(input == 0){
-		drawBetweenNodes = drawBetweenNodesLineWithDots;
+		this.drawBetweenNodes = drawLineWithDots;
 	} else if(input == 1){
-		drawBetweenNodes = drawBetweenNodesRect;
-	} else if (input == 2){
-		drawBetweenNodes = drawBetweenNodesHex;
+		this.drawBetweenNodes = drawBetweenNodesHex;
 	}
+
+	// if(input == 0){
+	// 	if(this.showWireframe){
+	// 		this.drawBetweenNodes = function(){
+	// 			drawBetweenNodesRect();
+	// 			drawLineWithDots();
+	// 		};
+	// 	} else{
+	// 		this.drawBetweenNodes = function(){
+	// 			drawLineWithDots();
+	// 		};
+	// 	}
+	// } else if (input == 1){
+	// 	if(this.showWireframe){
+	// 		this.drawBetweenNodes = function(){
+	// 			drawBetweenNodesRect();
+	// 			drawBetweenNodesHex();
+	// 		};
+	// 	} else{
+	// 		this.drawBetweenNodes = function(){
+	// 			drawBetweenNodesHex();
+	// 		};
+	// 	}
+	// }
 }
 
 // call these to draw:
-function drawBinaryTree(position){      recurseSimple(this.tree, position);   }
-function drawSnowflakeOneArm(position){ recurseReflect(this.tree, position, 0); }
-function drawSnowflake6Sides(position){
+Snowflake.prototype.drawBinaryTree = function(position){      this.recurseSimple(this.tree, position);   }
+Snowflake.prototype.drawSnowflakeOneArm = function(position){ this.recurseReflect(this.tree, position, 0); }
+Snowflake.prototype.drawSnowflake6Sides = function(position){
 	for(var angle = 0; angle < 6; angle += 2)
-		recurseReflect(this.tree, position, angle);
+		this.recurseReflect(this.tree, position, angle);
 	for(var angle = 1; angle < 6; angle += 2)
-		recurseReflect(this.tree, position, angle);
+		this.recurseReflect(this.tree, position, angle);
 }
-function drawFilledSnowflake6Sides(position){
+Snowflake.prototype.drawFilledSnowflake6Sides = function(position){
 	for(var angle = 0; angle < 6; angle += 2)
-		recurseReflectFilled(this.tree, position, angle);
+		this.recurseReflectFilled(this.tree, position, angle);
 	for(var angle = 1; angle < 6; angle += 2)
-		recurseReflectFilled(this.tree, position, angle);
+		this.recurseReflectFilled(this.tree, position, angle);
 }
 
 /////////// DRAWING
 ///////////
 // this actually does the drawing
 // this function gets called at every iteration of the recusive crawl
-function drawBetweenNodesLineWithDots(start, end, angle, thickness){
+function drawLineWithDots(start, end, angle, thickness){
 	line(start.x, start.y, end.x, end.y);
 	ellipse(end.x, end.y, 6, 6);
 }
+
+// function drawBetweenNodesHex(start, end, angle, thickness){
+// 	var length = Math.sqrt( Math.pow(end.y-start.y,2) + Math.pow(end.x-start.x,2) );
+// 	if(thickness == undefined){
+// 		thickness = 0.5*length;
+// 	}
+// 	var thick60deg = thickness * 1.154700538379252;
+// 	line(start.x, start.y, 
+// 		 start.x + thick60deg * HEX_BRANCH[mod6(angle+1)].x, 
+// 		 start.y + thick60deg * HEX_BRANCH[mod6(angle+1)].y);
+// 	line(start.x, start.y, 
+// 		 start.x + thick60deg * HEX_BRANCH[mod6(angle-1)].x, 
+// 		 start.y + thick60deg * HEX_BRANCH[mod6(angle-1)].y);
+// 	line(end.x, end.y, 
+// 		 end.x + thick60deg * HEX_BRANCH[mod6(angle+2)].x, 
+// 		 end.y + thick60deg * HEX_BRANCH[mod6(angle+2)].y);
+// 	line(end.x, end.y, 
+// 		 end.x + thick60deg * HEX_BRANCH[mod6(angle-2)].x, 
+// 		 end.y + thick60deg * HEX_BRANCH[mod6(angle-2)].y);
+// 	line(start.x + thick60deg * HEX_BRANCH[mod6(angle-1)].x, 
+// 		 start.y + thick60deg * HEX_BRANCH[mod6(angle-1)].y,
+// 		 end.x + thick60deg * HEX_BRANCH[mod6(angle-2)].x, 
+// 		 end.y + thick60deg * HEX_BRANCH[mod6(angle-2)].y);
+// 	line(start.x + thick60deg * HEX_BRANCH[mod6(angle+1)].x, 
+// 		 start.y + thick60deg * HEX_BRANCH[mod6(angle+1)].y,
+// 		 end.x + thick60deg * HEX_BRANCH[mod6(angle+2)].x, 
+// 		 end.y + thick60deg * HEX_BRANCH[mod6(angle+2)].y);
+// 	// line(start.x, start.y, end.x, end.y);
+// 	// ellipse(end.x, end.y, 6, 6);
+// }
 
 function drawBetweenNodesHex(start, end, angle, thickness){
 	var length = Math.sqrt( Math.pow(end.y-start.y,2) + Math.pow(end.x-start.x,2) );
@@ -80,20 +157,22 @@ function drawBetweenNodesHex(start, end, angle, thickness){
 	line(start.x, start.y, 
 		 start.x + thick60deg * HEX_BRANCH[mod6(angle-1)].x, 
 		 start.y + thick60deg * HEX_BRANCH[mod6(angle-1)].y);
-	line(end.x, end.y, 
-		 end.x + thick60deg * HEX_BRANCH[mod6(angle+2)].x, 
-		 end.y + thick60deg * HEX_BRANCH[mod6(angle+2)].y);
-	line(end.x, end.y, 
-		 end.x + thick60deg * HEX_BRANCH[mod6(angle-2)].x, 
-		 end.y + thick60deg * HEX_BRANCH[mod6(angle-2)].y);
+	line(end.x + thick60deg * HEX_BRANCH[angle].x, 
+		 end.y + thick60deg * HEX_BRANCH[angle].y, 
+		 end.x + thick60deg * HEX_BRANCH[mod6(angle+1)].x, 
+		 end.y + thick60deg * HEX_BRANCH[mod6(angle+1)].y);
+	line(end.x + thick60deg * HEX_BRANCH[angle].x,
+	     end.y + thick60deg * HEX_BRANCH[angle].y, 
+		 end.x + thick60deg * HEX_BRANCH[mod6(angle-1)].x, 
+		 end.y + thick60deg * HEX_BRANCH[mod6(angle-1)].y);
 	line(start.x + thick60deg * HEX_BRANCH[mod6(angle-1)].x, 
 		 start.y + thick60deg * HEX_BRANCH[mod6(angle-1)].y,
-		 end.x + thick60deg * HEX_BRANCH[mod6(angle-2)].x, 
-		 end.y + thick60deg * HEX_BRANCH[mod6(angle-2)].y);
+		 end.x + thick60deg * HEX_BRANCH[mod6(angle-1)].x, 
+		 end.y + thick60deg * HEX_BRANCH[mod6(angle-1)].y);
 	line(start.x + thick60deg * HEX_BRANCH[mod6(angle+1)].x, 
 		 start.y + thick60deg * HEX_BRANCH[mod6(angle+1)].y,
-		 end.x + thick60deg * HEX_BRANCH[mod6(angle+2)].x, 
-		 end.y + thick60deg * HEX_BRANCH[mod6(angle+2)].y);
+		 end.x + thick60deg * HEX_BRANCH[mod6(angle+1)].x, 
+		 end.y + thick60deg * HEX_BRANCH[mod6(angle+1)].y);
 	// line(start.x, start.y, end.x, end.y);
 	// ellipse(end.x, end.y, 6, 6);
 }
@@ -104,22 +183,23 @@ function drawBetweenNodesRect(start, end, angle, thickness){
 	if(thickness == undefined){
 		thickness = length * 0.33;
 	}
+	thick60deg = thickness * 1.154700538379252;
 	line(start.x - thickness*Math.cos(a+PI*0.5),
 		 start.y - thickness*Math.sin(a+PI*0.5),
 		 start.x + thickness*Math.cos(a+PI*0.5),
 		 start.y + thickness*Math.sin(a+PI*0.5) );
-	line(end.x - thickness*Math.cos(a+PI*0.5),
-		 end.y - thickness*Math.sin(a+PI*0.5),
-		 end.x + thickness*Math.cos(a+PI*0.5),
-		 end.y + thickness*Math.sin(a+PI*0.5) );
+	line(end.x + thick60deg * HEX_BRANCH[angle].x - thickness*Math.cos(a+PI*0.5),
+		 end.y + thick60deg * HEX_BRANCH[angle].y - thickness*Math.sin(a+PI*0.5),
+		 end.x + thick60deg * HEX_BRANCH[angle].x + thickness*Math.cos(a+PI*0.5),
+		 end.y + thick60deg * HEX_BRANCH[angle].y + thickness*Math.sin(a+PI*0.5) );
 	line(start.x - thickness*Math.cos(a+PI*0.5),
 		 start.y - thickness*Math.sin(a+PI*0.5),
-		 end.x - thickness*Math.cos(a+PI*0.5),
-		 end.y - thickness*Math.sin(a+PI*0.5) );
+		 end.x + thick60deg * HEX_BRANCH[angle].x - thickness*Math.cos(a+PI*0.5),
+		 end.y + thick60deg * HEX_BRANCH[angle].y - thickness*Math.sin(a+PI*0.5) );
 	line(start.x + thickness*Math.cos(a+PI*0.5),
 		 start.y + thickness*Math.sin(a+PI*0.5),
-		 end.x + thickness*Math.cos(a+PI*0.5),
-		 end.y + thickness*Math.sin(a+PI*0.5) );
+		 end.x + thick60deg * HEX_BRANCH[angle].x + thickness*Math.cos(a+PI*0.5),
+		 end.y + thick60deg * HEX_BRANCH[angle].y + thickness*Math.sin(a+PI*0.5) );
 	// line(start.x, start.y, end.x, end.y);
 	// ellipse(end.x, end.y, 6, 6);
 }
@@ -128,7 +208,8 @@ function drawBetweenNodesRect(start, end, angle, thickness){
 ///////////
 
 function nodeLengthCascading(node){
-	return 100/Math.pow(node.generation+1, .9);
+	// return 100/Math.pow(node.generation+1, .97);
+	return 400/(node.generation+10);
 }
 function nodeLengthLinear(node){
 	return 33;
@@ -145,7 +226,9 @@ function nodeThicknessLinear(node){
 	return 33*0.866*0.5;
 }
 function nodeThicknessCascading(node){
-	var l = 100/Math.pow(node.generation+1, .9);
+	// var l = 100/Math.pow(node.generation+1, .97);
+	// return l*0.866*0.5;
+	var l = 400/(node.generation+10);
 	return l*0.866*0.5;
 }
 function nodeThicknessFromNode(node){
@@ -169,24 +252,24 @@ function getWidth(node){
 ///////////
 // these functions do the recursive crawling
 // variations: with snowflake property of adding reflections on the right arm
-function recurseSimple(node, position){
+Snowflake.prototype.recurseSimple = function(node, position){
 	var length = getLength(node);
 	var thickness = getThickness(node);
 	if(node.right != undefined){
 		var end = {x:(position.x + length * HEX_BRANCH[mod6(node.right.rBranches)].x),
 		           y:(position.y + length * HEX_BRANCH[mod6(node.right.rBranches)].y)};
-		recurseSimple(node.right, end);
-		drawBetweenNodes(position, end, mod6(node.right.rBranches), thickness);
+		this.recurseSimple(node.right, end);
+		this.drawBetweenNodes(position, end, mod6(node.right.rBranches), thickness);
 	}
 	if(node.left != undefined){
 		var end = {x:(position.x + length * HEX_BRANCH[mod6(node.left.rBranches)].x),
 		           y:(position.y + length * HEX_BRANCH[mod6(node.left.rBranches)].y)};
-		recurseSimple(node.left, end);
-		drawBetweenNodes(position, end, mod6(node.left.rBranches), thickness);
+		this.recurseSimple(node.left, end);
+		this.drawBetweenNodes(position, end, mod6(node.left.rBranches), thickness);
 	}
 }
 
-function recurseReflect(node, position, angle){
+Snowflake.prototype.recurseReflect = function(node, position, angle){
 	var length = getLength(node);
 	var thickness = getThickness(node);
 	if(node.right != undefined){
@@ -194,20 +277,20 @@ function recurseReflect(node, position, angle){
 		                 y:(position.y + length * HEX_BRANCH[mod6(angle+1)].y)};
 		var childPos2 = {x:(position.x + length * HEX_BRANCH[mod6(angle-1)].x),
 		                 y:(position.y + length * HEX_BRANCH[mod6(angle-1)].y)};
-		recurseReflect(node.right, childPos1, mod6(angle+1) );
-		recurseReflect(node.right, childPos2, mod6(angle-1) );
-		drawBetweenNodes(position, childPos1, mod6(angle+1), thickness );
-		drawBetweenNodes(position, childPos2, mod6(angle-1), thickness );
+		this.recurseReflect(node.right, childPos1, mod6(angle+1) );
+		this.recurseReflect(node.right, childPos2, mod6(angle-1) );
+		this.drawBetweenNodes(position, childPos1, mod6(angle+1), thickness );
+		this.drawBetweenNodes(position, childPos2, mod6(angle-1), thickness );
 	}
 	if(node.left != undefined){
 		var childPos = {x:(position.x + length * HEX_BRANCH[mod6(angle)].x),
 		                y:(position.y + length * HEX_BRANCH[mod6(angle)].y)};
-		recurseReflect(node.left, childPos, angle);
-		drawBetweenNodes(position, childPos, mod6(angle), thickness);
+		this.recurseReflect(node.left, childPos, angle);
+		this.drawBetweenNodes(position, childPos, mod6(angle), thickness);
 	}
 }
 
-function recurseReflectFilled(node, start, angle){
+Snowflake.prototype.recurseReflectFilled = function(node, start, angle){
 	// LENGTH and THICKNESS
 	var length = getLength(node);	
 	var thickness = getThickness(node);
@@ -243,12 +326,12 @@ function recurseReflectFilled(node, start, angle){
 		thckAng = 1;
 	}
 	if(node.right != undefined){
-		recurseReflectFilled(node.right, end, mod6(angle+1) );
-		recurseReflectFilled(node.right, end, mod6(angle-1) );
+		this.recurseReflectFilled(node.right, end, mod6(angle+1) );
+		this.recurseReflectFilled(node.right, end, mod6(angle-1) );
 	}
 	//first go to the bottom of tree, following the main stem
 	if(node.left != undefined)
-		recurseReflectFilled(node.left, end, angle);
+		this.recurseReflectFilled(node.left, end, angle);
 	
 	var point1a = {
 		x:(startThick.x + thickness * HEX_BRANCH[mod6(angle-thckAng)].x),
@@ -307,7 +390,7 @@ function recurseReflectFilled(node, start, angle){
 
 
 
-function drawStylizedSnowflakeFIRST(position){
+Snowflake.prototype.drawStylizedSnowflakeFIRST = function(position){
 	if(DEBUG){ console.log('drawStylizedSnowflake()'); }
 
 	for(var angle = 0; angle < 6; angle+=2)

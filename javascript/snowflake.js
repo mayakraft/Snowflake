@@ -1,19 +1,15 @@
-// Algorithmic Snowflake
-//
-// REQUIRES: binarytree.js
-//           render.js (with p5.js) for drawing
+// generative snowflake
+// robby kraft
+// 
+// dependencies: math/binarytree.js
+//               math/algorithms.js
+//     optional:
+//               render.js (with p5.js) for drawing
 
+var DEBUG = 0;  // 0:off  1:on
 
-var DEBUG = 0;
+var matter = 48;  // (size/scale)
 
-var matter = 48;
-
-//TODO 
-//lines that go through the center
-// lines that also go inside, but pointing toward the far edges
-//    - both in 60 deg and also 30 deg angles
-//    - do the latter if the length v thickness equivocates to about a regular hexagon
-//
 
 var SnowflakeData = function(location, length, direction, thickness, thinness, active){
 	if(DEBUG){ console.log('new SnowflakeData()'); }
@@ -54,12 +50,19 @@ var Snowflake = function(){
 		this.mainArmRejoinPoints = [];  // when two arms grow wide enough that they touch
 	}
 
-	this.tree;  // the parent node of the binary tree
+	this.tree;  // type:(TreeNode) - the parent node of the binary tree
 	this.mainArmRejoinPoints; 
 
 	this.init();
 
-	this.draw = drawSnowflake6Sides;
+	// render options
+	this.showWireframe = false;
+	this.useLength = true;
+	this.useThickness = true;
+
+	this.drawBetweenNodes = drawBetweenNodesHex;
+
+	this.draw = this.drawSnowflake6Sides;
 };
 
 
@@ -74,12 +77,10 @@ Snowflake.prototype.grow = function(atmosphere){
 		{x:-1, y:0}, {x:-.5,y:0.8660254037844},  {x:.5, y:0.8660254037844} ];
 
 	for(var i = 0; i < atmosphere.length; i++){
-		// console.log('growing ' + i + ': ' + this.tree.data.active);
-		// setGlobalTreeVariables(tree);
 		visitLeaves(this.tree, {"mass":atmosphere.mass[i], "branch":atmosphere.branch[i], "thin":atmosphere.thin[i]});
 	}
 
-	// to grow in thickness and to sprout new branches
+	// grow existing arms thicker / sprout new branches
 	function visitLeaves(tree, atmosphere){
 		if(tree.left){
 			visitLeaves(tree.left, atmosphere);
@@ -96,7 +97,7 @@ Snowflake.prototype.grow = function(atmosphere){
 
 			// OPTIONAL: add mass to branches that are not leaves
 
-			
+
 			// SPROUT NEW LEAF / LEAVES
 			if(tree.leaf == true){  // operations only on leaves
 				// GROW THIS LEAF
@@ -128,120 +129,5 @@ Snowflake.prototype.grow = function(atmosphere){
 				}
 			}
 		}
-	}	
-}
-
-// function growTree(tree, atmosphere){
-// 	var nMass = atmosphere["mass"];
-// 	var nBranchHere = atmosphere["branch"];
-// 	var nThinHere = atmosphere["thin"];
-
-// 	findLeaves(tree);
-// 	setGlobalTreeVariables(tree);
-
-// 	function findLeaves(tree){
-// 		if(tree.left)
-// 			findLeaves(tree.left);		
-// 		if(tree.right)
-// 			findLeaves(tree.right);
-
-// 	// GROW MORE CRYSTALS
-// 		if(tree.left == undefined && tree.right == undefined && !tree.dead && tree.rBranches < 3){
-			
-// 			// var twoBranches = (random(10) < 8);
-// 			var twoBranches = nBranchHere;
-// 			if(tree.parent == undefined) twoBranches = false;  // force first seed to branch only left
-
-// 			var shortenby = Math.pow(0.4, tree.rBranches);
-// 			// var newLength = tree.length * nMass[DEPTH];
-// 			var newLength = matter * cos(PI * .5 * nMass)  * shortenby;// * (3+tree.generation);
-// 			var newThickness = matter * sin(PI * .5 * nMass) * shortenby;// * (tree.generation);
-// 			var newThinness = undefined;
-// 			if(nThinHere < .5) 
-// 				newThinness = random(.15)+.05;
-
-// 			if(newLength < tree.thickness){
-// 				console.log("adjusting value, length is smaller than thickness");
-// 				newLength = tree.thickness + 3;
-// 			}
-
-// 			if(1){//newLength > 5){
-// 				// if(newLength < 30)
-// 				// 	newLength = 30;
-
-// 				// ADD CHILDREN
-// 				// left
-// 				tree.addLeftChild({"length":newLength, "thickness":newThickness, "thinness":newThinness});
-// 				var leftIntersect = check30DegIntersection(tree, tree.left);
-// 				if(leftIntersect != undefined)
-// 					makeNodeDead(tree.left, leftIntersect, newThickness );
-// 				// right
-// 				if(twoBranches){
-// 					tree.addRightChild({"length":newLength * .7, "thickness":newThickness * .7, "thinness":newThinness});
-// 					var rightIntersect = check30DegIntersection(tree, tree.right);
-// 					if(rightIntersect != undefined)
-// 						makeNodeDead(tree.right, rightIntersect, newThickness );
-// 				}
-// 			}
-// 		}
-// 		// grow thicker
-// 		if(tree.age < 3){
-// 			if(tree.maxGeneration - tree.generation == 0)
-// 				tree.thickness = (tree.thickness*(1+(1/(tree.maxGeneration+2))) );
-// 			else if(tree.maxGeneration - tree.generation == 1)
-// 				tree.thickness = (tree.thickness*(1+(1/(tree.maxGeneration+3))) );
-// 			else if(tree.maxGeneration - tree.generation == 2)
-// 				tree.thickness = (tree.thickness*(1+(1/(tree.maxGeneration+4))) );
-// 		}
-
-// 	}
-// 	function operateOnEntireTree(tree){
-// 		// run neighbor arm too near on all the leaves
-// 		if(tree.left != undefined)
-// 			operateOnEntireTree(tree.left);
-// 		if(tree.right != undefined)
-// 			operateOnEntireTree(tree.right);
-// 		if(tree.left == undefined && tree.right == undefined)
-// 			neighborArmTooNear(tree);
-
-// 		function neighborArmTooNear(tree){
-// 			var stepsUp = traverseUpUntilBranch(tree, 0);
-// 			// if(stepsUp != -1)
-// 			// 	console.log("Steps Back: " + stepsUp);
-// 			function traverseUpUntilBranch(tree, howManyUp){
-// 				if(tree.parent == undefined)
-// 					return -1;
-// 				if(tree.childType == LEFT)
-// 					return traverseUpUntilBranch(tree.parent, howManyUp+1);
-// 				return howManyUp+1;
-// 			}
-// 		}
-// 	}	
-// }
-
-/////////////////////////////
-//  DATA STRUCTURES
-////////////////////////////////
-
-function mod6(input){
-	// returns 0-5.  accepts any int, negatives included
-	var i = input;
-	while (i < 0) i += 6;
-	return i % 6;
-}
-
-
-function makeNodeDead(node, newLength, newThickness){
-	if(DEBUG){ console.log('makeNodeDead()'); }
-	node.data.dead = true;
-	if(newThickness != undefined)
-		node.data.thickness = newThickness;//(newThickness, 0);
-	if(newLength != undefined){
-		node.data.length = newLength; // (newLength, 0);
-// TODO: reintroduce below
-		// node.data.location = {
-		// 	x:(node.parent.data.location.x + newLength * HEX_ANGLE[node.direction].x), 
-		// 	y:(node.parent.data.location.y + newLength * HEX_ANGLE[node.direction].y)
-		// };
 	}
 }
