@@ -6,6 +6,7 @@ var HEX_BRANCH = [ {x:1, y:0}, {x:0.5,y:-0.866025403784439}, {x:-0.5,y:-0.866025
 
 var getLength = nodeLengthFromNode;
 var getThickness = nodeThicknessFromNode;
+var drawBetweenNodes = drawBetweenNodesHex;
 
 //TODO 
 //lines that go through the center
@@ -14,68 +15,43 @@ var getThickness = nodeThicknessFromNode;
 //    - do the latter if the length v thickness equivocates to about a regular hexagon
 //
 
-Snowflake.prototype.setUseLength = function(input){
-	this.useLength = input;
-	if(this.useLength){
-		getLength = nodeLengthFromNode;
-	} else{
-		getLength = nodeLengthCascading;		
-	}
-	// 	getLength = nodeLengthLinear;
-}
+Snowflake.prototype.draw = function(position, options){
+	var wireframe = false;
+	var numberArms = 6;
+	var shape = true;
+	var fills = false;
+	var length = true;
+	var thickness = true;
+	var size = 50;
 
-Snowflake.prototype.setUseThickness = function(input){
-	this.useThickness = input;
-	if(this.useThickness){
-		getThickness = nodeThicknessFromNode;
-	} else{
-		getThickness = nodeThicknessCascading;		
-	}
-	// 	getThickness = nodeThicknessLinear;
-}
-
-Snowflake.prototype.setDrawStyle = function(input){
-	if(input == 0){
-		this.draw = this.drawBinaryTree;
-	} else if(input == 1){
-		this.draw = this.drawSnowflakeOneArm;
-	} else if (input == 2){
-		this.draw = this.drawSnowflake6Sides;
-	}
-}
-
-Snowflake.prototype.setNodeStyle = function(input){
-	this.drawBetweenNodes = drawBetweenNodesHex;
-	
-	if(input == 0){
-		this.drawBetweenNodes = drawLineWithDots;
-	} else if(input == 1){
-		this.drawBetweenNodes = drawBetweenNodesHex;
+	if(options != undefined){
+		if(options['wireframe'] != undefined) wireframe = options['wireframe'];
+		if(options['numberArms'] != undefined) numberArms = options['numberArms'];
+		if(options['shape'] != undefined) shape = options['shape'];
+		if(options['fills'] != undefined) fills = options['fills'];
+		if(options['length'] != undefined) length = options['length'];
+		if(options['thickness'] != undefined) thickness = options['thickness'];
+		if(options['size'] != undefined) size = options['size'];
 	}
 
-	// if(input == 0){
-	// 	if(this.showWireframe){
-	// 		this.drawBetweenNodes = function(){
-	// 			drawBetweenNodesRect();
-	// 			drawLineWithDots();
-	// 		};
-	// 	} else{
-	// 		this.drawBetweenNodes = function(){
-	// 			drawLineWithDots();
-	// 		};
-	// 	}
-	// } else if (input == 1){
-	// 	if(this.showWireframe){
-	// 		this.drawBetweenNodes = function(){
-	// 			drawBetweenNodesRect();
-	// 			drawBetweenNodesHex();
-	// 		};
-	// 	} else{
-	// 		this.drawBetweenNodes = function(){
-	// 			drawBetweenNodesHex();
-	// 		};
-	// 	}
-	// }
+	// wireframe
+
+	// length
+	if(length) getLength = nodeLengthFromNode;
+	else       getLength = nodeLengthCascading;
+	// thickness
+	if(thickness) getThickness = nodeThicknessFromNode;
+	else          getThickness = nodeThicknessCascading;
+	// shape & fills
+	if(shape) {
+		if(fills) drawBetweenNodes = drawBetweenNodesHexFilled;
+		else      drawBetweenNodes = drawBetweenNodesHex;
+	} else      drawBetweenNodes = drawLineWithDots; 
+	// number arms
+	if(numberArms == 0){         this.drawBinaryTree(position);
+	} else if(numberArms == 1){  this.drawSnowflakeOneArm(position);
+	} else if (numberArms == 6){ this.drawSnowflake6Sides(position);
+	}
 }
 
 // call these to draw:
@@ -297,13 +273,13 @@ Snowflake.prototype.recurseSimple = function(node, position){
 		var end = {x:(position.x + length * HEX_BRANCH[mod6(node.right.rBranches)].x),
 		           y:(position.y + length * HEX_BRANCH[mod6(node.right.rBranches)].y)};
 		this.recurseSimple(node.right, end);
-		this.drawBetweenNodes(position, end, mod6(node.right.rBranches), thickness);
+		drawBetweenNodes(position, end, mod6(node.right.rBranches), thickness);
 	}
 	if(node.left != undefined){
 		var end = {x:(position.x + length * HEX_BRANCH[mod6(node.left.rBranches)].x),
 		           y:(position.y + length * HEX_BRANCH[mod6(node.left.rBranches)].y)};
 		this.recurseSimple(node.left, end);
-		this.drawBetweenNodes(position, end, mod6(node.left.rBranches), thickness);
+		drawBetweenNodes(position, end, mod6(node.left.rBranches), thickness);
 	}
 }
 
@@ -317,14 +293,14 @@ Snowflake.prototype.recurseReflect = function(node, position, angle){
 		                 y:(position.y + length * HEX_BRANCH[mod6(angle-1)].y)};
 		this.recurseReflect(node.right, childPos1, mod6(angle+1) );
 		this.recurseReflect(node.right, childPos2, mod6(angle-1) );
-		this.drawBetweenNodes(position, childPos1, mod6(angle+1), thickness );
-		this.drawBetweenNodes(position, childPos2, mod6(angle-1), thickness );
+		drawBetweenNodes(position, childPos1, mod6(angle+1), thickness );
+		drawBetweenNodes(position, childPos2, mod6(angle-1), thickness );
 	}
 	if(node.left != undefined){
 		var childPos = {x:(position.x + length * HEX_BRANCH[mod6(angle)].x),
 		                y:(position.y + length * HEX_BRANCH[mod6(angle)].y)};
 		this.recurseReflect(node.left, childPos, angle);
-		this.drawBetweenNodes(position, childPos, mod6(angle), thickness);
+		drawBetweenNodes(position, childPos, mod6(angle), thickness);
 	}
 }
 

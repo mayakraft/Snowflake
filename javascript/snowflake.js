@@ -8,8 +8,6 @@
 
 var DEBUG = 0;  // 0:off  1:on
 
-var matter = 48;  // (size/scale)
-
 
 var SnowflakeData = function(location, length, direction, thickness, thinness, active){
 	if(DEBUG){ console.log('new SnowflakeData()'); }
@@ -34,40 +32,19 @@ var SnowflakeData = function(location, length, direction, thickness, thinness, a
 };
 
 var Snowflake = function(){
-	// #DEFS
-	var RIGHT = 1;
-	var LEFT = 0;
-	// clockwise starting from 3:00
+	if(DEBUG){ console.log('Snowflake.init()'); }
 
-	this.init = function(){
-		if(DEBUG){ console.log('Snowflake.init()'); }
-		// var location = { x:(0.0 + length * HEX_ANGLE[direction].x), 
-		//                  y:(0.0 + length * HEX_ANGLE[direction].y) };
-		var thickness = 24;
-		var data = new SnowflakeData({x:(0.0),y:(0.0)}, 0, 0, 0, 0, true);
-		this.tree = new TreeNode(undefined, data);		
+	this.matter = 48;  // (size/scale)
+	this.mainArmRejoinPoints = [];  // when two arms grow wide enough that they touch
 
-		this.mainArmRejoinPoints = [];  // when two arms grow wide enough that they touch
-	}
-
-	this.tree;  // type:(TreeNode) - the parent node of the binary tree
-	this.mainArmRejoinPoints; 
-
-	this.init();
-
-	// render options
-	this.showWireframe = false;
-	this.useLength = true;
-	this.useThickness = true;
-
-	this.drawBetweenNodes = drawBetweenNodesHex;
-
-	this.draw = this.drawSnowflake6Sides;
+	var data = new SnowflakeData({x:(0.0),y:(0.0)}, 0, 0, 0, 0, true);
+	this.tree = new TreeNode(undefined, data);  // type:(TreeNode) - the parent node of the binary tree
 };
 
 
 Snowflake.prototype.grow = function(atmosphere){
 	if(DEBUG){ console.log('Snowflake.grow()'); }
+	var matter = this.matter;
 
 	var HEX_ANGLE = [
 		{x:0.8660254037844,  y:0.5},  {x:0, y:1},  {x:-0.8660254037844, y:0.5},

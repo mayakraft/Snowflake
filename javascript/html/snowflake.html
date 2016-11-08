@@ -42,51 +42,44 @@
 			</div>
 			<div style="text-align:left;">
 				<h3>render:</h3>
-				<input type="range" class="slider-width75" onchange="sliderHandler(this.value)"><br>
-				<input type="checkbox" name="wireframeCheckbox" value="yes" disabled onclick="wireframeHandler(this)"> wireframe<br>
-				<input type="radio" name="nodeshape" value="0" onchange="radioHandler()">lines
-				<input type="radio" name="nodeshape" value="1" checked onchange="radioHandler()">hex<br>
-				<input type="checkbox" name="fillsCheckbox" value="yes" onclick="fillsHandler(this)">show fills<br>
+				<input type="range" id="sizeSlider" class="slider-width75" onchange="update()"><br>
+				<input type="checkbox" id="wireframeCheckbox" value="yes" disabled onclick="update()"> wireframe<br>
+				<input type="radio" value="0" name="nodeshape" onchange="update()">lines
+				<input type="radio" value="1" name="nodeshape" checked onchange="update()">hex<br>
+				<input type="checkbox" id="fillsCheckbox" value="yes" onclick="update()">show fills<br>
 				<h3>show:</h3>
-				<input type="radio" name="flakeshape" value="2" checked onchange="radioHandler()">snowflake<br>
-				<input type="radio" name="flakeshape" value="1" onchange="radioHandler()">one arm<br>
-				<input type="radio" name="flakeshape" value="0" onchange="radioHandler()">binary tree<br>
+				<input type="radio" value="6" name="numArmRadio" checked onchange="update()">snowflake<br>
+				<input type="radio" value="1" name="numArmRadio" onchange="update()">one arm<br>
+				<input type="radio" value="0" name="numArmRadio" onchange="update()">binary tree<br>
 			</div>
 			<br>
 			<div style="text-align:left;">
 				<h3>hack:</h3>
-				<input type="checkbox" name="uselength" value="yes" checked onclick="lengthsHandler(this)"> lengths<br>
-				<input type="checkbox" name="usethickness" value="yes" checked onclick="thicknessHandler(this)"> thickness<br>
-				<input type="range" class="slider-width75" onchange="slider2Handler(this.value)"><br>
+				<input type="checkbox" id="uselength" value="yes" checked onclick="update()"> lengths<br>
+				<input type="checkbox" id="usethickness" value="yes" checked onclick="update()"> thickness<br>
+				<input type="range" id="unused" class="slider-width75" onchange="update()"><br>
 			</div>
 		</form>
 	</div>
 	<script>
 
-
 var snowflake;
-
-var snowflakePosition;
-
-var drawStyle = 2;
-var nodeStyle = 1;
-
 var atmos;
+var atmosphere_iterations = 4;
 
-var atmosphere_iterations = 5;
+var snowflakePosition, treePosition, atmosphereRect;
 
 function setup() {
 	var divs = selectAll('.floating');
-	console.log('Number: ' + divs.length);
 	for (var i=0; i<divs.length; i++) {
 		var div = divs[i];
 		div.position(50, 50);
 	}
-	// console.log(myDiv);
 
 	canvas = createCanvas(windowWidth, windowHeight);
 	resizeOrigins();
 	frameRate(10);
+
 	// make atmosphere
 	atmos = new Atmosphere( atmosphere_iterations );
 	console.log(atmos);
@@ -98,66 +91,40 @@ function setup() {
 	noLoop();
 }
 
-function radioHandler(){
-	drawStyle = $('input[name="flakeshape"]:checked').val();
-	snowflake.setDrawStyle(drawStyle);
-	nodeStyle = $('input[name="nodeshape"]:checked').val();
-	snowflake.setNodeStyle(nodeStyle);
+function update(){
 	draw();
 }
 
-function wireframeHandler(input){
-	if(input == true){
+function getOptionsFromDom(){
+	var numberArms = $('input[name=numArmRadio]:checked').val();
+	var shape = $('input[name=nodeshape]:checked').val();
+	var fills = $('#fillsCheckbox').is(':checked');
+	var length = $('#uselength').is(':checked');
+	var thickness = $('#usethickness').is(':checked');
+	var size = $('#sizeSlider').val();
+	
+	if(shape == "1") shape = true;
+	if(shape == "0") shape = false;
 
-	} else{
-
-	}
-}
-
-function checkHandler(input){
-	draw();
-}
-
-function thicknessHandler(input){
-	snowflake.setUseThickness(input.checked);
-	// snowflake.useThickness = false;
-	draw();
-}
-
-function lengthsHandler(input){
-	snowflake.setUseLength(input.checked);
-	// snowflake.useLength = false;
-	draw();
-}
-
-function fillsHandler(input){
-	console.log(input.checked);
-	if(nodeStyle == 0){
-		snowflake.drawBetweenNodes = drawLineWithDots;
-	} else if(nodeStyle == 1){
-		if(input.checked){
-			snowflake.drawBetweenNodes = drawBetweenNodesHexFilled;
-		} else{
-			snowflake.drawBetweenNodes = drawBetweenNodesHex;
-		}
-	}
-	draw();
-}
-
-function sliderHandler(input){
-	console.log(input);
-	matter = input;
-	draw();
+	return {
+		'numberArms': numberArms,
+		'shape': shape,
+		'fills': fills,
+		'length': length,
+		'thickness': thickness,
+		'size': size
+	};
 }
 
 function newSnowflake(){
 	atmos = new Atmosphere( atmosphere_iterations );
-	console.log(atmos);
 	snowflake = new Snowflake();
 	snowflake.grow(atmos);
+
+	console.log(atmos);
 	logTree(snowflake.tree);
-	snowflake.setDrawStyle(drawStyle);
-	draw();	
+
+	draw();
 }
 
 function mousePressed() {
@@ -170,21 +137,27 @@ function mousePressed() {
 
 function draw() {
 	background(128);
+
+	var options = getOptionsFromDom();
+
 	stroke(0);
 	fill(255);
-	// var treePosition = {'x':windowWidth*.5, 'y':windowHeight*.5};
-	// drawRightBranchingBinaryTree(snowflake.tree, treePosition);
-	// noStroke();
-	snowflake.draw(snowflakePosition);
-	drawRightBranchingBinaryTree(snowflake.tree, {'x':windowWidth*0.5 + 100 - 100, 'y':windowHeight-20});
-	atmos.drawAtmosphereGraph({'x':windowWidth*0.5 + 100 - 100, 'y':10, 'width':200, 'height':40});
+	drawRightBranchingBinaryTree(snowflake.tree, treePosition);
+	atmos.drawAtmosphereGraph(atmosphereRect);
+
+	stroke(0);
+	fill(255);
+	snowflake.draw(snowflakePosition, options);
 }
 
 function resizeOrigins(){
 	// if(windowWidth > windowHeight)
 	// 	snowflakePosition = {x:windowWidth*.5, y:windowHeight*.5};
 	// else
-		snowflakePosition = {x:windowWidth*.5 + 100, y:windowHeight*.5};
+
+	snowflakePosition = {x:windowWidth*.5 + 100, y:windowHeight*.5};
+	treePosition = {'x':windowWidth*0.5 + 100 - 100, 'y':windowHeight-20};
+	atmosphereRect = {'x':windowWidth*0.5 + 100 - 100, 'y':10, 'width':200, 'height':40};
 }
 
 function windowResized() {
