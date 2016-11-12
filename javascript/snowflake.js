@@ -34,7 +34,7 @@ var SnowflakeData = function(location, length, direction, thickness, thinness, a
 var Snowflake = function(){
 	if(DEBUG){ console.log('Snowflake.init()'); }
 
-	this.matter = 48;  // (size/scale)
+	this.matter = 2;  // (size/scale)
 	this.mainArmRejoinPoints = [];  // when two arms grow wide enough that they touch
 
 	var data = new SnowflakeData({x:(0.0),y:(0.0)}, 0, 0, 0, 0, true);
@@ -42,7 +42,7 @@ var Snowflake = function(){
 };
 
 
-Snowflake.prototype.grow = function(atmosphere){
+Snowflake.prototype.grow = function(atmosphere, progress, addChildren){
 	if(DEBUG){ console.log('Snowflake.grow()'); }
 	var matter = this.matter;
 
@@ -53,7 +53,13 @@ Snowflake.prototype.grow = function(atmosphere){
 		{x:1,  y:0}, {x:.5, y:-0.8660254037844}, {x:-.5,y:-0.8660254037844},
 		{x:-1, y:0}, {x:-.5,y:0.8660254037844},  {x:.5, y:0.8660254037844} ];
 
-	for(var i = 0; i < atmosphere.length; i++){
+	// for(var i = 0; i < atmosphere.length; i++){
+	// 	visitLeaves(this.tree, {"mass":atmosphere.mass[i], "branch":atmosphere.branch[i], "thin":atmosphere.thin[i]});
+	// }
+
+	var i = Math.floor(progress * atmosphere.length);
+	console.log('growing: ' + i);
+	if(i >= 0 && i < atmosphere.length){
 		visitLeaves(this.tree, {"mass":atmosphere.mass[i], "branch":atmosphere.branch[i], "thin":atmosphere.thin[i]});
 	}
 
@@ -96,14 +102,18 @@ Snowflake.prototype.grow = function(atmosphere){
 					return;
 				}
 
-				// ADD CHILDREN
-				var leftData = new SnowflakeData(endLocation, 0, tree.data.direction, 0, 0, true);
-				tree.addLeftChild( leftData );
-				
-				if(twoBranches){  // right
-					var rightData = new SnowflakeData(endLocation, 0, mod6(tree.data.direction+1), 0, 0, true);
-					tree.addRightChild( rightData );
+
+				if(addChildren){
+					// ADD CHILDREN
+					var leftData = new SnowflakeData(endLocation, 0, tree.data.direction, 0, 0, true);
+					tree.addLeftChild( leftData );
+					
+					if(twoBranches){  // right
+						var rightData = new SnowflakeData(endLocation, 0, mod6(tree.data.direction+1), 0, 0, true);
+						tree.addRightChild( rightData );
+					}
 				}
+
 			}
 		}
 	}

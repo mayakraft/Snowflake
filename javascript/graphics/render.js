@@ -269,39 +269,31 @@ function getWidth(node){
 Snowflake.prototype.recurseSimple = function(node, position){
 	var length = getLength(node);
 	var thickness = getThickness(node);
+	var endPosition = {x:(position.x + length * HEX_BRANCH[mod6(node.rBranches)].x),
+		               y:(position.y + length * HEX_BRANCH[mod6(node.rBranches)].y)};
 	if(node.right != undefined){
-		var end = {x:(position.x + length * HEX_BRANCH[mod6(node.right.rBranches)].x),
-		           y:(position.y + length * HEX_BRANCH[mod6(node.right.rBranches)].y)};
-		this.recurseSimple(node.right, end);
-		drawBetweenNodes(position, end, mod6(node.right.rBranches), thickness);
+		this.recurseSimple(node.right, endPosition);
 	}
 	if(node.left != undefined){
-		var end = {x:(position.x + length * HEX_BRANCH[mod6(node.left.rBranches)].x),
-		           y:(position.y + length * HEX_BRANCH[mod6(node.left.rBranches)].y)};
-		this.recurseSimple(node.left, end);
-		drawBetweenNodes(position, end, mod6(node.left.rBranches), thickness);
+		this.recurseSimple(node.left, endPosition);
 	}
+	drawBetweenNodes(position, endPosition, mod6(node.rBranches), thickness);
 }
 
 Snowflake.prototype.recurseReflect = function(node, position, angle){
 	var length = getLength(node);
 	var thickness = getThickness(node);
+	var endPosition = {x:(position.x + length * HEX_BRANCH[mod6(angle)].x),
+	                   y:(position.y + length * HEX_BRANCH[mod6(angle)].y)};
 	if(node.right != undefined){
-		var childPos1 = {x:(position.x + length * HEX_BRANCH[mod6(angle+1)].x),
-		                 y:(position.y + length * HEX_BRANCH[mod6(angle+1)].y)};
-		var childPos2 = {x:(position.x + length * HEX_BRANCH[mod6(angle-1)].x),
-		                 y:(position.y + length * HEX_BRANCH[mod6(angle-1)].y)};
-		this.recurseReflect(node.right, childPos1, mod6(angle+1) );
-		this.recurseReflect(node.right, childPos2, mod6(angle-1) );
-		drawBetweenNodes(position, childPos1, mod6(angle+1), thickness );
-		drawBetweenNodes(position, childPos2, mod6(angle-1), thickness );
+		this.recurseReflect(node.right, endPosition, mod6(angle+1) );
+		this.recurseReflect(node.right, endPosition, mod6(angle-1) );
 	}
 	if(node.left != undefined){
-		var childPos = {x:(position.x + length * HEX_BRANCH[mod6(angle)].x),
-		                y:(position.y + length * HEX_BRANCH[mod6(angle)].y)};
-		this.recurseReflect(node.left, childPos, angle);
-		drawBetweenNodes(position, childPos, mod6(angle), thickness);
+		this.recurseReflect(node.left, endPosition, angle);
 	}
+
+	drawBetweenNodes(position, endPosition, mod6(angle), thickness);
 }
 
 /////////////////////////////////////////////////////////////

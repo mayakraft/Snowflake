@@ -38,11 +38,13 @@
 	<div class="floating">
 		<form>
 			<div style="padding:15px;">
-				<input type="button" value="New Snowflake" onclick="newSnowflake()"><br>
+				<input type="button" id="newSnowflakeButton" value="New Snowflake" onclick="newSnowflake()"><br>
 			</div>
 			<div style="text-align:left;">
+				<h3>animate:</h3>
+				<input type="range" id="speedSlider" class="slider-width75" onchange="update()">Speed<br>
+				<input type="range" id="sizeSlider" class="slider-width75" onchange="update()">Size<br>
 				<h3>render:</h3>
-				<input type="range" id="sizeSlider" class="slider-width75" onchange="update()"><br>
 				<input type="checkbox" id="wireframeCheckbox" value="yes" disabled onclick="update()"> wireframe<br>
 				<input type="radio" value="0" name="nodeshape" onchange="update()">lines
 				<input type="radio" value="1" name="nodeshape" checked onchange="update()">hex<br>
@@ -69,31 +71,8 @@ var atmosphere_iterations = 4;
 
 var snowflakePosition, treePosition, atmosphereRect;
 
-function setup() {
-	var divs = selectAll('.floating');
-	for (var i=0; i<divs.length; i++) {
-		var div = divs[i];
-		div.position(50, 50);
-	}
-
-	canvas = createCanvas(windowWidth, windowHeight);
-	resizeOrigins();
-	frameRate(10);
-
-	// make atmosphere
-	atmos = new Atmosphere( atmosphere_iterations );
-	console.log(atmos);
-
-	snowflake = new Snowflake();
-	snowflake.grow(atmos);
-	logTree(snowflake.tree);
-
-	noLoop();
-}
-
-function update(){
-	draw();
-}
+var isAnimating = true;
+var animationProgress = 0.0;
 
 function getOptionsFromDom(){
 	var numberArms = $('input[name=numArmRadio]:checked').val();
@@ -102,6 +81,7 @@ function getOptionsFromDom(){
 	var length = $('#uselength').is(':checked');
 	var thickness = $('#usethickness').is(':checked');
 	var size = $('#sizeSlider').val();
+	var speed = $('#speedSlider').val();
 	
 	if(shape == "1") shape = true;
 	if(shape == "0") shape = false;
@@ -112,42 +92,74 @@ function getOptionsFromDom(){
 		'fills': fills,
 		'length': length,
 		'thickness': thickness,
-		'size': size
+		'size': size,
+		'speed': speed
 	};
+}
+
+function setup() {
+	var divs = selectAll('.floating');
+	for (var i=0; i<divs.length; i++) {
+		var div = divs[i];
+		div.position(50, 50);
+	}
+
+	canvas = createCanvas(windowWidth, windowHeight);
+	resizeOrigins();
+	frameRate(10);
+	// noLoop();
+
+	// start things
+	newSnowflake();
 }
 
 function newSnowflake(){
 	atmos = new Atmosphere( atmosphere_iterations );
 	snowflake = new Snowflake();
-	snowflake.grow(atmos);
 
 	console.log(atmos);
 	logTree(snowflake.tree);
 
+	animationProgress = 0.0;
+	isAnimating = true;
+}
+
+function update(){
 	draw();
 }
 
-function mousePressed() {
-	// var atmos = new Atmosphere(8);
-	// console.log(atmos);
-	// snowflake = new Snowflake();
-	// snowflake.grow(atmos);
-	// draw();
-}
-
 function draw() {
-	background(128);
-
 	var options = getOptionsFromDom();
 
+// update
+	if(isAnimating){
+		var addChildren = undefined;
+		if(Math.random() < 0.1){
+			addChildren = true;
+			console.log('add children');
+		}
+
+		snowflake.grow(atmos, animationProgress, addChildren);
+		animationProgress += 0.01;
+		if(animationProgress >= 1.0){
+			animationProgress = 1.0;
+			isAnimating = false;
+		}
+	}
+
+// draw
+	background(128);
 	stroke(0);
 	fill(255);
 	drawRightBranchingBinaryTree(snowflake.tree, treePosition);
 	atmos.drawAtmosphereGraph(atmosphereRect);
-
 	stroke(0);
 	fill(255);
 	snowflake.draw(snowflakePosition, options);
+}
+
+function mousePressed() {
+	// newSnowflake();
 }
 
 function resizeOrigins(){
@@ -155,7 +167,7 @@ function resizeOrigins(){
 	// 	snowflakePosition = {x:windowWidth*.5, y:windowHeight*.5};
 	// else
 
-	snowflakePosition = {x:windowWidth*.5 + 100, y:windowHeight*.5};
+	snowflakePosition = {'x':windowWidth*.5 + 100, 'y':windowHeight*.5};
 	treePosition = {'x':windowWidth*0.5 + 100 - 100, 'y':windowHeight-20};
 	atmosphereRect = {'x':windowWidth*0.5 + 100 - 100, 'y':10, 'width':200, 'height':40};
 }
