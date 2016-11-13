@@ -10,6 +10,8 @@
 	<script language="javascript" type="text/javascript" src="../graphics/render.js"></script>
 	<script language="javascript" type="text/javascript" src="../graphics/renderTree.js"></script>
 	<script language="javascript" type="text/javascript" src="../lib/jquery-3.1.1.min.js"></script>
+	<script language="javascript" type="text/javascript" src="../lib/bootstrap.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="../lib/bootstrap.min.css">
 	<style> 
 	body {
 		padding: 0; 
@@ -20,50 +22,94 @@
 		padding:0px;
 	}
 	.floating{
-		background-color: white;
-		width: 140px;
+		/*background-color: white;*/
+		width: 170px;
 		height: 500px;
 		top: 0px;
 		left: 40px;
 		z-index: 2;
-		padding: 10px;
 		text-align: center;
 	}
 	.slider-width75{
 		width: 75;
 	}
+	.btn-group{
+		padding:5px;
+		text-align: center;
+	}
+	.panel-title{
+		padding:5px;
+		text-align: left;
+		width:100%;
+	}
+
 	</style>
 </head>
 <body>	
 	<div class="floating">
 		<form>
-			<div style="padding:15px;">
-				<input type="button" id="newSnowflakeButton" value="New Snowflake" onclick="newSnowflake()"><br>
+<div style="background-color: white; padding:10px">
+			<div class="btn-group">
+				<input type="button" id="newSnowflakeButton" class="btn btn-sm btn-primary" value="New Snowflake" onclick="newSnowflake()"></button>
 			</div>
-			<div style="text-align:left;">
-				<h3>animate:</h3>
-				<input type="range" id="speedSlider" class="slider-width75" onchange="update()">Speed<br>
-				<input type="range" id="sizeSlider" class="slider-width75" onchange="update()">Size<br>
-				<h3>render:</h3>
-				<input type="checkbox" id="wireframeCheckbox" value="yes" disabled onclick="update()"> wireframe<br>
-				<input type="radio" value="0" name="nodeshape" onchange="update()">lines
-				<input type="radio" value="1" name="nodeshape" checked onchange="update()">hex<br>
-				<input type="checkbox" id="fillsCheckbox" value="yes" onclick="update()">show fills<br>
-				<h3>show:</h3>
-				<input type="radio" value="6" name="numArmRadio" checked onchange="update()">snowflake<br>
-				<input type="radio" value="1" name="numArmRadio" onchange="update()">one arm<br>
-				<input type="radio" value="0" name="numArmRadio" onchange="update()">binary tree<br>
+			<button class="btn btn-sm btn-default" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+			settings
+			</button>
+</div>
+<div class="collapse in" id="collapseExample" style="background-color: white;">
+	<div style=" padding:10px">
+			<input type="range" id="speedSlider" class="slider-width75" onchange="update()">Speed<br>
+			<input type="range" id="sizeSlider" class="slider-width75" onchange="update()">Size<br>
+			<h3 class="panel-title">render:</h3>
+			<div class="btn-group" data-toggle="buttons">
+				<label class="btn btn-sm btn-default">
+					<input type="radio" name="nodeshape" id="option1" value="0" autocomplete="off" onchange="update()">lines
+				</label>
+				<label class="btn btn-sm btn-default active">
+					<input type="radio" name="nodeshape" id="option2" value="1" autocomplete="off" onchange="update()">hex
+				</label>
+			</div>
+
+			<div class="btn-group" data-toggle="buttons">
+				<label class="btn btn-sm btn-default active">
+					<input type="checkbox" id="fillsCheckbox" autocomplete="off" checked onclick="update()">fills
+				</label>
+			</div>
+
+			<h3 class="panel-title">arms:</h3>
+			<div class="btn-group" data-toggle="buttons">
+				<label class="btn btn-sm btn-default active">
+					<input type="radio" name="numArmRadio" id="option1" value="6" autocomplete="off" onchange="update()">6
+				</label>
+				<label class="btn btn-sm btn-default">
+					<input type="radio" name="numArmRadio" id="option2" value="1" autocomplete="off" onchange="update()">1
+				</label>
+				<label class="btn btn-sm btn-default">
+					<input type="radio" name="numArmRadio" id="option3" value="0" autocomplete="off" onchange="update()">Tree
+				</label>
 			</div>
 			<br>
-			<div style="text-align:left;">
-				<h3>hack:</h3>
-				<input type="checkbox" id="uselength" value="yes" checked onclick="update()"> lengths<br>
-				<input type="checkbox" id="usethickness" value="yes" checked onclick="update()"> thickness<br>
-				<input type="range" id="unused" class="slider-width75" onchange="update()"><br>
+			<h3 class="panel-title">hack:</h3>
+			<div class="btn-group" data-toggle="buttons">
+				<label class="btn btn-sm btn-default active">
+					<input type="checkbox" id="uselength" autocomplete="off" checked onclick="update()">lengths
+				</label>
 			</div>
+
+			<div class="btn-group" data-toggle="buttons">
+				<label class="btn btn-sm btn-default active">
+					<input type="checkbox" id="usethickness" autocomplete="off" checked onclick="update()">thickness
+				</label>
+			</div>
+
+			<input type="range" id="unused" class="slider-width75" onchange="update()"><br>
+	</div>
+</div>
 		</form>
 	</div>
 	<script>
+
+$('.collapse').collapse()
 
 var snowflake;
 var atmos;
@@ -106,7 +152,7 @@ function setup() {
 
 	canvas = createCanvas(windowWidth, windowHeight);
 	resizeOrigins();
-	frameRate(10);
+	frameRate(60);
 	// noLoop();
 
 	// start things

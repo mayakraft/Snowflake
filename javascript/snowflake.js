@@ -34,7 +34,7 @@ var SnowflakeData = function(location, length, direction, thickness, thinness, a
 var Snowflake = function(){
 	if(DEBUG){ console.log('Snowflake.init()'); }
 
-	this.matter = 2;  // (size/scale)
+	this.matter = 6;  // (size/scale)
 	this.mainArmRejoinPoints = [];  // when two arms grow wide enough that they touch
 
 	var data = new SnowflakeData({x:(0.0),y:(0.0)}, 0, 0, 0, 0, true);
@@ -72,6 +72,8 @@ Snowflake.prototype.grow = function(atmosphere, progress, addChildren){
 			visitLeaves(tree.right, atmosphere);
 		}
 
+
+
 		if(tree.data.active){
 
 			var nMass = atmosphere['mass'];
@@ -79,28 +81,37 @@ Snowflake.prototype.grow = function(atmosphere, progress, addChildren){
 			var nThinHere = atmosphere['thin'];
 
 			// OPTIONAL: add mass to branches that are not leaves
+				var length = matter * nMass;
+				var thickness = matter * nMass * Math.random();
+
+
+				var endLocation = {'x':tree.data.location.x + tree.data.length * HEX_ANGLE[tree.data.direction].x,
+				                   'y':tree.data.location.y + tree.data.length * HEX_ANGLE[tree.data.direction].y};
+				// check intersections
+				var leadingEdge = endLocation;
+				if(tree.data.direction == 0){
+					
+				}
+				var intersection = check30DegIntersection(tree.data.location, leadingEdge);
+				if(intersection != undefined){
+					tree.data.active = false;
+					tree.data.length = intersection;
+					return;
+				}
+
+			if(tree.leaf == false){
+				// tree.data.length += length;
+				tree.data.thickness += thickness;				
+			}
 
 
 			// SPROUT NEW LEAF / LEAVES
 			if(tree.leaf == true){  // operations only on leaves
 				// GROW THIS LEAF
 
-				var length = matter * nMass;
-				var thickness = matter * nMass * Math.random();
 
 				tree.data.length += length;
 				tree.data.thickness += thickness;
-
-				var endLocation = {'x':tree.data.location.x + tree.data.length * HEX_ANGLE[tree.data.direction].x,
-				                   'y':tree.data.location.y + tree.data.length * HEX_ANGLE[tree.data.direction].y};
-
-				// check intersections
-				var intersection = check30DegIntersection(tree.data.location, endLocation);
-				if(intersection != undefined){
-					tree.data.active = false;
-					tree.data.length = intersection;
-					return;
-				}
 
 
 				if(addChildren){
