@@ -113,6 +113,9 @@
 
 $('.collapse').collapse();
 
+$('#transparencySlider').on('input', update);
+$('#sizeSlider').on('input', update);
+
 var snowflake;
 var atmos;
 var atmosphere_iterations = 4;
@@ -121,6 +124,8 @@ var snowflakePosition, treePosition, atmosphereRect;
 
 var isAnimating = true;
 var animationProgress = 0.0;
+
+var snowflakeScale = 1.0;
 
 function getOptionsFromDom(){
 	var numberArms = $('input[name=numArmRadio]:checked').val();
@@ -133,11 +138,10 @@ function getOptionsFromDom(){
 	var transp = $('#transparencySlider').val();
 	transparency = transp * 2.55;
 
-	console.log('fills');
-	console.log(fills);
-
 	if(shape == "1") shape = true;
 	if(shape == "0") shape = false;
+
+	snowflakeScale = size / 50.0;
 
 	return {
 		'numberArms': numberArms,
@@ -211,7 +215,11 @@ function draw() {
 	atmos.drawAtmosphereGraph(atmosphereRect);
 	stroke(0);
 	fill(255);
-	snowflake.draw(snowflakePosition, options);
+	push();
+	translate(snowflakePosition.x, snowflakePosition.y);
+	scale(snowflakeScale);
+	snowflake.draw({x:0, y:0}, options);
+	pop();
 }
 
 function mousePressed() {
