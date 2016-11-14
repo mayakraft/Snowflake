@@ -61,6 +61,7 @@
 			<input type="range" id="speedSlider" class="slider-width75" onchange="update()">Speed<br>
 			<input type="range" id="sizeSlider" class="slider-width75" onchange="update()">Size<br>
 			<h3 class="panel-title">render:</h3>
+			<input type="range" id="transparencySlider" value="25" class="slider-width75" onchange="update()">Transparency<br>
 			<div class="btn-group" data-toggle="buttons">
 				<label class="btn btn-sm btn-default">
 					<input type="radio" name="nodeshape" id="option1" value="0" autocomplete="off" onchange="update()">lines
@@ -72,7 +73,7 @@
 
 			<div class="btn-group" data-toggle="buttons">
 				<label class="btn btn-sm btn-default active">
-					<input type="checkbox" id="fillsCheckbox" autocomplete="off" checked onclick="update()">fills
+					<input type="checkbox" id="fillsCheckbox" autocomplete="off" checked onchange="update()">fills
 				</label>
 			</div>
 
@@ -92,13 +93,13 @@
 			<h3 class="panel-title">hack:</h3>
 			<div class="btn-group" data-toggle="buttons">
 				<label class="btn btn-sm btn-default active">
-					<input type="checkbox" id="uselength" autocomplete="off" checked onclick="update()">lengths
+					<input type="checkbox" id="uselength" autocomplete="off" checked onchange="update()">lengths
 				</label>
 			</div>
 
 			<div class="btn-group" data-toggle="buttons">
 				<label class="btn btn-sm btn-default active">
-					<input type="checkbox" id="usethickness" autocomplete="off" checked onclick="update()">thickness
+					<input type="checkbox" id="usethickness" autocomplete="off" checked onchange="update()">thickness
 				</label>
 			</div>
 
@@ -129,7 +130,12 @@ function getOptionsFromDom(){
 	var thickness = $('#usethickness').is(':checked');
 	var size = $('#sizeSlider').val();
 	var speed = $('#speedSlider').val();
-	
+	var transp = $('#transparencySlider').val();
+	transparency = transp * 2.55;
+
+	console.log('fills');
+	console.log(fills);
+
 	if(shape == "1") shape = true;
 	if(shape == "0") shape = false;
 
@@ -173,6 +179,7 @@ function newSnowflake(){
 }
 
 function update(){
+	getOptionsFromDom();
 	draw();
 }
 

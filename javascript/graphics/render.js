@@ -8,6 +8,8 @@ var getLength = nodeLengthFromNode;
 var getThickness = nodeThicknessFromNode;
 var drawBetweenNodes = drawBetweenNodesHex;
 
+var transparency = 60;
+
 //TODO 
 //lines that go through the center
 // lines that also go inside, but pointing toward the far edges
@@ -152,7 +154,7 @@ function drawBetweenNodesHexFilled(start, end, angle, thickness){
 	// var fillValue = 5*node.age + 150;// + (node.randomValue[angle%6]-5)*2;
 	// fill(fillValue, 250);
 
-	fill(255, 120);
+	fill(255, transparency);
 	noStroke();
 
 	beginShape();
