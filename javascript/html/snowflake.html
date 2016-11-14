@@ -10,8 +10,8 @@
 	<script language="javascript" type="text/javascript" src="../graphics/render.js"></script>
 	<script language="javascript" type="text/javascript" src="../graphics/renderTree.js"></script>
 	<script language="javascript" type="text/javascript" src="../lib/jquery-3.1.1.min.js"></script>
-	<script language="javascript" type="text/javascript" src="../lib/bootstrap.min.js"></script>
-	<link rel="stylesheet" type="text/css" href="../lib/bootstrap.min.css">
+	<script language="javascript" type="text/javascript" src="../lib/bootstrap/bootstrap.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="../lib/bootstrap/bootstrap.min.css">
 	<style> 
 	body {
 		padding: 0; 
@@ -50,14 +50,14 @@
 		<form>
 <div style="background-color: white; padding:10px">
 			<div class="btn-group">
-				<input type="button" id="newSnowflakeButton" class="btn btn-sm btn-primary" value="New Snowflake" onclick="newSnowflake()"></button>
+				<input type="button" id="newSnowflakeButton" class="btn btn-med btn-primary" value="New" onclick="newSnowflake()"></button>
 			</div>
-			<button class="btn btn-sm btn-default" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
-			settings
+			<button class="btn btn-med btn-default" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+				<span class="glyphicon glyphicon-wrench"></span>
 			</button>
 </div>
 <div class="collapse in" id="collapseExample" style="background-color: white;">
-	<div style=" padding:10px">
+	<div style="padding:10px"><div class="well">
 			<input type="range" id="speedSlider" class="slider-width75" onchange="update()">Speed<br>
 			<input type="range" id="sizeSlider" class="slider-width75" onchange="update()">Size<br>
 			<h3 class="panel-title">render:</h3>
@@ -102,14 +102,15 @@
 				</label>
 			</div>
 
-			<input type="range" id="unused" class="slider-width75" onchange="update()"><br>
+		
 	</div>
+</div>
 </div>
 		</form>
 	</div>
 	<script>
 
-$('.collapse').collapse()
+$('.collapse').collapse();
 
 var snowflake;
 var atmos;
@@ -153,7 +154,7 @@ function setup() {
 	canvas = createCanvas(windowWidth, windowHeight);
 	resizeOrigins();
 	frameRate(60);
-	// noLoop();
+	noLoop();
 
 	// start things
 	newSnowflake();
@@ -168,6 +169,7 @@ function newSnowflake(){
 
 	animationProgress = 0.0;
 	isAnimating = true;
+	loop();
 }
 
 function update(){
@@ -190,6 +192,7 @@ function draw() {
 		if(animationProgress >= 1.0){
 			animationProgress = 1.0;
 			isAnimating = false;
+			noLoop();
 		}
 	}
 
